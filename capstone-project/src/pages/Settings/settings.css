@@ -1,0 +1,32 @@
+#settings-nav{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+}
+
+img{
+    width: 30px;
+    height: 30px;
+}
+#search-input{
+    width: 250px;
+    padding: 10px;
+    border: 1px solid;
+    border-radius: 5px;
+    font-size: 16px;
+    box-sizing: border-box;
+}   
+
+#back-button, #account-field, #privacy-field, #notif-field, #about-field{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+#back-button:hover, #account-field:hover, #privacy-field:hover, #notif-field:hover, #about-field:hover{
+    background-color: #e0e0e0;
+}   
