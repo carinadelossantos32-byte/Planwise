@@ -1,9 +1,8 @@
-import "./aboutsettings.css"
-import Settings from "../Settings/settings";
+import Settings from "../../pages/Settings/settings";
 function AboutSettings(){
     return(
         <>
-        <Settings />   
+         
         <div id="about-container">
             <div id="about-header">
                 <h1>PlanWise Family Planning System</h1>

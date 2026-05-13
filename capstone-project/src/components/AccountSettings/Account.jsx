@@ -1,10 +1,10 @@
 import "./account.css"
-import Settings from "../Settings/settings";
+import Settings from "../../pages/Settings/settings";
 function Account(){
 
     return(
         <>
-        <Settings />   
+         
         <h1>Account Settings</h1>
         <h5>Manage your personal information and preferences</h5>
 

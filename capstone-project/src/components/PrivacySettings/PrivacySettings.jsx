@@ -1,9 +1,9 @@
-import "./privacy.css"
-import Settings from "../Settings/settings";
+import "./privacy-settings.css"
+import Settings from "../../pages/Settings/settings";
 function PrivacySettings(){
     return(
         <>
-        <Settings />    
+       
         <h1>Privacy Settings</h1>
         <h3>Change Password</h3>
         <h5>Current Password</h5>

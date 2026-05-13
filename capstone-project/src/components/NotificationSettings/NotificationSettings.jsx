@@ -1,9 +1,9 @@
-import "./notification.css"
-import Settings from "../Settings/settings";
+import "./notification-settings.css"
+import Settings from "../../pages/Settings/settings";
 function NotificationSettings(){
     return(
         <>
-        <Settings />   
+        
         <h1>Notification Preferences</h1>
         <h3>Low Stock Alerts</h3>
         <p>Get notified when commodity levels are low</p>

@@ -1,13 +1,31 @@
+.settings-container{
+    display: flex;
+    gap: 20px;
+    height: 100vh;
+}
+
 #settings-nav{
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    padding: 20px;
+    width: 280px;
+    height: 100vh;
+    margin-left: 40px;
+   
 }
 
+#settings-content{
+    flex: 1;
+    padding: 20px;
+    border-left: 1px solid #ccc;
+}
+
+
+
+
 img{
-    width: 30px;
-    height: 30px;
+    width: 20px;
+    height: 20px;
+    font-weight: bold;
 }
 #search-input{
     width: 250px;
@@ -23,10 +41,31 @@ img{
     align-items: center;
     gap: 10px;
     cursor: pointer;
-    padding: 10px;
-    border-radius: 5px;
+    border-left: 1px solid transparent;
+    margin-top: 5px;
+    
 }
+   
 
 #back-button:hover, #account-field:hover, #privacy-field:hover, #notif-field:hover, #about-field:hover{
-    background-color: #e0e0e0;
+    background-color:#f0f0f0;
+    border-left: 7px solid #4F39F6;
+    border-radius: 7px;
 }   
+
+#account-field.selected, #privacy-field.selected, #notif-field.selected, #about-field.selected{
+    border-left: 7px solid #4F39F6;
+    font-weight: bold;
+    padding: 2px;
+    border-radius:7px;
+    color:#4F39F6;
+    
+    
+}
+
+
+#account-field.selected img, #privacy-field.selected img, #notif-field.selected img, #about-field.selected img{
+  
+ filter: invert(27%) sepia(93%) saturate(3000%) hue-rotate(237deg) brightness(97%) contrast(97%);
+}
+
