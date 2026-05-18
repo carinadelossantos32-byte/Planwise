@@ -1,0 +1,97 @@
+#privacy-settings-page-container{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width:100%;
+    
+}
+h1{
+    font-size: 24px;
+    margin:20px 0 20px 0;
+}
+
+h5{
+    font-size: 15px;
+    font-weight: bold;
+    color: #000000;
+}
+#privacy-settings-container{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 25px 20px 25px;
+    border: 1px solid #c0c0c0;
+    border-radius: 10px;
+    background-color: #ffffff;
+    height: auto;
+    margin:20px auto;
+    width: 100%; 
+    max-width:1000px;
+    
+}
+
+.info-section{
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin:0 0 20px 0;
+    width:100%;
+    }
+#change-password-section{
+    width:100%;
+    display:flex;
+    flex-direction: column;
+    font-size: 18px;
+    font-weight: bold;
+   margin:0;
+}
+
+#change-password-section input{
+  
+   height: 25px;
+   padding-right: 35px;
+}
+
+#change-password-section .password-input-wrapper{
+    position: relative;
+   
+    width:50%;
+    
+}
+
+#change-password-section .password-input-wrapper input{
+    width: 100%;
+    height: 25px;
+    padding-right: 35px;
+}
+
+#change-password-section .password-input-wrapper img{
+    position: absolute;
+    right:-20px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+}
+
+
+#update-password-button{
+    
+    padding: 10px 20px;
+    background-color: rgb(89, 9, 236);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    align-self: flex-start;
+    font-size: 16px;
+    font-weight: bold;
+    height:45px;
+}
+
+#update-password-button:hover{
+    background-color: rgb(70, 0, 200);
+    transition: background-color 0.2s ease;
+}

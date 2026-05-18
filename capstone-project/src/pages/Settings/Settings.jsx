@@ -6,7 +6,7 @@ import accountLogo from "../../assets/account-logo.png"
 import privacyLogo from "../../assets/privacy.png"
 import notifLogo from "../../assets/notif.png"
 import aboutLogo from "../../assets/about.png"
-import logoutLogo from "../../assets/logout.png"
+import searchLogo from "../../assets/search.png";
 import Account from "../../components/AccountSettings/Account"
 import PrivacySettings from "../../components/PrivacySettings/PrivacySettings"
 import NotificationSettings from "../../components/NotificationSettings/NotificationSettings"
@@ -24,9 +24,12 @@ function Settings(){
         <div id="back-button">
             <img src={backArrowLogo} alt="back-button" /> 
              <h4>Back</h4>
-        </div>
+        </div>  
+
+        <h1>Settings</h1>
         <div id="search-field" >
             <input id="search-input" type="text" placeholder="Search..." />
+            <img src={searchLogo} alt="search-logo" />
         </div>
         <div id="account-field" className={activePage === "account" ? "selected" : ""} onClick={() => setActivePage("account")}>
             <img src={accountLogo} alt="acc-logo" />

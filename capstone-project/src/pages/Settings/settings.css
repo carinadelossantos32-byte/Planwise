@@ -13,13 +13,23 @@
    
 }
 
-#settings-content{
-    flex: 1;
-    padding: 20px;
-    border-left: 1px solid #ccc;
+#settings-nav h1{
+    font-size: 24px;
+    font-weight: bold;
+    margin: 10px 0 20px 0;
+    color: #000000;
+    display: block;
+    width: 100%;
+    padding: 0;
+    overflow: visible;
 }
 
-
+#settings-content{
+    flex: 1;
+    padding-left: 30px;
+    border-left: 1px solid #ccc;
+    background-color: #f9f9f9;
+}
 
 
 img{
@@ -29,11 +39,31 @@ img{
 }
 #search-input{
     width: 250px;
-    padding: 10px;
-    border: 1px solid;
-    border-radius: 5px;
+    height:50px;
+    border-radius:13px;
+    padding: 10px 10px 10px 35px;
+    border: 1px solid #ccc;
     font-size: 16px;
     box-sizing: border-box;
+    background-color: #f0e6ff;
+}   
+
+#search-field{
+    position: relative;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+#search-field img{
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    pointer-events: none;
+    
 }   
 
 #back-button, #account-field, #privacy-field, #notif-field, #about-field{
@@ -58,9 +88,7 @@ img{
     font-weight: bold;
     padding: 2px;
     border-radius:7px;
-    color:#4F39F6;
-    
-    
+    background-color: #4f39f60e;
 }
 
 
