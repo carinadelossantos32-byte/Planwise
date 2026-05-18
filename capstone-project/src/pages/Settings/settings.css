@@ -26,9 +26,10 @@
 
 #settings-content{
     flex: 1;
-    padding-left: 30px;
+    padding-left: 0 30px;
     border-left: 1px solid #ccc;
     background-color: #f9f9f9;
+    padding: 0px 30px;
 }
 
 

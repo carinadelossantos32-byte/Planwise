@@ -26,7 +26,7 @@ h2{
     padding: 20px;
     border: 1px solid #ccc;
     border-radius: 10px;
-    height: 70%;
+    height: auto;
     margin-top: 20px;
 }
 
@@ -145,6 +145,7 @@ input:focus{
     height: 30px;
    justify-content: flex-end;
    margin-top: 20px;
+   padding-bottom: 20px;
     
 }
 #cancel-button, #save-button{
@@ -155,6 +156,7 @@ input:focus{
     font-weight: bold;
     cursor: pointer;
     height: 50px;
+    
      
 }
 
