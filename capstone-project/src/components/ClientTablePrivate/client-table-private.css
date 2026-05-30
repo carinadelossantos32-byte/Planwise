@@ -1,0 +1,252 @@
+
+/* ===========================
+   STATS BANNER
+   =========================== */
+
+.stats-banner-private {
+  display: flex;
+  align-items: center;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  border-radius: 12px 12px 0 0;
+  padding: 20px 24px;
+  margin-bottom: 0;
+  gap: 0;
+}
+
+.stat-item-private {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-right: 32px;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  margin-right: 32px;
+}
+
+.stat-item-private:last-of-type {
+  border-right: none;
+}
+
+.stat-label-private {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 400;
+}
+
+.stat-value-private {
+  font-size: 24px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1;
+}
+
+/* ===========================
+   TABLE BASE
+   =========================== */
+
+.client-table-container-private table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+    background-color: #ffffff;
+    border-radius: 12px;
+}
+
+/* ===========================
+   HEADER
+   =========================== */
+
+.client-table-container-private thead tr {
+  background-color: #eff0f1;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.client-table-container-private thead td,
+.client-table-container-private thead th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  color: #6b7280;
+  
+}
+
+/* ===========================
+   BODY ROWS
+   =========================== */
+
+.client-table-container-private tbody tr {
+  border-bottom: 1px solid #e5eaf5;
+  transition: background-color 0.15s ease;
+}
+
+.client-table-container-private tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.client-table-container-private tbody tr:last-child {
+  border-bottom: none;
+}
+
+.client-table-container-private tbody td,
+.client-table-container-private tbody th {
+  padding: 11px 16px;
+  color: #111827;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* Row number */
+.client-table-container-private tbody th:first-child {
+  color: #9ca3af;
+  font-weight: 400;
+  font-size: 12px;
+  width: 40px;
+}
+
+/* ===========================
+   NAME CELL (bold + sub name)
+   =========================== */
+
+.client-name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.client-name-male {
+  font-weight: 600;
+  color: #111827;
+  font-size: 13px;
+}
+
+
+/* ===========================
+   Birthdate Cell
+   =========================== */
+
+.client-birthdate {
+  align-items: left;
+  justify-content: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+
+
+/* ===========================
+   FP METHOD BADGE
+   =========================== */
+
+.method-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  background-color: #e0f2fe;
+  color: #0369a1;
+  white-space: nowrap;
+}
+
+/* ===========================
+   TYPE BADGE
+   =========================== */
+
+.type-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  background-color: #f3f4f6;
+  color: #374151;
+  white-space: nowrap;
+}
+
+/* ===========================
+   ACTION BUTTONS
+   =========================== */
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+
+/* Edit button */
+.action-btn.edit {
+  color: #6b7280;
+}
+
+.action-btn.edit:hover {
+  background-color: #eff6ff;
+  color: #2563eb;
+}
+
+/* Delete button */
+.action-btn.delete {
+  color: #6b7280;
+}
+
+.action-btn.delete:hover {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+/* ===========================
+   EMPTY STATE
+   =========================== */
+
+.table-empty-private {
+  text-align: center;
+  padding: 48px 16px;
+  color: #9ca3af;
+  font-size: 14px;
+  background-color: #ffffff;
+}
+
+/* ===========================
+   ARCHIVED ROW
+   =========================== */
+
+.archived-row td,
+.archived-row th {
+  opacity: 0.6;
+}
+
+/* Restore button */
+.action-btn.restore {
+  color: #6b7280;
+}
+
+.action-btn.restore:hover {
+  background-color: #ecfdf5;
+  color: #16a34a;
+}
+
+/* View button */
+.action-btn.view {
+  color: #6b7280;
+}
+
+.action-btn.view:hover {
+  background-color: #f5f3ff;
+  color: #7c3aed;
+}

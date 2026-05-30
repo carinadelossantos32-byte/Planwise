@@ -1,0 +1,65 @@
+.client-archive-container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    padding: 8px 0;
+}
+
+/* TOOLBAR */
+.archive-toolbar {
+    display: flex;
+    align-items: center;
+}
+
+.client-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 8px 12px; 
+    min-width: 300px;
+}
+
+.client-search input {
+    border: none;
+    outline: none;
+    font-size: 13px;
+    color: #111827;
+    width: 100%;
+    background: #ffffff;
+}
+
+/* SECTION */
+.archive-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+}
+
+.archive-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border: none;
+}
+
+.archive-section-header h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #09338d;
+    margin: 0;
+}
+
+.archive-count {
+    font-size: 0.8rem;
+    color: #6b7280;
+    background: #e5e7eb;
+    padding: 3px 10px;
+    border-radius: 20px;
+}

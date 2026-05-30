@@ -1,0 +1,359 @@
+
+/* ===========================
+   STATS BANNER
+   =========================== */
+
+.stats-banner {
+  display: flex;
+  align-items: center;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  border-radius: 12px 12px 0 0;
+  padding: 20px 24px;
+  margin-bottom: 0;
+  gap: 0;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-right: 32px;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  margin-right: 32px;
+}
+
+.stat-item:last-of-type {
+  border-right: none;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 400;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1;
+}
+
+/* Generate Form A Button */
+.btn-generate-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  padding: 10px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-generate-form:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+/* ===========================
+   TABLE BASE
+   =========================== */
+
+.client-table-container table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  background-color: #ffffff;
+}
+
+/* ===========================
+   HEADER
+   =========================== */
+
+.client-table-container thead tr {
+  background-color: #eff0f1;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.client-table-container thead td,
+.client-table-container thead th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  color: #6b7280;
+  
+}
+
+/* ===========================
+   BODY ROWS
+   =========================== */
+
+.client-table-container tbody tr {
+  border-bottom: 1px solid #e5eaf5;
+  transition: background-color 0.15s ease;
+}
+
+.client-table-container tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.client-table-container tbody tr:last-child {
+  border-bottom: none;
+}
+
+.client-table-container tbody td,
+.client-table-container tbody th {
+  padding: 11px 16px;
+  color: #111827;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* Row number */
+.client-table-container tbody th:first-child {
+  color: #9ca3af;
+  font-weight: 400;
+  font-size: 12px;
+  width: 40px;
+}
+
+/* ===========================
+   NAME CELL (bold + sub name)
+   =========================== */
+
+.client-name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.client-name-male {
+  font-weight: 600;
+  color: #111827;
+  font-size: 13px;
+}
+
+.client-name-female {
+  padding-top: 3px;
+  font-size: 13px;
+  color: #797676;
+  font-weight: 600;
+}
+
+/* ===========================
+   SEX BADGE (M/F circle)
+   =========================== */
+
+.client-sex {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sex-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 5px;
+  
+}
+
+.sex-badge.male {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+.sex-badge.female {
+  background-color: #fce7f3;
+  color: #be185d;
+}
+
+/* ===========================
+   Birthdate Cell
+   =========================== */
+
+.client-birthdate {
+  align-items: left;
+  justify-content: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ===========================
+   Educational Attainment Cell
+   =========================== */
+
+.client-educational-attainment {
+    align-items: left;
+  justify-content: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ===========================
+   CHILDREN COUNT BADGE
+   =========================== */
+
+.children-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: #ede9fe;
+  color: #6d28d9;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ===========================
+   FP METHOD BADGE
+   =========================== */
+
+.method-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  background-color: #e0f2fe;
+  color: #0369a1;
+  white-space: nowrap;
+}
+
+/* ===========================
+   TYPE BADGE
+   =========================== */
+
+.type-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  background-color: #f3f4f6;
+  color: #374151;
+  white-space: nowrap;
+}
+
+/* ===========================
+   STATUS BADGE
+   =========================== */
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.status-badge.active {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.status-badge.inactive {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+/* ===========================
+   ACTION BUTTONS
+   =========================== */
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+
+/* Edit button */
+.action-btn.edit {
+  color: #6b7280;
+}
+
+.action-btn.edit:hover {
+  background-color: #eff6ff;
+  color: #2563eb;
+}
+
+/* Delete button */
+.action-btn.delete {
+  color: #6b7280;
+}
+
+.action-btn.delete:hover {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+/* ===========================
+   EMPTY STATE
+   =========================== */
+
+.table-empty {
+  text-align: center;
+  padding: 48px 16px;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+/* ===========================
+   ARCHIVED ROW
+   =========================== */
+
+.archived-row td,
+.archived-row th {
+  opacity: 0.6;
+}
+
+/* Restore button */
+.action-btn.restore {
+  color: #6b7280;
+}
+
+.action-btn.restore:hover {
+  background-color: #ecfdf5;
+  color: #16a34a;
+}
+
+/* View button */
+.action-btn.view {
+  color: #6b7280;
+}
+
+.action-btn.view:hover {
+  background-color: #f5f3ff;
+  color: #7c3aed;
+}

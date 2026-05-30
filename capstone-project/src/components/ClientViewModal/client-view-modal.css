@@ -1,0 +1,126 @@
+/* OVERLAY */
+.modal-overlay-view {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.644);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* MODAL BOX */
+.modal-view {
+  background: #fff;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+/* HEADER */
+.modal-header-view {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #ffbf0e;
+}
+
+.modal-header-view h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: #ffffff;
+}
+
+/* BODY */
+.modal-body-view {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* VIEW GRID */
+.view-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.view-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 5px 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.view-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.view-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  font-family: 'Segoe UI', sans-serif;
+  
+}
+
+.view-value {
+  font-size: 14px;
+  color: #111827;
+  font-weight: 400;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* SIGNATURE */
+.signature-image {
+  margin-top: 6px;
+  max-width: 200px;
+  max-height: 80px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  object-fit: contain;
+}
+
+/* FOOTER */
+.modal-btn-view {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 24px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.btn-back {
+  padding: 8px 18px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: #ffbf0e;
+  color: #fafafa;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.btn-back:hover {
+  background: #e0b53f;
+}
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+  .view-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-view {
+    width: 95%;
+  }
+}

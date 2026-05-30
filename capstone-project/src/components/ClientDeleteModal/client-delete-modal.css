@@ -1,0 +1,146 @@
+/* OVERLAY */
+.modal-overlay-delete {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* MODAL BOX */
+.modal-delete {
+  background: #fff;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 350px;
+  padding: 32px 28px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+/* CLOSE BUTTON */
+.modal-close-delete {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close-delete:hover {
+  color: #374151;
+}
+
+/* ICON CIRCLE */
+.archive-icon-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #f97316;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+/* TITLE */
+.archive-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 16px;
+}
+
+/* MESSAGE */
+.archive-message {
+  font-size: 0.9rem;
+  color: #374151;
+  line-height: 1.6;
+  margin: 0 0 24px;
+}
+
+.archive-name {
+  color: #f97316;
+  font-weight: 600;
+}
+
+/* BUTTONS */
+.modal-btn-delete {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.btn-cancel-d {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-cancel-d:hover {
+  background: #e5e7eb;
+}
+
+.btn-archive {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  background: #f97316;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-archive:hover {
+  background: #ea6c0a;
+}
+
+/* FOOTER NOTE */
+.archive-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #eff6ff;
+  border-radius: 8px;
+  padding: 10px 14px;
+  width: 100%;
+  text-align: left;
+  font-size: 0.8rem;
+  color: #374151;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+
+.archive-note-icon {
+  color: #3b82f6;
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
