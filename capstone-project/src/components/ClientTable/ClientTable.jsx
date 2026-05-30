@@ -1,5 +1,5 @@
 import "./client-table.css"
-import { SquarePen, Trash2, FileText, Eye, ArchiveRestore } from 'lucide-react';
+import { SquarePen, Trash2, FileText, Eye, ArchiveRestore} from 'lucide-react';
 
 function ClientTable({ clients, loading, onView, onEdit, onDelete, isArchived, onRestore }) {
     return (
@@ -128,6 +128,7 @@ function ClientTable({ clients, loading, onView, onEdit, onDelete, isArchived, o
                                                     <button className="action-btn delete" onClick={() => onDelete(client)}>
                                                         <Trash2 size={15} strokeWidth={1.5} />
                                                     </button>
+
                                                 </>
                                             )}
                                         </div>
