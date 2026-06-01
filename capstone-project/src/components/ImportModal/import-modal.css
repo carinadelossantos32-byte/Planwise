@@ -1,0 +1,256 @@
+/* OVERLAY */
+.modal-overlay-import {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* MODAL BOX */
+.modal-import {
+  background: #fff;
+  border-radius: 12px;
+  width: 95%;
+  max-width: 1100px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+/* HEADER */
+.modal-header-import {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header-import h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+  color: #111827;
+}
+
+.modal-close-import {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.modal-close-import:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+/* UPLOAD AREA */
+.import-upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 60px 24px;
+  text-align: center;
+}
+
+.import-upload-area p {
+  font-size: 1rem;
+  color: #374151;
+  margin: 0;
+  font-weight: 500;
+}
+
+.import-note {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.btn-choose-file {
+  padding: 10px 24px;
+  border-radius: 8px;
+  background: #6366f1;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  margin-top: 8px;
+}
+
+.btn-choose-file:hover {
+  background: #4f46e5;
+}
+
+/* WARNING BANNER */
+.import-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fffbeb;
+  border-bottom: 1px solid #fde68a;
+  padding: 12px 24px;
+  font-size: 0.85rem;
+  color: #92400e;
+}
+
+/* PREVIEW TABLE */
+.import-preview-table-wrapper {
+  overflow: auto;
+  flex: 1;
+  padding: 0;
+}
+
+.import-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.import-preview-table thead tr {
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+}
+
+.import-preview-table thead th {
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.import-preview-table tbody tr {
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.import-preview-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.import-preview-table tbody td {
+  padding: 9px 12px;
+  color: #111827;
+  white-space: nowrap;
+}
+
+.import-preview-table tbody tr.row-error {
+  background: #fff7f7;
+}
+
+.missing {
+  color: #d1d5db;
+}
+
+.error-badge {
+  font-size: 11px;
+  color: #b91c1c;
+  background: #fee2e2;
+  padding: 2px 8px;
+  border-radius: 20px;
+  white-space: normal;
+}
+
+.ok-badge {
+  font-size: 11px;
+  color: #15803d;
+  background: #dcfce7;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+/* FOOTER */
+.modal-btn-import {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.btn-cancel-import {
+  padding: 9px 20px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #374151;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.btn-cancel-import:hover {
+  background: #f3f4f6;
+}
+
+.btn-confirm-import {
+  padding: 9px 20px;
+  border-radius: 8px;
+  border: none;
+  background: #6366f1;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-confirm-import:hover {
+  background: #4f46e5;
+}
+
+/* STATUS (saving/done) */
+.import-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 60px 24px;
+  text-align: center;
+}
+
+.import-status p {
+  font-size: 1rem;
+  color: #374151;
+  margin: 0;
+}
+
+/* SPINNER */
+.import-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.btn-reupload {
+  padding: 9px 20px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #374151;
+  font-size: 0.875rem;
+  cursor: pointer;
+  margin-right: auto;
+}
+
+.btn-reupload:hover {
+  background: #f3f4f6;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
