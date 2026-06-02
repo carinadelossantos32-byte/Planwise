@@ -1,6 +1,5 @@
-/* ===========================
-   TOOLBAR / SEARCH BAR AREA
-   =========================== */
+
+/* TOOLBAR / SEARCH BAR AREA */
 .toolbar-header{
     display: flex;
     flex-direction: column;

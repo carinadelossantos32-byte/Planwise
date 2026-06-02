@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "../../firebase-config";
+import { db } from "../../firebase";
 import './client-edit-modal.css';
 
 function ClientEditModal({ client, onClose, onSuccess }) {

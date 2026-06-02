@@ -1,4 +1,3 @@
-import { X, Archive } from 'lucide-react';
 import './client-delete-modal.css';
 
 function ClientDeleteModal({ selectedClient, onClose, handleDelete }) {
