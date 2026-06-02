@@ -147,6 +147,22 @@
   background: #51c779;
 }
 
+/* ERROR VALIDATION STYLES */
+
+.input-error {
+  border: 1px solid #ef4444 !important;
+  background-color: #fef2f2; 
+}
+
+.error-text {
+  color: #ef4444;
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
+  font-family: 'Segoe UI', sans-serif;
+  font-style: italic;
+}
+
 /* RESPONSIVE */
 @media (max-width: 600px) {
   .form-grid {
