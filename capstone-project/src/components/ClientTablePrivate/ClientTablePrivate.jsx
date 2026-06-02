@@ -17,6 +17,10 @@ function ClientTablePrivate({ clients, loading, onView, onEdit, onDelete, isArch
                         <span className="stat-label-private">New This Month</span>
                         <span className="stat-value-private">
                             {clients?.filter(c => {
+<<<<<<< HEAD
+=======
+                                // Safeguard against null server timestamps
+>>>>>>> main
                                 if (!c.created_at || typeof c.created_at.toDate !== 'function') return false;
 
                                 const date = c.created_at.toDate();

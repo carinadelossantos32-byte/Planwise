@@ -1,17 +1,4 @@
-<<<<<<< Updated upstream
-import "./client-records.css"
 
-function ClientRecords(){
-    return(
-        <>
-        <div className="client-records-container">
-            <h1>Client Records</h1>
-            <p>This is the client records page.</p>
-        </div>
-        </>
-    )
-}export default ClientRecords;
-=======
 import { useEffect, useState, useCallback } from "react";
 import {
   collection,
@@ -23,8 +10,6 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import ExcelJS from "exceljs";
-import { saveAs } from "file-saver";
 import ClientTable from "../../components/ClientTable/ClientTable";
 import ClientTablePrivate from "../../components/ClientTablePrivate/ClientTablePrivate";
 import ClientArchive from "../../components/ClientArchive/ClientArchive";
@@ -38,7 +23,6 @@ import ClientDeleteModal from "../../components/ClientDeleteModal/ClientDeleteMo
 import ClientAddModalPrivate from "../../components/ClientAddModalPrivate/ClientAddModalPrivate";
 import ClientEditModalPrivate from "../../components/ClientEditModalPrivate/ClientEditModalPrivate";
 import ClientViewModalPrivate from "../../components/ClientViewModalPrivate/ClientViewModalPrivate";
-import ImportModal from "../../components/ImportModal/ImportModal";
 
 function ClientRecords() {
 
@@ -55,9 +39,6 @@ function ClientRecords() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-
-  const [showImportModal, setShowImportModal] = useState(false);
-
   const [selectedClient, setSelectedClient] = useState(null);
 
   // Form state
@@ -65,8 +46,7 @@ function ClientRecords() {
     name: "",
     spouse_name: "",
     sex: "",
-    civil_status_male: "",
-    civil_status_female: "",
+    civil_status: "",
     birthdate_male: "",
     birthdate_female: "",
     address: "",
@@ -87,7 +67,7 @@ function ClientRecords() {
   , [activeTab]);
 
 
-  // READ 
+  // READ (Optimized with Query & useCallback)
   const fetchClients = useCallback(async () => {
     setLoading(true);
     try {
@@ -168,106 +148,6 @@ function ClientRecords() {
     }
   };
 
-// EXPORT TO GOVERNMENT TEMPLATE
-const handleExport = async () => {
-  try {
-    const response = await fetch("/Export_Template.xlsx");
-    const arrayBuffer = await response.arrayBuffer();
-
-    const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(arrayBuffer);
-    const sheet = workbook.getWorksheet(1);
-
-    const thin = { style: "thin" };
-    const border = { top: thin, bottom: thin, left: thin, right: thin };
-    const noBorder = {
-        top:    { style: undefined },
-        bottom: { style: undefined },
-        left:   { style: undefined },
-        right:  { style: undefined },
-      };
-    const center = { horizontal: "center", vertical: "middle", wrapText: true };
-    const left   = { horizontal: "left",   vertical: "middle", wrapText: true };
-
-    const allCols = ["B","C","D","E","F","G","H","I","J","K","L","M","N","O","P"];
-
-    const setCell = (ref, value, align = center) => {
-      const cell = sheet.getCell(ref);
-      cell.value = value;
-      cell.border = border;
-      cell.alignment = align;
-      cell.font = { name: "Arial", size: 10 };
-    };
-
-    for (let r = 6; r <= 50; r++) {
-      allCols.forEach(col => {
-        const cell = sheet.getCell(`${col}${r}`);
-        cell.border = noBorder;
-        cell.value = null;
-        cell.style = {};
-      });
-    }
-
-    filteredClients.forEach((client, index) => {
-      const husbandRow = 6 + index * 2;
-      const wifeRow    = husbandRow + 1;
-
-      const mergeCols = ["B", "H", "J", "K", "L", "M", "N", "O", "P"];
-  mergeCols.forEach(col => {
-    const cell = sheet.getCell(`${col}${wifeRow}`);
-    cell.border = {
-      ...cell.border,
-      top: { style: "thin" },    
-      bottom: { style: "thin" },
-      left: { style: "thin" },
-      right: { style: "thin" },
-    };
-  });
-
-      try { sheet.mergeCells(`B${husbandRow}:B${wifeRow}`); } catch {}
-      try { sheet.mergeCells(`C${husbandRow}:D${husbandRow}`); } catch {}
-      try { sheet.mergeCells(`C${wifeRow}:D${wifeRow}`); } catch {}
-      try { sheet.mergeCells(`H${husbandRow}:H${wifeRow}`); } catch {}
-      try { sheet.mergeCells(`J${husbandRow}:J${wifeRow}`); } catch {}
-      try { sheet.mergeCells(`K${husbandRow}:K${wifeRow}`); } catch {}
-      try { sheet.mergeCells(`L${husbandRow}:L${wifeRow}`); } catch {}
-      try { sheet.mergeCells(`M${husbandRow}:M${wifeRow}`); } catch {}
-      try { sheet.mergeCells(`N${husbandRow}:N${wifeRow}`); } catch {}
-      try { sheet.mergeCells(`O${husbandRow}:O${wifeRow}`); } catch {}
-      try { sheet.mergeCells(`P${husbandRow}:P${wifeRow}`); } catch {}
-
-      // HUSBAND ROW
-      setCell(`B${husbandRow}`, index + 1);
-      setCell(`C${husbandRow}`, client.name || "",                          left);
-      setCell(`E${husbandRow}`, "M");
-      setCell(`F${husbandRow}`, client.civil_status_male || "");
-      setCell(`G${husbandRow}`, client.birthdate_male || "");
-      setCell(`H${husbandRow}`, client.address || "",                       left);
-      setCell(`I${husbandRow}`, client.educational_attainment_male || "");
-      setCell(`J${husbandRow}`, client.no_of_children ? Number(client.no_of_children) : "");
-      setCell(`K${husbandRow}`, client.fp_method || "");
-      setCell(`L${husbandRow}`, client.intention_to_shift || "");
-      setCell(`M${husbandRow}`, client.type || "");
-      setCell(`N${husbandRow}`, client.status || "");
-      setCell(`O${husbandRow}`, client.reason || "");
-      setCell(`P${husbandRow}`, "");
-
-      // WIFE ROW
-      setCell(`C${wifeRow}`, client.spouse_name || "",                      left);
-      setCell(`E${wifeRow}`, "F");
-      setCell(`F${wifeRow}`, client.civil_status_female || "");
-      setCell(`G${wifeRow}`, client.birthdate_female || "");
-      setCell(`I${wifeRow}`, client.educational_attainment_female || "");
-    });
-
-    const buffer = await workbook.xlsx.writeBuffer();
-    saveAs(new Blob([buffer]), "Completed_RPFP_Form_1.xlsx");
-
-  } catch (error) {
-    console.error("Export failed:", error);
-    alert("Could not export. Make sure 'Export_Template.xlsx' is in your public folder!");
-  }
-};
 
   // HELPERS
   const resetForm = () => {
@@ -275,8 +155,7 @@ const handleExport = async () => {
       name: "",
       spouse_name: "",
       sex: "",
-      civil_status_male: "",
-      civil_status_female: "",
+      civil_status: "",
       birthdate_male: "",
       birthdate_female: "",
       address: "",
@@ -405,10 +284,8 @@ const handleExport = async () => {
               </select>
 
               <div className="toolbar-actions">
-                <button className="btn-export" onClick={handleExport}><Download size={14} /> Export</button>
-                <button className="btn-import" onClick={() => setShowImportModal(true)}>
-                  <Upload size={14} /> Import
-                </button>
+                <button className="btn-export"><Download size={14} /> Export</button>
+                <button className="btn-import"><Upload size={14} /> Import</button>
                 <button
                   className="btn-add-client"
                   onClick={() => setShowAddModal(true)}
@@ -451,18 +328,9 @@ const handleExport = async () => {
 
       </div>
 
-      {/* ----------------- IMPORT MODAL ----------------- */}
-      {showImportModal && activeTab === "public" && (
-        <ImportModal
-          collectionName="clients_public" 
-          onClose={() => setShowImportModal(false)}
-          onSuccess={fetchClients}
-        />
-      )}
-
  {/* ----------------- ADD MODALS ----------------- */}
       
-      {/* Only show if the Public tab is active */}
+      {/* Only show this one if the Public tab is active */}
       {showAddModal && activeTab === "public" && (
         <ClientAddModal
           onClose={() => setShowAddModal(false)}
@@ -470,7 +338,7 @@ const handleExport = async () => {
         />
       )}
 
-      {/* Only show if the Private tab is active */}
+      {/* Only show this one if the Private tab is active */}
       {showAddModal && activeTab === "private" && (
         <ClientAddModalPrivate
           onClose={() => setShowAddModal(false)}
@@ -513,6 +381,7 @@ const handleExport = async () => {
       )}
 
       {/* ----------------- DELETE MODAL ----------------- */}
+      {/* This one is shared, so it doesn't need an activeTab check */}
       {showDeleteModal && selectedClient && (
         <ClientDeleteModal
           selectedClient={selectedClient}
@@ -525,4 +394,4 @@ const handleExport = async () => {
 }
 
 export default ClientRecords;
->>>>>>> Stashed changes
+ 

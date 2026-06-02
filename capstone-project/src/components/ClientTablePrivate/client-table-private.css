@@ -1,5 +1,11 @@
 
+<<<<<<< HEAD
 /* STATS BANNER */
+=======
+/* ===========================
+   STATS BANNER
+   =========================== */
+>>>>>>> main
 
 .stats-banner-private {
   display: flex;
@@ -37,7 +43,13 @@
   line-height: 1;
 }
 
+<<<<<<< HEAD
 /* TABLE BASE */
+=======
+/* ===========================
+   TABLE BASE
+   =========================== */
+>>>>>>> main
 
 .client-table-container-private table {
   width: 100%;
@@ -48,7 +60,13 @@
     border-radius: 12px;
 }
 
+<<<<<<< HEAD
 /*  HEADER */
+=======
+/* ===========================
+   HEADER
+   =========================== */
+>>>>>>> main
 
 .client-table-container-private thead tr {
   background-color: #eff0f1;
@@ -66,7 +84,13 @@
   
 }
 
+<<<<<<< HEAD
 /* BODY ROWS */
+=======
+/* ===========================
+   BODY ROWS
+   =========================== */
+>>>>>>> main
 
 .client-table-container-private tbody tr {
   border-bottom: 1px solid #e5eaf5;
@@ -97,7 +121,13 @@
   width: 40px;
 }
 
+<<<<<<< HEAD
 /* NAME CELL  */
+=======
+/* ===========================
+   NAME CELL (bold + sub name)
+   =========================== */
+>>>>>>> main
 
 .client-name {
   display: flex;
@@ -112,7 +142,13 @@
 }
 
 
+<<<<<<< HEAD
 /* Birthdate Cell */
+=======
+/* ===========================
+   Birthdate Cell
+   =========================== */
+>>>>>>> main
 
 .client-birthdate {
   align-items: left;
@@ -124,7 +160,13 @@
 
 
 
+<<<<<<< HEAD
 /* FP METHOD BADGE */
+=======
+/* ===========================
+   FP METHOD BADGE
+   =========================== */
+>>>>>>> main
 
 .method-badge {
   display: inline-block;
@@ -137,7 +179,13 @@
   white-space: nowrap;
 }
 
+<<<<<<< HEAD
 /* TYPE BADGE */
+=======
+/* ===========================
+   TYPE BADGE
+   =========================== */
+>>>>>>> main
 
 .type-badge {
   display: inline-block;
@@ -150,7 +198,13 @@
   white-space: nowrap;
 }
 
+<<<<<<< HEAD
 /* ACTION BUTTONS */
+=======
+/* ===========================
+   ACTION BUTTONS
+   =========================== */
+>>>>>>> main
 
 .action-buttons {
   display: flex;
@@ -192,7 +246,13 @@
   color: #dc2626;
 }
 
+<<<<<<< HEAD
 /* EMPTY STATE */
+=======
+/* ===========================
+   EMPTY STATE
+   =========================== */
+>>>>>>> main
 
 .table-empty-private {
   text-align: center;
@@ -202,7 +262,13 @@
   background-color: #ffffff;
 }
 
+<<<<<<< HEAD
 /* ARCHIVED ROW */
+=======
+/* ===========================
+   ARCHIVED ROW
+   =========================== */
+>>>>>>> main
 
 .archived-row td,
 .archived-row th {

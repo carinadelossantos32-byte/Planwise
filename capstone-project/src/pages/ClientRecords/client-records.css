@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 =======
+=======
+
+>>>>>>> main
 /* TOOLBAR / SEARCH BAR AREA */
 .toolbar-header{
     display: flex;
@@ -184,5 +188,9 @@
 .tab-btn:hover{
     background-color: #4f46e5;
     color: #ffffff;
+<<<<<<< HEAD
 }
 >>>>>>> Stashed changes
+=======
+}
+>>>>>>> main
