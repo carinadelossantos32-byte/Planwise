@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from "react";
 import {
   collection,
@@ -10,6 +9,8 @@ import {
   query,
   where,
 } from "firebase/firestore";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 import ClientTable from "../../components/ClientTable/ClientTable";
 import ClientTablePrivate from "../../components/ClientTablePrivate/ClientTablePrivate";
 import ClientArchive from "../../components/ClientArchive/ClientArchive";
@@ -23,6 +24,7 @@ import ClientDeleteModal from "../../components/ClientDeleteModal/ClientDeleteMo
 import ClientAddModalPrivate from "../../components/ClientAddModalPrivate/ClientAddModalPrivate";
 import ClientEditModalPrivate from "../../components/ClientEditModalPrivate/ClientEditModalPrivate";
 import ClientViewModalPrivate from "../../components/ClientViewModalPrivate/ClientViewModalPrivate";
+import ImportModal from "../../components/ImportModal/ImportModal";
 
 function ClientRecords() {
 
@@ -39,6 +41,7 @@ function ClientRecords() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
 
   // Form state
@@ -46,7 +49,8 @@ function ClientRecords() {
     name: "",
     spouse_name: "",
     sex: "",
-    civil_status: "",
+    civil_status_male: "",
+    civil_status_female: "",
     birthdate_male: "",
     birthdate_female: "",
     address: "",
@@ -62,18 +66,17 @@ function ClientRecords() {
   });
 
   // COLLECTION HELPER
-  const getCollection = useCallback(() => 
+  const getCollection = useCallback(() =>
     activeTab === "private" ? "clients_private" : "clients_public"
   , [activeTab]);
 
 
-  // READ (Optimized with Query & useCallback)
+  // READ
   const fetchClients = useCallback(async () => {
     setLoading(true);
     try {
-      // Use Firestore query to filter out archived records before downloading
       const q = query(
-        collection(db, getCollection()), 
+        collection(db, getCollection()),
         where("is_archived", "==", false)
       );
       const querySnapshot = await getDocs(q);
@@ -116,10 +119,7 @@ function ClientRecords() {
   const handleUpdate = async () => {
     try {
       const docRef = doc(db, getCollection(), selectedClient.id);
-      
-      // Strip out the id and created_at so they don't overwrite server data
       const { id, created_at, ...updateData } = formData;
-
       await updateDoc(docRef, {
         ...updateData,
         updated_at: serverTimestamp()
@@ -149,13 +149,122 @@ function ClientRecords() {
   };
 
 
+  // EXPORT
+  const handleExport = async () => {
+    try {
+      const response = await fetch("/Export_Template.xlsx");
+      const arrayBuffer = await response.arrayBuffer();
+
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(arrayBuffer);
+      const sheet = workbook.getWorksheet(1);
+
+      const thin = { style: "thin" };
+      const border = { top: thin, bottom: thin, left: thin, right: thin };
+      const noBorder = {
+        top:    { style: null },
+        bottom: { style: null },
+        left:   { style: null },
+        right:  { style: null },
+      };
+      const center = { horizontal: "center", vertical: "middle", wrapText: true };
+      const left   = { horizontal: "left",   vertical: "middle", wrapText: true };
+      const allCols = ["B","C","D","E","F","G","H","I","J","K","L","M","N","O","P"];
+
+      const setCell = (ref, value, align = center) => {
+        const cell = sheet.getCell(ref);
+        cell.value = value;
+        cell.border = border;
+        cell.alignment = align;
+        cell.font = { name: "Arial", size: 10 };
+      };
+
+      // STEP 1 — clear ALL pre-formatted rows first
+      for (let r = 6; r <= 50; r++) {
+        allCols.forEach(col => {
+          const cell = sheet.getCell(`${col}${r}`);
+          cell.value = null;
+          cell.style = {
+            border: noBorder,
+            fill: { type: "pattern", pattern: "none" },
+            font: {},
+            alignment: {},
+          };
+        });
+      }
+
+      // STEP 2 — write data with borders only for actual records
+      filteredClients.forEach((client, index) => {
+        const husbandRow = 6 + index * 2;
+        const wifeRow    = husbandRow + 1;
+
+        // apply merges for all rows
+        try { sheet.mergeCells(`B${husbandRow}:B${wifeRow}`); } catch {}
+        try { sheet.mergeCells(`C${husbandRow}:D${husbandRow}`); } catch {}
+        try { sheet.mergeCells(`C${wifeRow}:D${wifeRow}`); } catch {}
+        try { sheet.mergeCells(`H${husbandRow}:H${wifeRow}`); } catch {}
+        try { sheet.mergeCells(`J${husbandRow}:J${wifeRow}`); } catch {}
+        try { sheet.mergeCells(`K${husbandRow}:K${wifeRow}`); } catch {}
+        try { sheet.mergeCells(`L${husbandRow}:L${wifeRow}`); } catch {}
+        try { sheet.mergeCells(`M${husbandRow}:M${wifeRow}`); } catch {}
+        try { sheet.mergeCells(`N${husbandRow}:N${wifeRow}`); } catch {}
+        try { sheet.mergeCells(`O${husbandRow}:O${wifeRow}`); } catch {}
+        try { sheet.mergeCells(`P${husbandRow}:P${wifeRow}`); } catch {}
+
+        // HUSBAND ROW
+        setCell(`B${husbandRow}`, index + 1);
+        setCell(`C${husbandRow}`, client.name || "",                          left);
+        setCell(`E${husbandRow}`, "M");
+        setCell(`F${husbandRow}`, client.civil_status_male || "");
+        setCell(`G${husbandRow}`, client.birthdate_male || "");
+        setCell(`H${husbandRow}`, client.address || "",                       left);
+        setCell(`I${husbandRow}`, client.educational_attainment_male || "");
+        setCell(`J${husbandRow}`, client.no_of_children ? Number(client.no_of_children) : "");
+        setCell(`K${husbandRow}`, client.fp_method || "");
+        setCell(`L${husbandRow}`, client.intention_to_shift || "");
+        setCell(`M${husbandRow}`, client.type || "");
+        setCell(`N${husbandRow}`, client.status || "");
+        setCell(`O${husbandRow}`, client.reason || "");
+        setCell(`P${husbandRow}`, "");
+
+        // WIFE ROW
+        setCell(`C${wifeRow}`, client.spouse_name || "",                      left);
+        setCell(`E${wifeRow}`, "F");
+        setCell(`F${wifeRow}`, client.civil_status_female || "");
+        setCell(`G${wifeRow}`, client.birthdate_female || "");
+        setCell(`I${wifeRow}`, client.educational_attainment_female || "");
+
+        // FIX — patch missing top borders on wife row merged cells
+        const mergeCols = ["B", "H", "J", "K", "L", "M", "N", "O", "P"];
+        mergeCols.forEach(col => {
+          const cell = sheet.getCell(`${col}${wifeRow}`);
+          cell.border = {
+            top:    { style: "thin" },
+            bottom: { style: "thin" },
+            left:   { style: "thin" },
+            right:  { style: "thin" },
+          };
+        });
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      saveAs(new Blob([buffer]), "Completed_RPFP_Form_1.xlsx");
+
+    } catch (error) {
+      console.error("Export failed:", error);
+      alert("Could not export. Make sure 'Export_Template.xlsx' is in your public folder!");
+    }
+  };
+
+
   // HELPERS
   const resetForm = () => {
     setFormData({
       name: "",
       spouse_name: "",
       sex: "",
-      civil_status: "",
+      civil_status_male: "",
+      civil_status_female: "",
       birthdate_male: "",
       birthdate_female: "",
       address: "",
@@ -192,6 +301,7 @@ function ClientRecords() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+
   // FILTER
   const filteredClients = clients.filter((client) => {
     const matchesSearch =
@@ -203,6 +313,7 @@ function ClientRecords() {
     const matchesMethod = filterMethod ? client.fp_method === filterMethod : true;
     return matchesSearch && matchesStatus && matchesMethod;
   });
+
 
   // RENDER
   return (
@@ -284,8 +395,12 @@ function ClientRecords() {
               </select>
 
               <div className="toolbar-actions">
-                <button className="btn-export"><Download size={14} /> Export</button>
-                <button className="btn-import"><Upload size={14} /> Import</button>
+                <button className="btn-export" onClick={handleExport}>
+                  <Download size={14} /> Export
+                </button>
+                <button className="btn-import" onClick={() => setShowImportModal(true)}>
+                  <Upload size={14} /> Import
+                </button>
                 <button
                   className="btn-add-client"
                   onClick={() => setShowAddModal(true)}
@@ -328,26 +443,30 @@ function ClientRecords() {
 
       </div>
 
- {/* ----------------- ADD MODALS ----------------- */}
-      
-      {/* Only show this one if the Public tab is active */}
+      {/* IMPORT MODAL */}
+      {showImportModal && (
+        <ImportModal
+          collectionName={getCollection()}
+          onClose={() => setShowImportModal(false)}
+          onSuccess={fetchClients}
+        />
+      )}
+
+      {/* ADD MODALS */}
       {showAddModal && activeTab === "public" && (
         <ClientAddModal
           onClose={() => setShowAddModal(false)}
-          onSuccess={fetchClients} 
+          onSuccess={fetchClients}
         />
       )}
-
-      {/* Only show this one if the Private tab is active */}
       {showAddModal && activeTab === "private" && (
         <ClientAddModalPrivate
           onClose={() => setShowAddModal(false)}
-          onSuccess={fetchClients} 
+          onSuccess={fetchClients}
         />
       )}
 
-      {/* ----------------- EDIT MODALS ----------------- */}
-      
+      {/* EDIT MODALS */}
       {showEditModal && activeTab === "public" && selectedClient && (
         <ClientEditModal
           client={selectedClient}
@@ -355,7 +474,6 @@ function ClientRecords() {
           onSuccess={fetchClients}
         />
       )}
-
       {showEditModal && activeTab === "private" && selectedClient && (
         <ClientEditModalPrivate
           client={selectedClient}
@@ -364,15 +482,13 @@ function ClientRecords() {
         />
       )}
 
-      {/* ----------------- VIEW MODALS ----------------- */}
-      
+      {/* VIEW MODALS */}
       {showViewModal && activeTab === "public" && selectedClient && (
         <ClientViewModal
           client={selectedClient}
           onClose={() => { setShowViewModal(false); setSelectedClient(null); }}
         />
       )}
-
       {showViewModal && activeTab === "private" && selectedClient && (
         <ClientViewModalPrivate
           client={selectedClient}
@@ -380,8 +496,7 @@ function ClientRecords() {
         />
       )}
 
-      {/* ----------------- DELETE MODAL ----------------- */}
-      {/* This one is shared, so it doesn't need an activeTab check */}
+      {/* DELETE MODAL */}
       {showDeleteModal && selectedClient && (
         <ClientDeleteModal
           selectedClient={selectedClient}
@@ -394,4 +509,3 @@ function ClientRecords() {
 }
 
 export default ClientRecords;
- 

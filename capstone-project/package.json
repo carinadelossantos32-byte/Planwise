@@ -10,21 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
-<<<<<<< Updated upstream
+
     "lucide-react": "^1.16.0",
-<<<<<<< HEAD
-=======
-=======
->>>>>>> main
+
     "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",
     "firebase": "^12.13.0",
     "lucide": "^1.3.0",
-<<<<<<< HEAD
-    "lucide-react": "^1.3.0",
->>>>>>> Stashed changes
-=======
->>>>>>> main
+
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-router": "^7.15.0",

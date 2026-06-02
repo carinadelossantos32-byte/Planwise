@@ -16,12 +16,8 @@ function ClientViewModal({ client, onClose }) {
                 <div className="view-item"><span className="view-label">Birthdate Female</span><span className="view-value">{client.birthdate_female}</span></div>
                 <div className="view-item"><span className="view-label">Educational Attainment Male</span><span className="view-value">{client.educational_attainment_male}</span></div>
                 <div className="view-item"><span className="view-label">Educational Attainment Female</span><span className="view-value">{client.educational_attainment_female}</span></div>
-<<<<<<< HEAD
                 <div className="view-item"><span className="view-label">Civil Status Male</span><span className="view-value">{client.civil_status_male}</span></div>
                 <div className="view-item"><span className="view-label">Civil Status Female</span><span className="view-value">{client.civil_status_female}</span></div>
-=======
-                <div className="view-item"><span className="view-label">Civil Status</span><span className="view-value">{client.civil_status}</span></div>
->>>>>>> main
                 <div className="view-item"><span className="view-label">Address</span><span className="view-value">{client.address}</span></div>
                 <div className="view-item"><span className="view-label">Barangay</span><span className="view-value">{client.barangay}</span></div>
                 <div className="view-item"><span className="view-label">No. of Children</span><span className="view-value">{client.no_of_children}</span></div>

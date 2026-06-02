@@ -3,14 +3,9 @@ import { collection, getDocs, updateDoc, doc, query, where, serverTimestamp } fr
 import { db } from "../../firebase-config";
 import ClientTable from "../ClientTable/ClientTable";
 import ClientTablePrivate from "../ClientTablePrivate/ClientTablePrivate";
-<<<<<<< HEAD
 import { Search, X, ArchiveRestore } from "lucide-react"; 
 import "./client-archive.css";
-=======
-import { Search, X, ArchiveRestore } from "lucide-react"; // <-- Added icons here
-import "./client-archive.css";
-// Import the delete modal CSS so the restore modal looks the same!
->>>>>>> main
+
 import '../ClientDeleteModal/client-delete-modal.css'; 
 
 function ClientArchive() {
@@ -22,15 +17,10 @@ function ClientArchive() {
     // MODAL STATES
     const [showRestoreModal, setShowRestoreModal] = useState(false);
     const [clientToRestore, setClientToRestore] = useState(null);
-<<<<<<< HEAD
     const [restoreType, setRestoreType] = useState(""); 
 
     // FETCH BOTH COLLECTIONS
-=======
-    const [restoreType, setRestoreType] = useState(""); // tracks 'public' or 'private'
 
-    // FETCH BOTH COLLECTIONS (Optimized with Query & useCallback)
->>>>>>> main
     const fetchArchived = useCallback(async () => {
         setLoading(true);
         try {
@@ -66,26 +56,16 @@ function ClientArchive() {
         if (!clientToRestore) return;
         
         try {
-<<<<<<< HEAD
-=======
-            // Dynamically pick the collection based on the saved state
->>>>>>> main
             const collectionName = restoreType === "public" ? "clients_public" : "clients_private";
             
             await updateDoc(doc(db, collectionName, clientToRestore.id), {
                 is_archived: false,
                 updated_at: serverTimestamp()
             });
-            
-<<<<<<< HEAD
             fetchArchived(); 
             setShowRestoreModal(false); 
             setClientToRestore(null); 
-=======
-            fetchArchived(); // Refresh the tables
-            setShowRestoreModal(false); // Close the modal
-            setClientToRestore(null); // Clear state
->>>>>>> main
+
         } catch (error) {
             console.error(`Error restoring ${restoreType} client:`, error);
         }
@@ -134,10 +114,6 @@ function ClientArchive() {
                     onEdit={() => {}}
                     onDelete={() => {}}
                     isArchived={true}
-<<<<<<< HEAD
-=======
-                    // Trigger modal instead of direct restore
->>>>>>> main
                     onRestore={(client) => openRestoreModal(client, "public")} 
                 />
             </div>
@@ -155,21 +131,11 @@ function ClientArchive() {
                     onEdit={() => {}}
                     onDelete={() => {}}
                     isArchived={true}
-<<<<<<< HEAD
-=======
-                    // Trigger modal instead of direct restore
->>>>>>> main
                     onRestore={(client) => openRestoreModal(client, "private")}
                 />
             </div>
-
-<<<<<<< HEAD
             {/* INLINE RESTORE MODAL */}
-=======
-            {/* =========================================
-                INLINE RESTORE MODAL
-                ========================================= */}
->>>>>>> main
+
             {showRestoreModal && clientToRestore && (
                 <div className="modal-overlay-delete">
                     <div className="modal-delete">
@@ -180,11 +146,6 @@ function ClientArchive() {
                         >
                             <X size={16} />
                         </button>
-
-<<<<<<< HEAD
-=======
-                        {/* Teal styling to distinguish from the red delete modal */}
->>>>>>> main
                         <div className="archive-icon-circle" style={{ backgroundColor: '#10b981' }}>
                             <ArchiveRestore size={28} color="#fff" />
                         </div>
