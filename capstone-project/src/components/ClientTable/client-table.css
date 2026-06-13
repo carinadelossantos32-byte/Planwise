@@ -71,8 +71,9 @@
 /* HEADER */
 
 .client-table-container thead tr {
-  background-color: #eff0f1;
+  background-color: #eef0f1;
   border-bottom: 1px solid #e5e7eb;
+
 }
 
 .client-table-container thead td,
@@ -94,7 +95,7 @@
 }
 
 .client-table-container tbody tr:hover {
-  background-color: #f9fafb;
+  background-color: #ebf5ff;
 }
 
 .client-table-container tbody tr:last-child {

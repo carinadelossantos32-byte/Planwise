@@ -5,6 +5,7 @@
     flex-direction: column;
     background-color: #ffffff;
     padding: 15px 35px 0 35px;
+    box-shadow: 0 1px 5px rgba(181, 183, 185, 0.596);
 }
 .client-toolbar {
   display: flex;
@@ -29,7 +30,7 @@
   border-radius: 8px;
   padding: 8px 14px;
   background: #f1f2f3;
-  width: 280px;
+  width: 396px;
 }
 
 .client-search input {
@@ -119,7 +120,7 @@
 
 .btn-export:hover,
 .btn-import:hover {
-  background: #f3f4f6;
+  background: #f3cb17;
 }
 
 .btn-add-client {
@@ -148,13 +149,13 @@
   background: #ffffff;
   border-radius: 12px;
   border: 1px solid #e5e7eb;
+ 
   
 }
 
 .client-table-wrapper{
     border-radius: 12px;
-    padding: 10px;
-    margin: 0 25px 25px 25px;
+    margin: 25px 25px;
     background-color: #F4F8FF;
 }
 

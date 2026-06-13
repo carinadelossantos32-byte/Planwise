@@ -3,6 +3,7 @@ import { collection, getDocs, updateDoc, doc, query, where, serverTimestamp } fr
 import { db } from "../../firebase-config";
 import ClientTable from "../ClientTable/ClientTable";
 import ClientTablePrivate from "../ClientTablePrivate/ClientTablePrivate";
+import ReferredAndServed from "../ReferredAndServed/ReferredAndServed"; 
 import { Search, X, ArchiveRestore } from "lucide-react"; 
 import "./client-archive.css";
 
@@ -11,6 +12,7 @@ import '../ClientDeleteModal/client-delete-modal.css';
 function ClientArchive() {
     const [publicClients, setPublicClients] = useState([]);
     const [privateClients, setPrivateClients] = useState([]);
+    const [referredClients, setReferredClients] = useState([]); 
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
 
@@ -19,8 +21,7 @@ function ClientArchive() {
     const [clientToRestore, setClientToRestore] = useState(null);
     const [restoreType, setRestoreType] = useState(""); 
 
-    // FETCH BOTH COLLECTIONS
-
+    // FETCH ALL THREE COLLECTIONS
     const fetchArchived = useCallback(async () => {
         setLoading(true);
         try {
@@ -33,6 +34,11 @@ function ClientArchive() {
             const qPrivate = query(collection(db, "clients_private"), where("is_archived", "==", true));
             const privateSnapshot = await getDocs(qPrivate);
             setPrivateClients(privateSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+
+            // fetch archived referred & served
+            const qReferred = query(collection(db, "clients_referred"), where("is_archived", "==", true));
+            const referredSnapshot = await getDocs(qReferred);
+            setReferredClients(referredSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
 
         } catch (error) {
             console.error("Error fetching archived clients:", error);
@@ -56,12 +62,15 @@ function ClientArchive() {
         if (!clientToRestore) return;
         
         try {
-            const collectionName = restoreType === "public" ? "clients_public" : "clients_private";
+            let collectionName = "clients_public";
+            if (restoreType === "private") collectionName = "clients_private";
+            if (restoreType === "referred") collectionName = "clients_referred";
             
             await updateDoc(doc(db, collectionName, clientToRestore.id), {
                 is_archived: false,
                 updated_at: serverTimestamp()
             });
+            
             fetchArchived(); 
             setShowRestoreModal(false); 
             setClientToRestore(null); 
@@ -71,7 +80,7 @@ function ClientArchive() {
         }
     };
 
-    // FILTER
+    // FILTER HOOKS
     const filteredPublic = publicClients.filter((client) =>
         client.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         client.spouse_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -83,6 +92,13 @@ function ClientArchive() {
         client.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         client.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         client.fp_method?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const filteredReferred = referredClients.filter((client) =>
+        client.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        client.facility_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        client.referred_by?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        client.address?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     return (
@@ -134,8 +150,25 @@ function ClientArchive() {
                     onRestore={(client) => openRestoreModal(client, "private")}
                 />
             </div>
-            {/* INLINE RESTORE MODAL */}
 
+            {/* NEW: REFERRED & SERVED ARCHIVED TABLE SECTION */}
+            <div className="archive-section">
+                <div className="archive-section-header">
+                    <h3>Referred & Served — Archived</h3>
+                    <span className="archive-count">{filteredReferred.length} records</span>
+                </div>
+                <ReferredAndServed
+                    clients={filteredReferred}
+                    loading={loading}
+                    onView={() => {}}
+                    onEdit={() => {}}
+                    onDelete={() => {}}
+                    isArchived={true}
+                    onRestore={(client) => openRestoreModal(client, "referred")} 
+                />
+            </div>
+
+            {/* INLINE RESTORE MODAL */}
             {showRestoreModal && clientToRestore && (
                 <div className="modal-overlay-delete">
                     <div className="modal-delete">

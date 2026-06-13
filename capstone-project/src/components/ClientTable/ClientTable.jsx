@@ -20,7 +20,7 @@ function ClientTable({ clients, loading, onView, onEdit, onDelete, isArchived, o
     const handlePrevPage = () => {
         if (currentPage > 1) setCurrentPage(prev => prev - 1);
     };
-    // --------------------------------
+   
 
     return (
         <>
@@ -132,14 +132,14 @@ function ClientTable({ clients, loading, onView, onEdit, onDelete, isArchived, o
                                         <td>
                                             <span className="method-badge">{client.fp_method}</span>
                                         </td>
-                                        <td>{client.intention_to_shift || "—"}</td>
+                                        <td>{client.intention_to_shift}</td>
                                         <td>
                                             <span className="type-badge">{client.type}</span>
                                         </td>
                                         <td>
                                             <span>{client.status}</span>
                                         </td>
-                                        <td>{client.reason || "—"}</td>
+                                        <td>{client.reason}</td>
                                         <td>
                                             <div className="action-buttons">
 
@@ -168,7 +168,11 @@ function ClientTable({ clients, loading, onView, onEdit, onDelete, isArchived, o
                             </tbody>
                         </table>
 
-                        {/* Pagination Controls */}
+                        
+                    </>
+                )}
+            </div>
+            {/* Pagination Controls */}
                         {totalPages > 1 && (
                             <div className="pagination-controls">
                                 <button 
@@ -190,9 +194,6 @@ function ClientTable({ clients, loading, onView, onEdit, onDelete, isArchived, o
                                 </button>
                             </div>
                         )}
-                    </>
-                )}
-            </div>
         </>
     )
 }

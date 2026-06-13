@@ -32,7 +32,7 @@
 }
 
 .modal-header-import h2 {
-  font-size: 1.1rem;
+  font-size: 18px;
   font-weight: 600;
   margin: 0;
   color: #111827;
@@ -49,8 +49,8 @@
 }
 
 .modal-close-import:hover {
-  background: #f3f4f6;
-  color: #111827;
+  background: #f82020;
+  color: #ffffff;
 }
 
 /* UPLOAD AREA */
@@ -65,31 +65,32 @@
 }
 
 .import-upload-area p {
-  font-size: 1rem;
+  font-size: 17px;
   color: #374151;
   margin: 0;
   font-weight: 500;
 }
 
 .import-note {
-  font-size: 0.8rem;
+  font-size: 15px;
   color: #9ca3af;
 }
 
 .btn-choose-file {
   padding: 10px 24px;
   border-radius: 8px;
-  background: #6366f1;
+  background: #5456e9;
   color: #fff;
-  font-size: 0.9rem;
+  font-size: 16px;
   font-weight: 500;
   cursor: pointer;
+  font-family: 'Inter', sans-serif;
   border: none;
   margin-top: 8px;
 }
 
 .btn-choose-file:hover {
-  background: #4f46e5;
+  background: #918de6;
 }
 
 /* WARNING BANNER */
@@ -191,14 +192,15 @@
 }
 
 .btn-cancel-import:hover {
-  background: #f3f4f6;
+  background: #ee1212;
+  color: #ffffff;
 }
 
 .btn-confirm-import {
   padding: 9px 20px;
   border-radius: 8px;
   border: none;
-  background: #6366f1;
+  background: #4346f3;
   color: #fff;
   font-size: 0.875rem;
   font-weight: 600;
@@ -248,9 +250,114 @@
 }
 
 .btn-reupload:hover {
-  background: #f3f4f6;
+  background: #f5ce21;
+  color: #ffffff;
+}
+/* ── Duplicate Row Highlight ── */
+.row-duplicate td {
+  background: #fef9c3;
+  border-top: 2px solid #ca8a04;
+  border-bottom: 2px solid #ca8a04;
 }
 
+.duplicate-badge {
+  background: #fef08a;
+  color: #854d0e;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ── Duplicate Detail/Comparison Row ── */
+.row-duplicate-detail td {
+  background: #ffffff;
+  padding: 12px 16px;
+  border-bottom: 2px solid #ca8a04;
+}
+
+.dup-comparison {
+  display: flex;
+  gap: 15px;
+}
+
+.dup-side {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  border: 1px solid #747577;
+  border-radius: 8px;
+  overflow: hidden;
+  padding-bottom: 4px;
+}
+
+.dup-side strong {
+  display: block;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.dup-side.incoming strong {
+  background: #facd8a;
+}
+
+.dup-side.existing strong {
+  background: #badef7;
+}
+
+.dup-field {
+  display: flex;
+  gap: 8px;
+  padding: 3px 12px;
+  font-size: 12px;
+}
+
+.dup-field.changed {
+  background: #fef9c3;
+  font-weight: 600;
+}
+
+.dup-label {
+  color: #6b7280;
+  min-width: 110px;
+  flex-shrink: 0;
+}
+
+/* ── Duplicate Action Buttons ── */
+.btn-skip-dup,
+.btn-overwrite-dup {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-skip-dup {
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  color: #374151;
+}
+
+.btn-skip-dup:hover {
+  background: #497ce2;
+  color: #fff;
+}
+
+.btn-overwrite-dup {
+  border: 1px solid #f59e0b;
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.btn-overwrite-dup:hover {
+  background: #f3ac14;
+  color: #fff;
+}
 @keyframes spin {
   to { transform: rotate(360deg); }
 }

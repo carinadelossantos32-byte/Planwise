@@ -25,6 +25,10 @@ import ClientAddModalPrivate from "../../components/ClientAddModalPrivate/Client
 import ClientEditModalPrivate from "../../components/ClientEditModalPrivate/ClientEditModalPrivate";
 import ClientViewModalPrivate from "../../components/ClientViewModalPrivate/ClientViewModalPrivate";
 import ImportModal from "../../components/ImportModal/ImportModal";
+import ReferredAndServed from "../../components/ReferredAndServed/ReferredAndServed";
+import ClientAddModalReferred from "../../components/ClientAddModalReferred/ClientAddModalReferred";
+import ClientEditModalReferred from "../../components/ClientEditModalReferred/ClientEditModalReferred";
+import ClientViewModalReferred from "../../components/ClientViewModalReferred/ClientViewModalReferred";
 
 function ClientRecords() {
 
@@ -32,7 +36,6 @@ function ClientRecords() {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
   const [filterMethod, setFilterMethod] = useState("");
   const [activeTab, setActiveTab] = useState("public");
 
@@ -65,10 +68,12 @@ function ClientRecords() {
     reason: ""
   });
 
-  // COLLECTION HELPER
-  const getCollection = useCallback(() =>
-    activeTab === "private" ? "clients_private" : "clients_public"
-  , [activeTab]);
+// COLLECTION HELPER
+const getCollection = useCallback(() => {
+  if (activeTab === "private") return "clients_private";
+  if (activeTab === "referred") return "clients_referred"; 
+  return "clients_public"; // Default fallback
+}, [activeTab]);
 
 
   // READ
@@ -114,7 +119,6 @@ function ClientRecords() {
     }
   };
 
-
   // UPDATE
   const handleUpdate = async () => {
     try {
@@ -132,7 +136,6 @@ function ClientRecords() {
     }
   };
 
-
   // ARCHIVE
   const handleDelete = async () => {
     try {
@@ -148,114 +151,177 @@ function ClientRecords() {
     }
   };
 
-
   // EXPORT
-  const handleExport = async () => {
-    try {
-      const response = await fetch("/Export_Template.xlsx");
-      const arrayBuffer = await response.arrayBuffer();
+ // ─── Tab-specific export configs ─────────────────────────────────
+const EXPORT_CONFIG = {
+  public: {
+    template: "/Export_Template.xlsx",
+    filename: "RPFP_Form_1.xlsx",
+    writeRows: writePublicRows,   // your existing logic
+  },
+  private: {
+    template: "/Private_Template.xlsx",
+    filename: "FP_User_Private.xlsx",
+    writeRows: writePrivateRows,
+  },
+  referred: {
+    template: "/Export_Template_Referred.xlsx",
+    filename: "Referred_and_Served.xlsx",
+    writeRows: writeReferredRows,
+  },
+};
 
-      const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.load(arrayBuffer);
-      const sheet = workbook.getWorksheet(1);
+// ─── Shared helpers ───────────────────────────────────────────────
+const thin  = { style: "thin" };
+const border = { top: thin, bottom: thin, left: thin, right: thin };
+const noBorder = { top:{style:null}, bottom:{style:null}, left:{style:null}, right:{style:null} };
+const center = { horizontal: "center", vertical: "middle", wrapText: true };
+const left   = { horizontal: "left",   vertical: "middle", wrapText: true };
 
-      const thin = { style: "thin" };
-      const border = { top: thin, bottom: thin, left: thin, right: thin };
-      const noBorder = {
-        top:    { style: null },
-        bottom: { style: null },
-        left:   { style: null },
-        right:  { style: null },
+const setCell = (sheet, ref, value, align = center) => {
+  const cell = sheet.getCell(ref);
+  cell.value = value;
+  cell.border = border;
+  cell.alignment = align;
+  cell.font = { name: "Arial", size: 10 };
+};
+
+// ─── Row writers ──────────────────────────────────────────────────
+function writePublicRows(sheet, filteredClients) {
+  const allCols = ["B","C","D","E","F","G","H","I","J","K","L","M","N","O","P"];
+
+  // Clear rows 6–500
+  for (let r = 6; r <= 500; r++) {
+    allCols.forEach(col => {
+      const cell = sheet.getCell(`${col}${r}`);
+      cell.value = null;
+      cell.style = { border: noBorder, fill: { type:"pattern", pattern:"none" }, font: {}, alignment: {} };
+    });
+  }
+
+  filteredClients.forEach((client, index) => {
+    const husbandRow = 6 + index * 2;
+    const wifeRow    = husbandRow + 1;
+
+    const merges = ["B","H","J","K","L","M","N","O","P"];
+    merges.forEach(col => { try { sheet.mergeCells(`${col}${husbandRow}:${col}${wifeRow}`); } catch {} });
+    try { sheet.mergeCells(`C${husbandRow}:D${husbandRow}`); } catch {}
+    try { sheet.mergeCells(`C${wifeRow}:D${wifeRow}`);       } catch {}
+
+    // Husband row
+    setCell(sheet, `B${husbandRow}`, index + 1);
+    setCell(sheet, `C${husbandRow}`, client.name || "", left);
+    setCell(sheet, `E${husbandRow}`, "M");
+    setCell(sheet, `F${husbandRow}`, client.civil_status_male || "");
+    setCell(sheet, `G${husbandRow}`, client.birthdate_male || "");
+    setCell(sheet, `H${husbandRow}`, client.barangay || "", left);
+    setCell(sheet, `I${husbandRow}`, client.educational_attainment_male || "");
+    setCell(sheet, `J${husbandRow}`, client.no_of_children ? Number(client.no_of_children) : "");
+    setCell(sheet, `K${husbandRow}`, client.fp_method || "");
+    setCell(sheet, `L${husbandRow}`, client.intention_to_shift || "");
+    setCell(sheet, `M${husbandRow}`, client.type || "");
+    setCell(sheet, `N${husbandRow}`, client.status || "");
+    setCell(sheet, `O${husbandRow}`, client.reason || "");
+    setCell(sheet, `P${husbandRow}`, "");
+
+    // Wife row
+    setCell(sheet, `C${wifeRow}`, client.spouse_name || "", left);
+    setCell(sheet, `E${wifeRow}`, "F");
+    setCell(sheet, `F${wifeRow}`, client.civil_status_female || "");
+    setCell(sheet, `G${wifeRow}`, client.birthdate_female || "");
+    setCell(sheet, `I${wifeRow}`, client.educational_attainment_female || "");
+
+    // Patch borders on merged wife-row cells
+    merges.forEach(col => {
+      sheet.getCell(`${col}${wifeRow}`).border = border;
+    });
+  });
+}
+
+function writePrivateRows(sheet, filteredClients) {
+  const allCols = ["B", "C", "D", "E", "F", "G"];
+
+  // Clear rows 7–100
+  for (let r = 7; r <= 100; r++) {
+    allCols.forEach(col => {
+      const cell = sheet.getCell(`${col}${r}`);
+      cell.value = null;
+      cell.style = {
+        border: noBorder,
+        fill: { type: "pattern", pattern: "none" },
+        font: {},
+        alignment: {},
       };
-      const center = { horizontal: "center", vertical: "middle", wrapText: true };
-      const left   = { horizontal: "left",   vertical: "middle", wrapText: true };
-      const allCols = ["B","C","D","E","F","G","H","I","J","K","L","M","N","O","P"];
+    });
+  }
 
-      const setCell = (ref, value, align = center) => {
-        const cell = sheet.getCell(ref);
-        cell.value = value;
-        cell.border = border;
-        cell.alignment = align;
-        cell.font = { name: "Arial", size: 10 };
+  filteredClients.forEach((client, index) => {
+    const row = 7 + index;
+
+    setCell(sheet, `B${row}`, client.name || "", left);
+    setCell(sheet, `C${row}`, client.age || "");
+    setCell(sheet, `D${row}`, client.birthdate || "");
+    setCell(sheet, `E${row}`, client.barangay || "", left);
+    setCell(sheet, `F${row}`, client.fp_method || "");
+    setCell(sheet, `G${row}`, client.fp_issued_by || "", left);
+  });
+}
+
+function writeReferredRows(sheet, filteredClients) {
+  const allCols = ["B", "C", "D", "E", "F", "G", "H", "I", "J"];
+
+  // Clear rows 5–200
+  for (let r = 5; r <= 200; r++) {
+    allCols.forEach(col => {
+      const cell = sheet.getCell(`${col}${r}`);
+      cell.value = null;
+      cell.style = {
+        border: noBorder,
+        fill: { type: "pattern", pattern: "none" },
+        font: {},
+        alignment: {},
       };
+    });
+  }
 
-      // STEP 1 — clear ALL pre-formatted rows first
-      for (let r = 6; r <= 50; r++) {
-        allCols.forEach(col => {
-          const cell = sheet.getCell(`${col}${r}`);
-          cell.value = null;
-          cell.style = {
-            border: noBorder,
-            fill: { type: "pattern", pattern: "none" },
-            font: {},
-            alignment: {},
-          };
-        });
-      }
+  filteredClients.forEach((client, index) => {
+    const row = 5 + index;
 
-      // STEP 2 — write data with borders only for actual records
-      filteredClients.forEach((client, index) => {
-        const husbandRow = 6 + index * 2;
-        const wifeRow    = husbandRow + 1;
+    setCell(sheet, `B${row}`, index + 1);                        
+    setCell(sheet, `C${row}`, client.name || "", left);          
+    setCell(sheet, `D${row}`, client.address || "", left);       
+    setCell(sheet, `E${row}`, client.FP_method || "");           
+    setCell(sheet, `F${row}`, client.facility_name || "", left); 
+    setCell(sheet, `G${row}`, client.facility_address || "", left); 
+    setCell(sheet, `H${row}`, client.referred_by || "", left);   
+    setCell(sheet, `I${row}`, client.volunteer_contact || "");   
+    setCell(sheet, `J${row}`, client.date || "");                
+  });
+}
 
-        // apply merges for all rows
-        try { sheet.mergeCells(`B${husbandRow}:B${wifeRow}`); } catch {}
-        try { sheet.mergeCells(`C${husbandRow}:D${husbandRow}`); } catch {}
-        try { sheet.mergeCells(`C${wifeRow}:D${wifeRow}`); } catch {}
-        try { sheet.mergeCells(`H${husbandRow}:H${wifeRow}`); } catch {}
-        try { sheet.mergeCells(`J${husbandRow}:J${wifeRow}`); } catch {}
-        try { sheet.mergeCells(`K${husbandRow}:K${wifeRow}`); } catch {}
-        try { sheet.mergeCells(`L${husbandRow}:L${wifeRow}`); } catch {}
-        try { sheet.mergeCells(`M${husbandRow}:M${wifeRow}`); } catch {}
-        try { sheet.mergeCells(`N${husbandRow}:N${wifeRow}`); } catch {}
-        try { sheet.mergeCells(`O${husbandRow}:O${wifeRow}`); } catch {}
-        try { sheet.mergeCells(`P${husbandRow}:P${wifeRow}`); } catch {}
+// ─── Main export handler ──────────────────────────────────────────
+const handleExport = async () => {
+  const config = EXPORT_CONFIG[activeTab];
+  if (!config) return;
 
-        // HUSBAND ROW
-        setCell(`B${husbandRow}`, index + 1);
-        setCell(`C${husbandRow}`, client.name || "",                          left);
-        setCell(`E${husbandRow}`, "M");
-        setCell(`F${husbandRow}`, client.civil_status_male || "");
-        setCell(`G${husbandRow}`, client.birthdate_male || "");
-        setCell(`H${husbandRow}`, client.address || "",                       left);
-        setCell(`I${husbandRow}`, client.educational_attainment_male || "");
-        setCell(`J${husbandRow}`, client.no_of_children ? Number(client.no_of_children) : "");
-        setCell(`K${husbandRow}`, client.fp_method || "");
-        setCell(`L${husbandRow}`, client.intention_to_shift || "");
-        setCell(`M${husbandRow}`, client.type || "");
-        setCell(`N${husbandRow}`, client.status || "");
-        setCell(`O${husbandRow}`, client.reason || "");
-        setCell(`P${husbandRow}`, "");
+  try {
+    const response    = await fetch(config.template);
+    const arrayBuffer = await response.arrayBuffer();
 
-        // WIFE ROW
-        setCell(`C${wifeRow}`, client.spouse_name || "",                      left);
-        setCell(`E${wifeRow}`, "F");
-        setCell(`F${wifeRow}`, client.civil_status_female || "");
-        setCell(`G${wifeRow}`, client.birthdate_female || "");
-        setCell(`I${wifeRow}`, client.educational_attainment_female || "");
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(arrayBuffer);
+    const sheet = workbook.getWorksheet(1);
 
-        // FIX — patch missing top borders on wife row merged cells
-        const mergeCols = ["B", "H", "J", "K", "L", "M", "N", "O", "P"];
-        mergeCols.forEach(col => {
-          const cell = sheet.getCell(`${col}${wifeRow}`);
-          cell.border = {
-            top:    { style: "thin" },
-            bottom: { style: "thin" },
-            left:   { style: "thin" },
-            right:  { style: "thin" },
-          };
-        });
-      });
+    config.writeRows(sheet, filteredClients);
 
-      const buffer = await workbook.xlsx.writeBuffer();
-      saveAs(new Blob([buffer]), "Completed_RPFP_Form_1.xlsx");
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), config.filename);
 
-    } catch (error) {
-      console.error("Export failed:", error);
-      alert("Could not export. Make sure 'Export_Template.xlsx' is in your public folder!");
-    }
-  };
-
+  } catch (error) {
+    console.error("Export failed:", error);
+    alert(`Could not export. Make sure '${config.template.replace("/", "")}' is in your public folder!`);
+  }
+};
 
   // HELPERS
   const resetForm = () => {
@@ -304,14 +370,23 @@ function ClientRecords() {
 
   // FILTER
   const filteredClients = clients.filter((client) => {
+    const query = searchQuery.toLowerCase();
+    if (activeTab === "referred") {
+      return (
+        client.name?.toLowerCase().includes(query) ||
+        client.facility_name?.toLowerCase().includes(query) ||
+        client.referred_by?.toLowerCase().includes(query) ||
+        client.address?.toLowerCase().includes(query)
+      );
+    }
+
     const matchesSearch =
       client.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       client.spouse_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       client.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       client.fp_method?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = filterStatus ? client.status === filterStatus : true;
     const matchesMethod = filterMethod ? client.fp_method === filterMethod : true;
-    return matchesSearch && matchesStatus && matchesMethod;
+    return matchesSearch && matchesMethod;
   });
 
 
@@ -329,22 +404,18 @@ function ClientRecords() {
           <div className="view-tabs">
             <button
               className={`tab-btn ${activeTab === "public" ? "tab-active" : ""}`}
-              onClick={() => setActiveTab("public")}
-            >
-              FP Public
-            </button>
+              onClick={() => setActiveTab("public")}>FP Public</button>
             <button
               className={`tab-btn ${activeTab === "private" ? "tab-active" : ""}`}
-              onClick={() => setActiveTab("private")}
-            >
-              FP Private
-            </button>
+              onClick={() => setActiveTab("private")}>FP Private</button>
+
+            <button
+              className={`tab-btn ${activeTab === "referred" ? "tab-active" : ""}`}
+              onClick={() => setActiveTab("referred")}>Referred & Served</button>
+
             <button
               className={`tab-btn ${activeTab === "archived" ? "tab-active" : ""}`}
-              onClick={() => setActiveTab("archived")}
-            >
-              Archived
-            </button>
+              onClick={() => setActiveTab("archived")}>Archived</button>
           </div>
 
           {/* TOOLBAR — hide on archived tab */}
@@ -359,20 +430,6 @@ function ClientRecords() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-
-              <button className="filter-icon-btn">
-                <Filter size={15} />
-              </button>
-
-              <select
-                className="client-filter-select"
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-              >
-                <option value="">All Status</option>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
 
               <select
                 className="client-filter-select"
@@ -422,7 +479,18 @@ function ClientRecords() {
               onEdit={openEditModal}
               onDelete={openDeleteModal}
               isArchived={false}
-              onRestore={() => {}}
+              onRestore={() => { }}
+            />
+          )}
+          {activeTab === "referred" && (
+            <ReferredAndServed
+              clients={filteredClients}
+              loading={loading}
+              onView={openViewModal}
+              onEdit={openEditModal}
+              onDelete={openDeleteModal}
+              isArchived={false}
+              onRestore={() => { }}
             />
           )}
           {activeTab === "private" && (
@@ -433,7 +501,7 @@ function ClientRecords() {
               onEdit={openEditModal}
               onDelete={openDeleteModal}
               isArchived={false}
-              onRestore={() => {}}
+              onRestore={() => { }}
             />
           )}
           {activeTab === "archived" && (
@@ -447,6 +515,7 @@ function ClientRecords() {
       {showImportModal && (
         <ImportModal
           collectionName={getCollection()}
+          tabType={activeTab}
           onClose={() => setShowImportModal(false)}
           onSuccess={fetchClients}
         />
@@ -461,6 +530,12 @@ function ClientRecords() {
       )}
       {showAddModal && activeTab === "private" && (
         <ClientAddModalPrivate
+          onClose={() => setShowAddModal(false)}
+          onSuccess={fetchClients}
+        />
+      )}
+      {showAddModal && activeTab === "referred" && (
+        <ClientAddModalReferred
           onClose={() => setShowAddModal(false)}
           onSuccess={fetchClients}
         />
@@ -481,6 +556,13 @@ function ClientRecords() {
           onSuccess={fetchClients}
         />
       )}
+      {showEditModal && activeTab === "referred" && selectedClient && (
+        <ClientEditModalReferred
+          client={selectedClient}
+          onClose={() => { setShowEditModal(false); setSelectedClient(null); }}
+          onSuccess={fetchClients}
+        />
+      )}
 
       {/* VIEW MODALS */}
       {showViewModal && activeTab === "public" && selectedClient && (
@@ -491,6 +573,12 @@ function ClientRecords() {
       )}
       {showViewModal && activeTab === "private" && selectedClient && (
         <ClientViewModalPrivate
+          client={selectedClient}
+          onClose={() => { setShowViewModal(false); setSelectedClient(null); }}
+        />
+      )}
+      {showViewModal && activeTab === "referred" && selectedClient && (
+        <ClientViewModalReferred
           client={selectedClient}
           onClose={() => { setShowViewModal(false); setSelectedClient(null); }}
         />
