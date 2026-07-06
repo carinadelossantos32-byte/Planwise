@@ -2,7 +2,7 @@ import "./privacy-settings.css"
 import Settings from "../../pages/Settings/settings";
 import {Eye, EyeOff,CheckCircle} from "lucide-react";
 import { useState,useEffect } from "react";
-import {db} from "../../firebaseConfig";
+import {db} from "../../firebase-config";
 import {doc, getDoc, updateDoc} from "firebase/firestore";
 
 

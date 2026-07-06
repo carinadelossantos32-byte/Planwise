@@ -3,7 +3,7 @@ import Settings from "../../pages/Settings/settings";
 import { Camera, CheckCircle,CardSim } from 'lucide-react';
 import { useState,useEffect } from "react";
 import { getAuth } from "firebase/auth";
-import {db} from "../../firebaseConfig";
+import {db} from "../../firebase-config";
 import {doc, getDoc, updateDoc} from "firebase/firestore";
 function Account(){
     const [showModal,setShowModal]=useState(false);

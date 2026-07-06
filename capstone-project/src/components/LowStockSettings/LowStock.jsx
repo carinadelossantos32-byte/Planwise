@@ -1,6 +1,6 @@
 // import "./notification-settings.css"
 import { useState, useEffect } from "react";
-import {db} from "../../firebaseConfig";
+import {db} from "../../firebase-config";
 import {doc, getDoc, setDoc} from "firebase/firestore";
 import Settings from "../../pages/Settings/settings";
 function LowStock(){
