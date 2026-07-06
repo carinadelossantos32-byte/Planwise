@@ -1,0 +1,188 @@
+h5{
+    font-size: 18px;
+    font-weight: normal;
+    margin: 0;
+    color: #444343;
+    
+}
+H1
+{
+    font-size: 25px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+h2{
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+
+#account-settings-container{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    height: auto;
+    margin-top: 20px;
+}
+
+#profile-field{
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    flex:1;
+}
+
+#profile-picture{
+   height: 200px;
+   width: 200px;
+}
+
+#profile-logo{
+    height: 150px;
+    width: 150px;
+    border-radius: 10px;
+}
+
+#upload-picture-button{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top:10px;
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: none;
+    background-color: #f7d097;
+    color: #f19a16;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.3s;
+}
+
+#upload-picture-button:hover{
+    background-color: #f19a16;
+    color: #fff;
+    transition: transform 0.3s;
+    transform: scale(1.05);
+   
+}
+#upload-logo{
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    margin-left: -10px;
+    margin-top: 2px;
+    transition: transform 0.3s;
+}
+#upload-logo:hover{
+    transform: scale(1.1);
+}
+
+
+#personal-info{
+    display:flex;
+    flex-direction:column;
+    gap: 10px;
+    flex:1;
+}
+#name-field, #phone-dept-field{
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+}
+#name-field input, #phone-dept-field input{
+width: 100%;
+height: 48px;
+box-sizing: border-box;
+}
+
+.info-field{
+    display: flex;
+    flex-direction: column;
+    flex:1;
+    gap: 0px;
+    margin:0px;
+    
+    
+}
+
+.info-field h3{
+    margin-bottom: 5px; 
+}
+input{
+    height: 30px;
+    padding:10px;
+    border: 1px solid #ccc;
+    border-radius: 7px;
+    font-size:16px;
+
+
+}
+
+input:focus{
+    outline: none;
+    border-color: #1424fd;
+}
+
+#email-field input{
+    width: 98%;
+   
+}
+
+#email-field h3{
+    margin-bottom:5px;
+    
+}
+#buttons-field{
+    display:flex;
+    gap:10px;
+    border-radius: 10px;
+    height: 30px;
+   justify-content: flex-end;
+   margin-top: 20px;
+   padding-bottom: 20px;
+    
+}
+#cancel-button, #save-button{
+    padding: 5px 15px;
+    border-radius: 10px;
+    border:1px solid #ccc;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    height: 50px;
+    
+     
+}
+
+#cancel-button{
+    color: #000000;
+}
+
+#save-button:hover{
+   
+   background-color: rgb(36, 10, 83);
+    transition: background-color 0.2s ease;;
+}
+
+#cancel-button:hover{
+   
+   background-color: rgb(90, 90, 90);
+    transition: background-color 0.2s ease;;
+}
+
+
+
+
+#save-button{
+    background-color: rgb(70, 2, 197);
+    color: #ffffff;
+}
+#memory-logo{
+     filter: brightness(0) invert(1);
+}
