@@ -1,7 +1,6 @@
 
-/* ===========================
-   STATS BANNER
-   =========================== */
+/* STATS BANNER */
+
 
 .stats-banner-private {
   display: flex;
@@ -39,9 +38,8 @@
   line-height: 1;
 }
 
-/* ===========================
-   TABLE BASE
-   =========================== */
+/* TABLE BASE */
+
 
 .client-table-container-private table {
   width: 100%;
@@ -52,9 +50,8 @@
     border-radius: 12px;
 }
 
-/* ===========================
-   HEADER
-   =========================== */
+/*  HEADER */
+
 
 .client-table-container-private thead tr {
   background-color: #eff0f1;
@@ -72,9 +69,8 @@
   
 }
 
-/* ===========================
-   BODY ROWS
-   =========================== */
+/* BODY ROWS */
+
 
 .client-table-container-private tbody tr {
   border-bottom: 1px solid #e5eaf5;
@@ -105,9 +101,7 @@
   width: 40px;
 }
 
-/* ===========================
-   NAME CELL (bold + sub name)
-   =========================== */
+/* NAME CELL  */
 
 .client-name {
   display: flex;
@@ -122,9 +116,8 @@
 }
 
 
-/* ===========================
-   Birthdate Cell
-   =========================== */
+/* Birthdate Cell */
+
 
 .client-birthdate {
   align-items: left;
@@ -136,9 +129,8 @@
 
 
 
-/* ===========================
-   FP METHOD BADGE
-   =========================== */
+/* FP METHOD BADGE */
+
 
 .method-badge {
   display: inline-block;
@@ -151,9 +143,8 @@
   white-space: nowrap;
 }
 
-/* ===========================
-   TYPE BADGE
-   =========================== */
+/* TYPE BADGE */
+
 
 .type-badge {
   display: inline-block;
@@ -166,9 +157,8 @@
   white-space: nowrap;
 }
 
-/* ===========================
-   ACTION BUTTONS
-   =========================== */
+/* ACTION BUTTONS */
+
 
 .action-buttons {
   display: flex;
@@ -210,9 +200,8 @@
   color: #dc2626;
 }
 
-/* ===========================
-   EMPTY STATE
-   =========================== */
+/* EMPTY STATE */
+
 
 .table-empty-private {
   text-align: center;
@@ -222,9 +211,8 @@
   background-color: #ffffff;
 }
 
-/* ===========================
-   ARCHIVED ROW
-   =========================== */
+/* ARCHIVED ROW */
+
 
 .archived-row td,
 .archived-row th {

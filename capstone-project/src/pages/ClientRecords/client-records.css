@@ -5,6 +5,7 @@
     flex-direction: column;
     background-color: #ffffff;
     padding: 15px 35px 0 35px;
+    box-shadow: 0 1px 5px rgba(181, 183, 185, 0.596);
 }
 .client-toolbar {
   display: flex;
@@ -29,7 +30,7 @@
   border-radius: 8px;
   padding: 8px 14px;
   background: #f1f2f3;
-  width: 280px;
+  width: 450px;
 }
 
 .client-search input {
@@ -109,17 +110,17 @@
   padding: 8px 16px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  background: #ffffff;
+  background: #4b67e4;
   font-size: 13px;
   font-weight: 500;
-  color: #374151;
+  color: #ffffff;
   cursor: pointer;
   transition: background 0.15s ease;
 }
 
 .btn-export:hover,
 .btn-import:hover {
-  background: #f3f4f6;
+  background: #f3cb17;
 }
 
 .btn-add-client {
@@ -142,19 +143,16 @@
 }
 
 .client-table-container {
-  
   width: 100%;
   overflow-x: auto;
   background: #ffffff;
   border-radius: 12px;
   border: 1px solid #e5e7eb;
-  
 }
 
 .client-table-wrapper{
     border-radius: 12px;
-    padding: 10px;
-    margin: 0 25px 25px 25px;
+    margin: 17px 17px;
     background-color: #F4F8FF;
 }
 
@@ -183,4 +181,5 @@
 .tab-btn:hover{
     background-color: #4f46e5;
     color: #ffffff;
+
 }

@@ -1,9 +1,8 @@
 import { useState } from "react";
-import './client-table-private.css';
-import { SquarePen, Trash2, Eye, ArchiveRestore } from 'lucide-react';
+import './referred-and-served.css';
+import { SquarePen, Trash2, Eye, ArchiveRestore, ImageIcon } from 'lucide-react';
 
-
-function ClientTablePrivate({ clients, loading, onView, onEdit, onDelete, isArchived, onRestore }) {
+function ReferredAndServed({ clients, loading, onView, onEdit, onDelete, isArchived, onRestore }) {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10; 
 
@@ -24,7 +23,6 @@ function ClientTablePrivate({ clients, loading, onView, onEdit, onDelete, isArch
 
     return (
         <>
-            {/* Stats Banner */}
             <div className="stats-banner-private">
                 <div className="stat-item-private">
                     <span className="stat-label-private">
@@ -38,7 +36,6 @@ function ClientTablePrivate({ clients, loading, onView, onEdit, onDelete, isArch
                         <span className="stat-value-private">
                             {safeClients.filter(c => {
                                 if (!c.created_at || typeof c.created_at.toDate !== 'function') return false;
-
                                 const date = c.created_at.toDate();
                                 const now = new Date();
                                 return date.getMonth() === now.getMonth() &&
@@ -49,7 +46,6 @@ function ClientTablePrivate({ clients, loading, onView, onEdit, onDelete, isArch
                 )}
             </div>
 
-            {/* Table */}
             <div className="client-table-container-private">
                 {loading ? (
                     <div className="table-empty-private">Loading records...</div>
@@ -64,11 +60,14 @@ function ClientTablePrivate({ clients, loading, onView, onEdit, onDelete, isArch
                                 <tr>
                                     <th>ID</th>
                                     <td>Name</td>
-                                    <td>Age</td>
-                                    <td>Birthdate</td>
-                                    <td>Barangay</td>
-                                    <td>Method Used</td>
-                                    <td>FP Issued By (Name of Clinic, Hospital, Lying-In)</td>
+                                    <td>Address</td>
+                                    <td>FP Method</td>
+                                    <td>Name of Health Service Facility</td>
+                                    <td>Address of Health Service Facility</td>
+                                    <td>Who Referred the Client</td>
+                                    <td>Contact No. Volunteer</td>
+                                    <td>Date</td>
+                                    <td>Referral Slip Picture</td>
                                     <td>Actions</td>
                                 </tr>
                             </thead>
@@ -81,13 +80,33 @@ function ClientTablePrivate({ clients, loading, onView, onEdit, onDelete, isArch
                                                 <span className="client-name-male">{client.name}</span>
                                             </div>
                                         </td>
-                                        <td>{client.age || "—"}</td>
-                                        <td>{client.birthdate || "—"}</td>
-                                        <td>{client.barangay || "—"}</td>
+                                        <td>{client.address || "—"}</td>
+                                        <td>{client.FP_method || "—"}</td>
+                                        <td>{client.facility_name || "—"}</td>
+                                        <td>{client.facility_address || "—"}</td>
+                                        <td>{client.referred_by || "—"}</td>
+                                        <td>{client.volunteer_contact || "—"}</td>
+                                        <td>{client.date || "—"}</td>
+                                        
+                                        {/* STATIC IMAGE COLUMN */}
                                         <td>
-                                            <span className="method-badge">{client.fp_method}</span>
+                                            {client.referral_slip_file ? (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <img 
+                                                        src={client.referral_slip_file} 
+                                                        alt="Slip" 
+                                                        style={{ width: '32px', height: '32px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #e5e7eb' }} 
+                                                    />
+                                                    <span style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Attached</span>
+                                                </div>
+                                            ) : (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#9ca3af' }}>
+                                                    <ImageIcon size={14} />
+                                                    <span style={{ fontSize: '12px' }}>—</span>
+                                                </div>
+                                            )}
                                         </td>
-                                        <td>{client.fp_issued_by || "—"}</td>
+
                                         <td>
                                             <div className="action-buttons">
                                                 {isArchived ? (
@@ -114,26 +133,11 @@ function ClientTablePrivate({ clients, loading, onView, onEdit, onDelete, isArch
                             </tbody>
                         </table>
 
-                        {/* Pagination Controls */}
                         {totalPages > 1 && (
                             <div className="pagination-controls">
-                                <button 
-                                    className="page-btn" 
-                                    onClick={handlePrevPage} 
-                                    disabled={currentPage === 1}
-                                >
-                                    Previous
-                                </button>
-                                <span className="page-info">
-                                    Page {currentPage} of {totalPages}
-                                </span>
-                                <button 
-                                    className="page-btn" 
-                                    onClick={handleNextPage} 
-                                    disabled={currentPage === totalPages}
-                                >
-                                    Next
-                                </button>
+                                <button className="page-btn" onClick={handlePrevPage} disabled={currentPage === 1}>Previous</button>
+                                <span className="page-info">Page {currentPage} of {totalPages}</span>
+                                <button className="page-btn" onClick={handleNextPage} disabled={currentPage === totalPages}>Next</button>
                             </div>
                         )}
                     </>
@@ -143,4 +147,4 @@ function ClientTablePrivate({ clients, loading, onView, onEdit, onDelete, isArch
     );
 }
 
-export default ClientTablePrivate;
+export default ReferredAndServed;

@@ -1,3 +1,4 @@
+import { X, Archive } from 'lucide-react';
 import './client-delete-modal.css';
 
 function ClientDeleteModal({ selectedClient, onClose, handleDelete }) {
@@ -18,7 +19,6 @@ function ClientDeleteModal({ selectedClient, onClose, handleDelete }) {
         <p className="archive-message">
           The client record of <span className="archive-name">{selectedClient.name}</span> 
           
-          {/* Only render the & Spouse Name if it actually exists (Public records) */}
           {selectedClient.spouse_name && (
              <> & <span className="archive-name">{selectedClient.spouse_name}</span></>
           )} 
