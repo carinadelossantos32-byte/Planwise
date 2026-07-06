@@ -14,13 +14,16 @@ function Layout() {
   const showSidebar = !NO_SIDEBAR_ROUTES.includes(location.pathname);
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
+    <div style={{ display: "flex", height: "100vh", width: "100vw", overflow: "hidden" }}>
       {showSidebar && <Sidebar />}
-      <main style={{ flex: 1, overflow: "auto" }}>
+      <main style={{ flex: 1, height: "100%", overflow: "auto" }}>
         <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          
+          {/* FIX: Using a wildcard (*) allows /dashboard, /dashboard/cpd, and /dashboard/health to all load the Dashboard component successfully */}
+          <Route path="/dashboard/*" element={<Dashboard />} />
+          
           <Route path="/client-records" element={<ClientRecords />} />
           <Route path="/gis-map" element={<GisMap />} />
           <Route path="/reports" element={<Reports />} />
