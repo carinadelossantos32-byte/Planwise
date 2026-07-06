@@ -1,0 +1,17 @@
+.map-fa-marker {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: transparent;
+}
+
+.map-fa-marker i {
+    filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.4));
+    transition: font-size 0.2s ease;
+}
+
+.color-short-modern { color: #ff4d4d; }    
+.color-long-modern { color: #90c7ff; }   
+.color-natural-modern { color: #41d641; }    
+.color-traditional { color: #e45f00; }   
+.color-no-method { color: #696969; } 
