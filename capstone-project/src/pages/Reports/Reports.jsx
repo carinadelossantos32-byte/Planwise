@@ -9,9 +9,37 @@ import MonthlyReportTable from "./MonthlyReportTable";
 
 function Reports() {
     const [activeTab, setActiveTab] = useState("client");
-    const [startDate, setStartDate] = useState("");
-    const [endDate, setEndDate] = useState("");
+    const [period, setPeriod] = useState("all");
+    const [year, setYear] = useState(new Date().getFullYear());
     const [reportType, setReportType] = useState("form-a");
+
+    const periods = [
+    { value: "all", label: "All Year" },
+
+    { value: "q1", label: "Q1 (Jan - Mar)" },
+    { value: "q2", label: "Q2 (Apr - Jun)" },
+    { value: "q3", label: "Q3 (Jul - Sep)" },
+    { value: "q4", label: "Q4 (Oct - Dec)" },
+
+    { value: "january", label: "January" },
+    { value: "february", label: "February" },
+    { value: "march", label: "March" },
+    { value: "april", label: "April" },
+    { value: "may", label: "May" },
+    { value: "june", label: "June" },
+    { value: "july", label: "July" },
+    { value: "august", label: "August" },
+    { value: "september", label: "September" },
+    { value: "october", label: "October" },
+    { value: "november", label: "November" },
+    { value: "december", label: "December" },
+];
+
+const years = [];
+
+for (let y = 2024; y <= 2035; y++) {
+    years.push(y);
+}
 
     const renderAnalytics = () => {
         switch (reportType) {
@@ -91,24 +119,57 @@ function Reports() {
                                 </select>
                             </div>
 
-                            {/* Date Range */}
-                            <div>
-                                <p>Date Range</p>
+                            {/* Period */}
 
-                                <input
-                                    type="date"
-                                    value={startDate}
-                                    onChange={(e) => setStartDate(e.target.value)}
-                                />
+<div>
 
-                                <span> to </span>
+    <p>Period</p>
 
-                                <input
-                                    type="date"
-                                    value={endDate}
-                                    onChange={(e) => setEndDate(e.target.value)}
-                                />
-                            </div>
+    <select
+        value={period}
+        onChange={(e) => setPeriod(e.target.value)}
+    >
+
+        {periods.map((item) => (
+
+            <option
+                key={item.value}
+                value={item.value}
+            >
+                {item.label}
+            </option>
+
+        ))}
+
+    </select>
+
+</div>
+
+{/* Year */}
+
+<div>
+
+    <p>Year</p>
+
+    <select
+        value={year}
+        onChange={(e) => setYear(e.target.value)}
+    >
+
+        {years.map((yr) => (
+
+            <option
+                key={yr}
+                value={yr}
+            >
+                {yr}
+            </option>
+
+        ))}
+
+    </select>
+
+</div>
 
                             {/* Method */}
                             <div>
