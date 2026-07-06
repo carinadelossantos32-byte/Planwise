@@ -1,6 +1,12 @@
 .sidebar {
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
   width: 260px;
-  min-height: 100vh;
+  
+  /* CHANGE THIS LINE */
+  height: 100vh; 
+  
   background-color: #3822db;
   display: flex;
   flex-direction: column;
