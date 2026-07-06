@@ -38,6 +38,7 @@ function ClientRecords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterMethod, setFilterMethod] = useState("");
   const [activeTab, setActiveTab] = useState("public");
+  const [filterCategory, setFilterCategory] = useState("");
 
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
@@ -68,12 +69,12 @@ function ClientRecords() {
     reason: ""
   });
 
-// COLLECTION HELPER
-const getCollection = useCallback(() => {
-  if (activeTab === "private") return "clients_private";
-  if (activeTab === "referred") return "clients_referred"; 
-  return "clients_public"; // Default fallback
-}, [activeTab]);
+  // COLLECTION HELPER
+  const getCollection = useCallback(() => {
+    if (activeTab === "private") return "clients_private";
+    if (activeTab === "referred") return "clients_referred";
+    return "clients_public"; // Default fallback
+  }, [activeTab]);
 
 
   // READ
@@ -152,176 +153,176 @@ const getCollection = useCallback(() => {
   };
 
   // EXPORT
- // ─── Tab-specific export configs ─────────────────────────────────
-const EXPORT_CONFIG = {
-  public: {
-    template: "/Export_Template.xlsx",
-    filename: "RPFP_Form_1.xlsx",
-    writeRows: writePublicRows,   // your existing logic
-  },
-  private: {
-    template: "/Private_Template.xlsx",
-    filename: "FP_User_Private.xlsx",
-    writeRows: writePrivateRows,
-  },
-  referred: {
-    template: "/Export_Template_Referred.xlsx",
-    filename: "Referred_and_Served.xlsx",
-    writeRows: writeReferredRows,
-  },
-};
+  // ─── Tab-specific export configs ─────────────────────────────────
+  const EXPORT_CONFIG = {
+    public: {
+      template: "/Export_Template.xlsx",
+      filename: "RPFP_Form_1.xlsx",
+      writeRows: writePublicRows,   // your existing logic
+    },
+    private: {
+      template: "/Private_Template.xlsx",
+      filename: "FP_User_Private.xlsx",
+      writeRows: writePrivateRows,
+    },
+    referred: {
+      template: "/Export_Template_Referred.xlsx",
+      filename: "Referred_and_Served.xlsx",
+      writeRows: writeReferredRows,
+    },
+  };
 
-// ─── Shared helpers ───────────────────────────────────────────────
-const thin  = { style: "thin" };
-const border = { top: thin, bottom: thin, left: thin, right: thin };
-const noBorder = { top:{style:null}, bottom:{style:null}, left:{style:null}, right:{style:null} };
-const center = { horizontal: "center", vertical: "middle", wrapText: true };
-const left   = { horizontal: "left",   vertical: "middle", wrapText: true };
+  // ─── Shared helpers ───────────────────────────────────────────────
+  const thin = { style: "thin" };
+  const border = { top: thin, bottom: thin, left: thin, right: thin };
+  const noBorder = { top: { style: null }, bottom: { style: null }, left: { style: null }, right: { style: null } };
+  const center = { horizontal: "center", vertical: "middle", wrapText: true };
+  const left = { horizontal: "left", vertical: "middle", wrapText: true };
 
-const setCell = (sheet, ref, value, align = center) => {
-  const cell = sheet.getCell(ref);
-  cell.value = value;
-  cell.border = border;
-  cell.alignment = align;
-  cell.font = { name: "Arial", size: 10 };
-};
+  const setCell = (sheet, ref, value, align = center) => {
+    const cell = sheet.getCell(ref);
+    cell.value = value;
+    cell.border = border;
+    cell.alignment = align;
+    cell.font = { name: "Arial", size: 10 };
+  };
 
-// ─── Row writers ──────────────────────────────────────────────────
-function writePublicRows(sheet, filteredClients) {
-  const allCols = ["B","C","D","E","F","G","H","I","J","K","L","M","N","O","P"];
+  // ─── Row writers ──────────────────────────────────────────────────
+  function writePublicRows(sheet, filteredClients) {
+    const allCols = ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"];
 
-  // Clear rows 6–500
-  for (let r = 6; r <= 500; r++) {
-    allCols.forEach(col => {
-      const cell = sheet.getCell(`${col}${r}`);
-      cell.value = null;
-      cell.style = { border: noBorder, fill: { type:"pattern", pattern:"none" }, font: {}, alignment: {} };
+    // Clear rows 6–500
+    for (let r = 6; r <= 500; r++) {
+      allCols.forEach(col => {
+        const cell = sheet.getCell(`${col}${r}`);
+        cell.value = null;
+        cell.style = { border: noBorder, fill: { type: "pattern", pattern: "none" }, font: {}, alignment: {} };
+      });
+    }
+
+    filteredClients.forEach((client, index) => {
+      const husbandRow = 6 + index * 2;
+      const wifeRow = husbandRow + 1;
+
+      const merges = ["B", "H", "J", "K", "L", "M", "N", "O", "P"];
+      merges.forEach(col => { try { sheet.mergeCells(`${col}${husbandRow}:${col}${wifeRow}`); } catch { } });
+      try { sheet.mergeCells(`C${husbandRow}:D${husbandRow}`); } catch { }
+      try { sheet.mergeCells(`C${wifeRow}:D${wifeRow}`); } catch { }
+
+      // Husband row
+      setCell(sheet, `B${husbandRow}`, index + 1);
+      setCell(sheet, `C${husbandRow}`, client.name || "", left);
+      setCell(sheet, `E${husbandRow}`, "M");
+      setCell(sheet, `F${husbandRow}`, client.civil_status_male || "");
+      setCell(sheet, `G${husbandRow}`, client.birthdate_male || "");
+      setCell(sheet, `H${husbandRow}`, client.address || "", left);
+      setCell(sheet, `I${husbandRow}`, client.educational_attainment_male || "");
+      setCell(sheet, `J${husbandRow}`, client.no_of_children ? Number(client.no_of_children) : "");
+      setCell(sheet, `K${husbandRow}`, client.fp_method || "");
+      setCell(sheet, `L${husbandRow}`, client.intention_to_shift || "");
+      setCell(sheet, `M${husbandRow}`, client.type || "");
+      setCell(sheet, `N${husbandRow}`, client.status || "");
+      setCell(sheet, `O${husbandRow}`, client.reason || "");
+      setCell(sheet, `P${husbandRow}`, "");
+
+      // Wife row
+      setCell(sheet, `C${wifeRow}`, client.spouse_name || "", left);
+      setCell(sheet, `E${wifeRow}`, "F");
+      setCell(sheet, `F${wifeRow}`, client.civil_status_female || "");
+      setCell(sheet, `G${wifeRow}`, client.birthdate_female || "");
+      setCell(sheet, `I${wifeRow}`, client.educational_attainment_female || "");
+
+      // Patch borders on merged wife-row cells
+      merges.forEach(col => {
+        sheet.getCell(`${col}${wifeRow}`).border = border;
+      });
     });
   }
 
-  filteredClients.forEach((client, index) => {
-    const husbandRow = 6 + index * 2;
-    const wifeRow    = husbandRow + 1;
+  function writePrivateRows(sheet, filteredClients) {
+    const allCols = ["B", "C", "D", "E", "F", "G"];
 
-    const merges = ["B","H","J","K","L","M","N","O","P"];
-    merges.forEach(col => { try { sheet.mergeCells(`${col}${husbandRow}:${col}${wifeRow}`); } catch {} });
-    try { sheet.mergeCells(`C${husbandRow}:D${husbandRow}`); } catch {}
-    try { sheet.mergeCells(`C${wifeRow}:D${wifeRow}`);       } catch {}
+    // Clear rows 7–100
+    for (let r = 7; r <= 100; r++) {
+      allCols.forEach(col => {
+        const cell = sheet.getCell(`${col}${r}`);
+        cell.value = null;
+        cell.style = {
+          border: noBorder,
+          fill: { type: "pattern", pattern: "none" },
+          font: {},
+          alignment: {},
+        };
+      });
+    }
 
-    // Husband row
-    setCell(sheet, `B${husbandRow}`, index + 1);
-    setCell(sheet, `C${husbandRow}`, client.name || "", left);
-    setCell(sheet, `E${husbandRow}`, "M");
-    setCell(sheet, `F${husbandRow}`, client.civil_status_male || "");
-    setCell(sheet, `G${husbandRow}`, client.birthdate_male || "");
-    setCell(sheet, `H${husbandRow}`, client.barangay || "", left);
-    setCell(sheet, `I${husbandRow}`, client.educational_attainment_male || "");
-    setCell(sheet, `J${husbandRow}`, client.no_of_children ? Number(client.no_of_children) : "");
-    setCell(sheet, `K${husbandRow}`, client.fp_method || "");
-    setCell(sheet, `L${husbandRow}`, client.intention_to_shift || "");
-    setCell(sheet, `M${husbandRow}`, client.type || "");
-    setCell(sheet, `N${husbandRow}`, client.status || "");
-    setCell(sheet, `O${husbandRow}`, client.reason || "");
-    setCell(sheet, `P${husbandRow}`, "");
+    filteredClients.forEach((client, index) => {
+      const row = 7 + index;
 
-    // Wife row
-    setCell(sheet, `C${wifeRow}`, client.spouse_name || "", left);
-    setCell(sheet, `E${wifeRow}`, "F");
-    setCell(sheet, `F${wifeRow}`, client.civil_status_female || "");
-    setCell(sheet, `G${wifeRow}`, client.birthdate_female || "");
-    setCell(sheet, `I${wifeRow}`, client.educational_attainment_female || "");
-
-    // Patch borders on merged wife-row cells
-    merges.forEach(col => {
-      sheet.getCell(`${col}${wifeRow}`).border = border;
-    });
-  });
-}
-
-function writePrivateRows(sheet, filteredClients) {
-  const allCols = ["B", "C", "D", "E", "F", "G"];
-
-  // Clear rows 7–100
-  for (let r = 7; r <= 100; r++) {
-    allCols.forEach(col => {
-      const cell = sheet.getCell(`${col}${r}`);
-      cell.value = null;
-      cell.style = {
-        border: noBorder,
-        fill: { type: "pattern", pattern: "none" },
-        font: {},
-        alignment: {},
-      };
+      setCell(sheet, `B${row}`, client.name || "", left);
+      setCell(sheet, `C${row}`, client.age || "");
+      setCell(sheet, `D${row}`, client.birthdate || "");
+      setCell(sheet, `E${row}`, client.barangay || "", left);
+      setCell(sheet, `F${row}`, client.fp_method || "");
+      setCell(sheet, `G${row}`, client.fp_issued_by || "", left);
     });
   }
 
-  filteredClients.forEach((client, index) => {
-    const row = 7 + index;
+  function writeReferredRows(sheet, filteredClients) {
+    const allCols = ["B", "C", "D", "E", "F", "G", "H", "I", "J"];
 
-    setCell(sheet, `B${row}`, client.name || "", left);
-    setCell(sheet, `C${row}`, client.age || "");
-    setCell(sheet, `D${row}`, client.birthdate || "");
-    setCell(sheet, `E${row}`, client.barangay || "", left);
-    setCell(sheet, `F${row}`, client.fp_method || "");
-    setCell(sheet, `G${row}`, client.fp_issued_by || "", left);
-  });
-}
+    // Clear rows 5–200
+    for (let r = 5; r <= 200; r++) {
+      allCols.forEach(col => {
+        const cell = sheet.getCell(`${col}${r}`);
+        cell.value = null;
+        cell.style = {
+          border: noBorder,
+          fill: { type: "pattern", pattern: "none" },
+          font: {},
+          alignment: {},
+        };
+      });
+    }
 
-function writeReferredRows(sheet, filteredClients) {
-  const allCols = ["B", "C", "D", "E", "F", "G", "H", "I", "J"];
+    filteredClients.forEach((client, index) => {
+      const row = 5 + index;
 
-  // Clear rows 5–200
-  for (let r = 5; r <= 200; r++) {
-    allCols.forEach(col => {
-      const cell = sheet.getCell(`${col}${r}`);
-      cell.value = null;
-      cell.style = {
-        border: noBorder,
-        fill: { type: "pattern", pattern: "none" },
-        font: {},
-        alignment: {},
-      };
+      setCell(sheet, `B${row}`, index + 1);
+      setCell(sheet, `C${row}`, client.name || "", left);
+      setCell(sheet, `D${row}`, client.address || "", left);
+      setCell(sheet, `E${row}`, client.FP_method || "");
+      setCell(sheet, `F${row}`, client.facility_name || "", left);
+      setCell(sheet, `G${row}`, client.facility_address || "", left);
+      setCell(sheet, `H${row}`, client.referred_by || "", left);
+      setCell(sheet, `I${row}`, client.volunteer_contact || "");
+      setCell(sheet, `J${row}`, client.date || "");
     });
   }
 
-  filteredClients.forEach((client, index) => {
-    const row = 5 + index;
+  // ─── Main export handler ──────────────────────────────────────────
+  const handleExport = async () => {
+    const config = EXPORT_CONFIG[activeTab];
+    if (!config) return;
 
-    setCell(sheet, `B${row}`, index + 1);                        
-    setCell(sheet, `C${row}`, client.name || "", left);          
-    setCell(sheet, `D${row}`, client.address || "", left);       
-    setCell(sheet, `E${row}`, client.FP_method || "");           
-    setCell(sheet, `F${row}`, client.facility_name || "", left); 
-    setCell(sheet, `G${row}`, client.facility_address || "", left); 
-    setCell(sheet, `H${row}`, client.referred_by || "", left);   
-    setCell(sheet, `I${row}`, client.volunteer_contact || "");   
-    setCell(sheet, `J${row}`, client.date || "");                
-  });
-}
+    try {
+      const response = await fetch(config.template);
+      const arrayBuffer = await response.arrayBuffer();
 
-// ─── Main export handler ──────────────────────────────────────────
-const handleExport = async () => {
-  const config = EXPORT_CONFIG[activeTab];
-  if (!config) return;
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(arrayBuffer);
+      const sheet = workbook.getWorksheet(1);
 
-  try {
-    const response    = await fetch(config.template);
-    const arrayBuffer = await response.arrayBuffer();
+      config.writeRows(sheet, filteredClients);
 
-    const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(arrayBuffer);
-    const sheet = workbook.getWorksheet(1);
+      const buffer = await workbook.xlsx.writeBuffer();
+      saveAs(new Blob([buffer]), config.filename);
 
-    config.writeRows(sheet, filteredClients);
-
-    const buffer = await workbook.xlsx.writeBuffer();
-    saveAs(new Blob([buffer]), config.filename);
-
-  } catch (error) {
-    console.error("Export failed:", error);
-    alert(`Could not export. Make sure '${config.template.replace("/", "")}' is in your public folder!`);
-  }
-};
+    } catch (error) {
+      console.error("Export failed:", error);
+      alert(`Could not export. Make sure '${config.template.replace("/", "")}' is in your public folder!`);
+    }
+  };
 
   // HELPERS
   const resetForm = () => {
@@ -371,6 +372,7 @@ const handleExport = async () => {
   // FILTER
   const filteredClients = clients.filter((client) => {
     const query = searchQuery.toLowerCase();
+
     if (activeTab === "referred") {
       return (
         client.name?.toLowerCase().includes(query) ||
@@ -385,8 +387,20 @@ const handleExport = async () => {
       client.spouse_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       client.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       client.fp_method?.toLowerCase().includes(searchQuery.toLowerCase());
+
     const matchesMethod = filterMethod ? client.fp_method === filterMethod : true;
-    return matchesSearch && matchesMethod;
+
+    // FP Users 
+    const matchesCategory =
+      filterCategory === "fp_users" // FP Users
+        ? client.fp_method && client.fp_method.trim() !== ""
+        : filterCategory === "unmet_needs" // Unmet Needs
+          ? client.type && client.type.trim() !== ""
+          : filterCategory === "intention_to_shift" // Intention to Shift
+            ? client.intention_to_shift && client.intention_to_shift.trim() !== ""
+            : true; // All Records
+
+    return matchesSearch && matchesMethod && matchesCategory;
   });
 
 
@@ -404,7 +418,7 @@ const handleExport = async () => {
           <div className="view-tabs">
             <button
               className={`tab-btn ${activeTab === "public" ? "tab-active" : ""}`}
-              onClick={() => setActiveTab("public")}>FP Public</button>
+              onClick={() => { setActiveTab("public"); setFilterCategory(""); }}>FP Public</button>
             <button
               className={`tab-btn ${activeTab === "private" ? "tab-active" : ""}`}
               onClick={() => setActiveTab("private")}>FP Private</button>
@@ -418,55 +432,79 @@ const handleExport = async () => {
               onClick={() => setActiveTab("archived")}>Archived</button>
           </div>
 
-          {/* TOOLBAR — hide on archived tab */}
-          {activeTab !== "archived" && (
-            <div className="client-toolbar">
-              <div className="client-search">
-                <Search size={14} color="#9ca3af" />
-                <input
-                  type="text"
-                  placeholder="Search by name, address, or method..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
+          <div className="client-toolbar">
 
-              <select
-                className="client-filter-select"
-                value={filterMethod}
-                onChange={(e) => setFilterMethod(e.target.value)}
-              >
-                <option value="">All FP Method</option>
-                <option value="Condom">Condom</option>
-                <option value="IUD">IUD</option>
-                <option value="Pills">Pills</option>
-                <option value="Injectable">Injectable</option>
-                <option value="Vasectomy">Vasectomy</option>
-                <option value="Tubal Ligation">Tubal Ligation</option>
-                <option value="Implant">Implant</option>
-                <option value="CMM/Billings">CMM/Billings</option>
-                <option value="BTT">BTT</option>
-                <option value="Symptothermal">Symptothermal</option>
-                <option value="SDM">SDM</option>
-                <option value="LAM">LAM</option>
-              </select>
-
-              <div className="toolbar-actions">
-                <button className="btn-export" onClick={handleExport}>
-                  <Download size={14} /> Export
-                </button>
-                <button className="btn-import" onClick={() => setShowImportModal(true)}>
-                  <Upload size={14} /> Import
-                </button>
-                <button
-                  className="btn-add-client"
-                  onClick={() => setShowAddModal(true)}
-                >
-                  <Plus size={14} /> Add New Client
-                </button>
-              </div>
+            <div className="client-search">
+              <Search size={14} color="#9ca3af" />
+              <input
+                type="text"
+                placeholder={
+                  activeTab === "archived"
+                    ? "Search archived records..."
+                    : activeTab === "referred"
+                      ? "Search by name, facility, or referrer..."
+                      : "Search by name, address, or method..."
+                }
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-          )}
+
+            {activeTab !== "archived" && (
+              <>
+                {activeTab === "public" && (
+                  <select
+                    className="client-filter-select"
+                    value={filterCategory}
+                    onChange={(e) => setFilterCategory(e.target.value)}
+                  >
+                    <option value="">All Records</option>
+                    <option value="fp_users">FP Users</option>
+                    <option value="unmet_needs">Unmet Needs</option>
+                    <option value="intention_to_shift">Intention to Shift</option>
+                  </select>
+                )}
+
+                {(activeTab === "public" || activeTab === "private") && (
+                  <select
+                    className="client-filter-select"
+                    value={filterMethod}
+                    onChange={(e) => setFilterMethod(e.target.value)}
+                  >
+                    <option value="">All FP Method</option>
+                    <option value="Condom">Condom</option>
+                    <option value="IUD">IUD</option>
+                    <option value="Pills">Pills</option>
+                    <option value="Injectable">Injectable</option>
+                    <option value="Vasectomy">Vasectomy</option>
+                    <option value="Tubal Ligation">Tubal Ligation</option>
+                    <option value="Implant">Implant</option>
+                    <option value="CMM/Billings">CMM/Billings</option>
+                    <option value="BTT">BTT</option>
+                    <option value="Symptothermal">Symptothermal</option>
+                    <option value="SDM">SDM</option>
+                    <option value="LAM">LAM</option>
+                  </select>
+                )}
+
+                {/* Main Action Buttons */}
+                <div className="toolbar-actions">
+                  <button className="btn-export" onClick={handleExport}>
+                    <Download size={14} /> Export
+                  </button>
+
+                  <button className="btn-import" onClick={() => setShowImportModal(true)}>
+                    <Upload size={14} /> Import
+                  </button>
+
+                  <button className="btn-add-client" onClick={() => setShowAddModal(true)}>
+                    <Plus size={14} />
+                    {activeTab === "referred" ? "Add New Referral" : "Add New Client"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         {/* TABLES */}
@@ -505,7 +543,7 @@ const handleExport = async () => {
             />
           )}
           {activeTab === "archived" && (
-            <ClientArchive />
+            <ClientArchive searchQuery={searchQuery} />
           )}
         </div>
 

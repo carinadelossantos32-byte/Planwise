@@ -37,27 +37,6 @@
   line-height: 1;
 }
 
-/* Generate Form A Button */
-.btn-generate-form {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-  padding: 10px 18px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.15s ease;
-  white-space: nowrap;
-}
-
-.btn-generate-form:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
 /* TABLE BASE */
 
 .client-table-container table {

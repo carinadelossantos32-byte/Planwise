@@ -261,8 +261,7 @@ const handleAdd = async (e) => {
 
               <div className="form-group">
                 <label>Method Used</label>
-                <select name="fp_method" value={formData.fp_method} onChange={handleInputChange}
-                  className={errors.fp_method ? "input-error" : ""}>
+                <select name="fp_method" value={formData.fp_method} onChange={handleInputChange}>
                   <option value="">Select</option>
                   <option value="Condom">1 - Condom</option>
                   <option value="IUD">2 - IUD</option>
@@ -277,7 +276,6 @@ const handleAdd = async (e) => {
                   <option value="SDM">11 - SDM</option>
                   <option value="LAM">12 - LAM</option>
                 </select>
-                {errors.fp_method && <span className="error-text">{errors.fp_method}</span>}
               </div>
 
               <div className="form-group">

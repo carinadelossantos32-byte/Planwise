@@ -223,7 +223,7 @@ const TAB_CONFIG = {
   },
   referred: {
     label: "Referred & Served Template",
-    template: "/Referred_Template.xlsx",
+    template: "/Export_Template_Referred.xlsx",
     templateName: "Referred_Template.xlsx",
     headerRow: 3,
     parseRows: parseReferredRows,

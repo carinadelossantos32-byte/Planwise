@@ -25,8 +25,7 @@ function ClientEditModal({ client, onClose, onSuccess }) {
       "name", "spouse_name", "birthdate_male", "birthdate_female",
       "educational_attainment_male", "educational_attainment_female",
       "civil_status_male", "civil_status_female", "address", "barangay",
-      "no_of_children", "fp_method", "type",
-      "status", "reason"
+      "no_of_children"
     ];
 
     fieldsToValidate.forEach((key) => {
@@ -236,7 +235,6 @@ function ClientEditModal({ client, onClose, onSuccess }) {
                 name="fp_method" 
                 value={formData.fp_method || ""} 
                 onChange={handleInputChange} 
-                className={errors.fp_method ? "input-error" : ""}
               >
                 <option value="">Select</option>
                 <option value="Condom">1 - Condom</option>
@@ -252,7 +250,6 @@ function ClientEditModal({ client, onClose, onSuccess }) {
                 <option value="SDM">11 - SDM</option>
                 <option value="LAM">12 - LAM</option>
               </select>
-              {errors.fp_method && <span className="error-text">{errors.fp_method}</span>}
             </div>
             
             <div className="form-group-edit">
@@ -284,7 +281,6 @@ function ClientEditModal({ client, onClose, onSuccess }) {
                 name="type" 
                 value={formData.type || ""} 
                 onChange={handleInputChange} 
-                className={errors.type ? "input-error" : ""}
               >
                 <option value="">Select</option>
                 <option value="Withdrawal">1 - Withdrawal</option>
@@ -294,7 +290,6 @@ function ClientEditModal({ client, onClose, onSuccess }) {
                 <option value="Herbal">5 - Herbal</option>
                 <option value="No Method">6 - No Method</option>
               </select>
-              {errors.type && <span className="error-text">{errors.type}</span>}
             </div>
             
             <div className="form-group-edit">
@@ -303,7 +298,6 @@ function ClientEditModal({ client, onClose, onSuccess }) {
                 name="status" 
                 value={formData.status || ""} 
                 onChange={handleInputChange} 
-                className={errors.status ? "input-error" : ""}
               >
                 <option value="">Select</option>
                 <option value="Expressing Intention to Use Modern FP">A - Expressing Intention to Use Modern FP</option>
@@ -311,7 +305,6 @@ function ClientEditModal({ client, onClose, onSuccess }) {
                 <option value="Currently Pregnant">C - Currently Pregnant</option>
                 <option value="No Intention to Use">D - No Intention to Use</option>
               </select>
-              {errors.status && <span className="error-text">{errors.status}</span>}
             </div>
             
             <div className="form-group-edit">
@@ -320,14 +313,12 @@ function ClientEditModal({ client, onClose, onSuccess }) {
                 name="reason" 
                 value={formData.reason || ""} 
                 onChange={handleInputChange} 
-                className={errors.reason ? "input-error" : ""}
               >
                 <option value="">Select</option>
                 <option value="Spacing">1 - Spacing</option>
                 <option value="Limiting">2 - Limiting</option>
                 <option value="Achieving">3 - Achieving</option>
               </select>
-              {errors.reason && <span className="error-text">{errors.reason}</span>}
             </div>
 
             <div className="modal-btn-edit" style={{ gridColumn: "1 / -1", display: "flex", gap: "10px", marginTop: "15px" }}>

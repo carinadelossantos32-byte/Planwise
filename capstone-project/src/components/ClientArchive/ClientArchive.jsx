@@ -9,12 +9,11 @@ import "./client-archive.css";
 
 import '../ClientDeleteModal/client-delete-modal.css'; 
 
-function ClientArchive() {
+function ClientArchive({ searchQuery }) {
     const [publicClients, setPublicClients] = useState([]);
     const [privateClients, setPrivateClients] = useState([]);
     const [referredClients, setReferredClients] = useState([]); 
     const [loading, setLoading] = useState(true);
-    const [searchQuery, setSearchQuery] = useState("");
 
     // MODAL STATES
     const [showRestoreModal, setShowRestoreModal] = useState(false);
@@ -103,19 +102,6 @@ function ClientArchive() {
 
     return (
         <div className="client-archive-container">
-
-            {/* SEARCH */}
-            <div className="archive-toolbar">
-                <div className="client-search">
-                    <Search size={14} color="#7c8492" />
-                    <input className="client-search-input"
-                        type="text"
-                        placeholder="Search archived records..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                </div>
-            </div>
 
             {/* PUBLIC ARCHIVED TABLE */}
             <div className="archive-section">
