@@ -5,6 +5,7 @@ import { useState } from "react";
 import FormAAnalytics from "./FormAAnalytics";
 import FormBAnalytics from "./FormBAnalytics";
 import FormCAnalytics from "./FormCAnalytics";
+import MonthlyReportTable from "./MonthlyReportTable";
 
 function Reports() {
     const [activeTab, setActiveTab] = useState("client");
@@ -42,6 +43,12 @@ function Reports() {
                         onClick={() => setActiveTab("client")}
                     >
                         Client Reports
+                    </button>
+                    <button
+                        className={`tab-btn ${activeTab === "monthly" ? "active" : ""}`}
+                        onClick={() => setActiveTab("monthly")}
+                    >
+                        Monthly Report
                     </button>
                     <button
                         className={`tab-btn ${activeTab === "inventory" ? "active" : ""}`}
@@ -122,6 +129,12 @@ function Reports() {
 
                             {renderAnalytics()}
 
+                    </div>
+                )}
+
+                {activeTab === "monthly" && (
+                    <div className="monthly-report-content">
+                        <MonthlyReportTable />
                     </div>
                 )}
 

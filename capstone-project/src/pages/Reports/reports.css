@@ -441,3 +441,9 @@
     text-align: left;
   }
 }
+
+/* Monthly Report Content */
+.monthly-report-content {
+  padding: 30px 20px;
+  background-color: #f8f9fa;
+}
