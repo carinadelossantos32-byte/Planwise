@@ -9,7 +9,9 @@
     flex-direction: column;
     width: 280px;
     height: 100vh;
-    margin-left: 40px;
+    margin-left: 12px;
+    gap:4px;
+    
    
 }
 
@@ -26,75 +28,47 @@
 
 #settings-content{
     flex: 1;
-    padding-left: 0 30px;
+    padding-left:20px;
     border-left: 1px solid #ccc;
     background-color: #f9f9f9;
-    padding: 0px 30px;
 }
-
-
-img{
-    width: 20px;
-    height: 20px;
-    font-weight: bold;
-}
-#search-input{
-    width: 250px;
-    height:50px;
-    border-radius:13px;
-    padding: 10px 10px 10px 35px;
-    border: 1px solid #ccc;
-    font-size: 16px;
-    box-sizing: border-box;
-    background-color: #f0e6ff;
-}   
-
-#search-field{
-    position: relative;
-    width: 100%;
-    margin-bottom: 20px;
-}
-
-#search-field img{
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-    pointer-events: none;
     
-}   
 
-#back-button, #account-field, #privacy-field, #notif-field, #about-field{
+
+
+
+#account-field, #privacy-field, #notif-field, #about-field{
     display: flex;
     align-items: center;
     gap: 10px;
     cursor: pointer;
     border-left: 1px solid transparent;
-    margin-top: 5px;
+    padding: 12px 16px;
+    box-sizing: border-box;
+    transition:border 0.3s ease, background-color 0.3s ease;
+    border-left:1px solid transparent;
+    height: 55px;
+    margin-bottom: 10px;
     
 }
    
 
-#back-button:hover, #account-field:hover, #privacy-field:hover, #notif-field:hover, #about-field:hover{
+ #account-field:hover, #privacy-field:hover, #notif-field:hover, #about-field:hover{
     background-color:#f0f0f0;
     border-left: 7px solid #4F39F6;
     border-radius: 7px;
+    
 }   
 
 #account-field.selected, #privacy-field.selected, #notif-field.selected, #about-field.selected{
-    border-left: 7px solid #4F39F6;
     font-weight: bold;
-    padding: 2px;
-    border-radius:7px;
-    background-color: #4f39f60e;
+    background-color:#f0f0f0;
+    border-left: 7px solid #4F39F6;
+    border-radius: 7px;
 }
 
 
-#account-field.selected img, #privacy-field.selected img, #notif-field.selected img, #about-field.selected img{
-  
- filter: invert(27%) sepia(93%) saturate(3000%) hue-rotate(237deg) brightness(97%) contrast(97%);
+#account-field.selected svg, #privacy-field.selected svg, #notif-field.selected svg, #about-field.selected svg{
+  color: #4F39F6;
 }
 

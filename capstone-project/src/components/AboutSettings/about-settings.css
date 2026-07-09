@@ -1,32 +1,44 @@
 #about-container{
-   display: flex;
+    display: flex;
     flex-direction: column;
     gap: 20px;
     padding: 20px;
     border: 1px solid #ccc;
     border-radius: 10px;
     height: auto;
-    margin-top: 20px;
+    min-height: 60%;
+    margin: 70px auto; /* center horizontally and keep top spacing */
+    box-sizing: border-box;
+    width: 95%;
+    max-width: 1000px;
 }
 #about-header{
     display: flex;
-    align-items: flex-start;
-    gap: 10px;
-   
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
 }
 
 #about-header img {
-    width: 80px;
-    height: 80px;
-    
+    width: 100px;
+    height: 100px;
+    max-width: 100%;
+    margin-right: 12px;
 }
 
 #about-header h1 {
-    font-size: 24px;
+    font-size: 22px;
     font-weight: bold;
     margin: 0;
     padding: 0;
-    align-self: start;
+    text-align:center;
+    
+}
+
+#about-header {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 #about-header p {
@@ -43,8 +55,9 @@ h1{
 
 #about-content{
     display: flex;
-    flex-direction: start;
+    flex-direction: row;
     margin: 20px;
+    gap: 10px;
 }
 .content{
     border: 1px solid #c0c0c0;
