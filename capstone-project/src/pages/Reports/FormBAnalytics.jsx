@@ -1,82 +1,158 @@
+import { useMemo } from "react";
 import "./FormBAnalytics.css";
 
-function FormBAnalytics() {
+const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+];
 
-    const unmetNeed = [
-        {
-            title: "Couples with Unmet Need for Modern FP",
-            value: 138,
-        },
-        {
-            title: "Clients with Unmet Need Referred / Served",
-            value: 95,
-        },
-        {
-            title: "Total Unmet Need",
-            value: 192,
-        },
-    ];
+function getFieldValue(client, keys) {
+    for (const key of keys) {
+        const value = client?.[key];
+        if (value === undefined || value === null) continue;
 
-    const traditionalUsers = [
-        {
-            title: "Without Intention to Shift",
-            value: 87,
-        },
-        {
-            title: "With Intention to Shift",
-            value: 45,
-        },
-        {
-            title: "Traditional FP Users Referred / Served",
-            value: 76,
-        },
-    ];
+        if (typeof value === "string") {
+            const trimmed = value.trim();
+            if (trimmed) return trimmed;
+        } else if (typeof value === "number" || typeof value === "boolean") {
+            return value;
+        }
+    }
 
-    const monthlySummary = [
-        {
-            month: "January",
-            unmet: 12,
-            traditional: 18,
-            referred: 10,
-            total: 30,
-        },
-        {
-            month: "February",
-            unmet: 10,
-            traditional: 15,
-            referred: 9,
-            total: 25,
-        },
-        {
-            month: "March",
-            unmet: 16,
-            traditional: 21,
-            referred: 15,
-            total: 37,
-        },
-        {
-            month: "April",
-            unmet: 11,
-            traditional: 13,
-            referred: 8,
-            total: 24,
-        },
-    ];
+    return "";
+}
 
-    const months = [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
-    ];
+function normalizeText(value) {
+    return typeof value === "string" ? value.trim() : "";
+}
+
+function getMonthLabel(client) {
+    const rawValue = getFieldValue(client, ["month", "report_month", "service_month", "month_of_service", "created_at", "updated_at", "date"]);
+    if (!rawValue) return "";
+
+    const textValue = normalizeText(String(rawValue)).toLowerCase();
+
+    if (textValue.includes("january")) return "January";
+    if (textValue.includes("february")) return "February";
+    if (textValue.includes("march")) return "March";
+    if (textValue.includes("april")) return "April";
+    if (textValue.includes("may")) return "May";
+    if (textValue.includes("june")) return "June";
+    if (textValue.includes("july")) return "July";
+    if (textValue.includes("august")) return "August";
+    if (textValue.includes("september")) return "September";
+    if (textValue.includes("october")) return "October";
+    if (textValue.includes("november")) return "November";
+    if (textValue.includes("december")) return "December";
+
+    const maybeDate = new Date(rawValue);
+    if (!Number.isNaN(maybeDate.getTime())) {
+        return monthNames[maybeDate.getMonth()];
+    }
+
+    return "";
+}
+
+function FormBAnalytics({ clients = [], loading = false, error = "" }) {
+    const unmetNeed = useMemo(() => {
+        const couplesWithUnmetNeed = clients.filter((client) => {
+            const spouseName = normalizeText(getFieldValue(client, ["spouse_name", "spouseName", "partner_name", "partnerName"]));
+            const methodValue = normalizeText(getFieldValue(client, ["fp_method", "FP_method", "method", "intention_to_shift"]));
+            return spouseName && (!methodValue || !["condom", "iud", "pills", "injectable", "implant"].some((item) => methodValue.toLowerCase().includes(item)));
+        }).length;
+
+        const referredServed = clients.filter((client) => client.sourceCollection === "clients_referred").length;
+
+        return [
+            { title: "Couples with Unmet Need for Modern FP", value: couplesWithUnmetNeed },
+            { title: "Clients with Unmet Need Referred / Served", value: referredServed },
+            { title: "Total Unmet Need", value: couplesWithUnmetNeed + referredServed },
+        ];
+    }, [clients]);
+
+    const traditionalUsers = useMemo(() => {
+        const noShift = clients.filter((client) => {
+            const intention = normalizeText(getFieldValue(client, ["intention_to_shift", "shift_intention"])).toLowerCase();
+            return !intention;
+        }).length;
+
+        const withShift = clients.filter((client) => {
+            const intention = normalizeText(getFieldValue(client, ["intention_to_shift", "shift_intention"])).toLowerCase();
+            return Boolean(intention);
+        }).length;
+
+        const referredTraditional = clients.filter((client) => {
+            const methodValue = normalizeText(getFieldValue(client, ["fp_method", "FP_method", "method"])).toLowerCase();
+            return ["lam", "sdm", "sympto-thermal", "sympto thermal", "bbt", "ccm", "billings", "nsv", "btl"].some((item) => methodValue.includes(item));
+        }).length;
+
+        return [
+            { title: "Without Intention to Shift", value: noShift },
+            { title: "With Intention to Shift", value: withShift },
+            { title: "Traditional FP Users Referred / Served", value: referredTraditional },
+        ];
+    }, [clients]);
+
+    const monthlySummary = useMemo(() => {
+        const monthCounts = {};
+
+        clients.forEach((client) => {
+            const month = getMonthLabel(client);
+            if (!month) return;
+
+            const current = monthCounts[month] || { unmet: 0, traditional: 0, referred: 0, total: 0 };
+            const methodValue = normalizeText(getFieldValue(client, ["fp_method", "FP_method", "method"])).toLowerCase();
+            const isTraditional = ["lam", "sdm", "sympto-thermal", "sympto thermal", "bbt", "ccm", "billings", "nsv", "btl"].some((item) => methodValue.includes(item));
+            const isReferred = client.sourceCollection === "clients_referred";
+
+            current.unmet += 1;
+            if (isTraditional) current.traditional += 1;
+            if (isReferred) current.referred += 1;
+            current.total += 1;
+            monthCounts[month] = current;
+        });
+
+        return monthNames.map((month) => {
+            const current = monthCounts[month];
+            return {
+                month,
+                unmet: current?.unmet || "",
+                traditional: current?.traditional || "",
+                referred: current?.referred || "",
+                total: current?.total || "",
+            };
+        });
+    }, [clients]);
+
+    const months = monthNames;
+
+    if (loading) {
+        return (
+            <div className="form-b-analytics">
+                <h2>Form B Analytics</h2>
+                <p>Loading Form B data from Firestore...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="form-b-analytics">
+                <h2>Form B Analytics</h2>
+                <p>{error}</p>
+            </div>
+        );
+    }
 
     return (
 
@@ -90,22 +166,22 @@ function FormBAnalytics() {
 
                 <div className="analytics-card blue">
                     <h4>Couples with Unmet Need</h4>
-                    <span>621</span>
+                    <span>{unmetNeed[0]?.value || 0}</span>
                 </div>
 
                 <div className="analytics-card orange">
                     <h4>Traditional FP Users</h4>
-                    <span>401</span>
+                    <span>{traditionalUsers[2]?.value || 0}</span>
                 </div>
 
                 <div className="analytics-card red">
                     <h4>Total Unmet Need</h4>
-                    <span>842</span>
+                    <span>{unmetNeed[2]?.value || 0}</span>
                 </div>
 
                 <div className="analytics-card green">
                     <h4>Total Referred / Served</h4>
-                    <span>296</span>
+                    <span>{unmetNeed[1]?.value || 0}</span>
                 </div>
 
             </div>
@@ -246,13 +322,13 @@ function FormBAnalytics() {
 
                                     <td>{month}</td>
 
-                                    <td>-</td>
-                                    <td>-</td>
-                                    <td>-</td>
-                                    <td>-</td>
-                                    <td>-</td>
-                                    <td>-</td>
-                                    <td>-</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
 
                                 </tr>
 
@@ -266,13 +342,13 @@ function FormBAnalytics() {
 
                                 <td>Grand Total</td>
 
-                                <td>-</td>
-                                <td>-</td>
-                                <td>-</td>
-                                <td>-</td>
-                                <td>-</td>
-                                <td>-</td>
-                                <td>-</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
 
                             </tr>
 
