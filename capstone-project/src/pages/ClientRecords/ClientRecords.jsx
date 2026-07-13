@@ -410,25 +410,25 @@ function ClientRecords() {
       <div className="client-records-container">
 
         {/* HEADER */}
-        <div className="toolbar-header">
+        <div className="toolbar-header-client">
           <h2>Client Records</h2>
-          <p className="p-sub-title">Responsible Parenthood and Family Planning Program</p>
+          <p className="p-sub-title-client">Responsible Parenthood and Family Planning Program</p>
 
           {/* TABS */}
-          <div className="view-tabs">
+          <div className="view-tabs-client">
             <button
-              className={`tab-btn ${activeTab === "public" ? "tab-active" : ""}`}
+              className={`tab-button ${activeTab === "public" ? "tab-active" : ""}`}
               onClick={() => { setActiveTab("public"); setFilterCategory(""); }}>FP Public</button>
             <button
-              className={`tab-btn ${activeTab === "private" ? "tab-active" : ""}`}
+              className={`tab-button ${activeTab === "private" ? "tab-active" : ""}`}
               onClick={() => setActiveTab("private")}>FP Private</button>
 
             <button
-              className={`tab-btn ${activeTab === "referred" ? "tab-active" : ""}`}
+              className={`tab-button ${activeTab === "referred" ? "tab-active" : ""}`}
               onClick={() => setActiveTab("referred")}>Referred & Served</button>
 
             <button
-              className={`tab-btn ${activeTab === "archived" ? "tab-active" : ""}`}
+              className={`tab-button ${activeTab === "archived" ? "tab-active" : ""}`}
               onClick={() => setActiveTab("archived")}>Archived</button>
           </div>
 

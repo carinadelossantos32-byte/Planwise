@@ -7,12 +7,14 @@ import {
   FileBarChart2,
   Settings,
   LogOut,
+  FileText,
 } from "lucide-react";
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
   { label: "Client Records", icon: Users, path: "/client-records" },
   { label: "GIS Map", icon: Map, path: "/gis-map" },
+  { label: "Inventory", icon: FileText, path: "/inventory" },
   { label: "Reports", icon: FileBarChart2, path: "/reports" },
 ];
 

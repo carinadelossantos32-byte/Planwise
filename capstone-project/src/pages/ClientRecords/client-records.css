@@ -1,5 +1,5 @@
 /* TOOLBAR / SEARCH BAR AREA */
-.toolbar-header{
+.toolbar-header-client{
     display: flex;
     flex-direction: column;
     background-color: #ffffff;
@@ -14,7 +14,7 @@
   flex-wrap: wrap;
 }
 
-.p-sub-title{
+.p-sub-title-client{
     font-size: 11px;
     color: #6b7280;
     padding: 7px 0;
@@ -155,12 +155,12 @@
     background-color: #F4F8FF;
 }
 
-.view-tabs{
+.view-tabs-client{
     display: flex;
     gap: 8px;
     margin-top: 15px;
 }
-.tab-btn{
+.tab-button{
     padding: 10px 16px;
     border: none;
     border-radius: 5px;
