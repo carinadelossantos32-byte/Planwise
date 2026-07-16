@@ -1,11 +1,102 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebase-config";
+import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import './client-edit-modal.css';
 
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+
+const DefaultIcon = L.icon({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+L.Marker.prototype.options.icon = DefaultIcon;
+
 function ClientEditModal({ client, onClose, onSuccess }) {
-  const [formData, setFormData] = useState({ ...client });
+  const [formData, setFormData] = useState({ 
+    ...client,
+    latitude: client.latitude !== undefined ? client.latitude : 14.82,
+    longitude: client.longitude !== undefined ? client.longitude : 121.05
+  });
+  
   const [errors, setErrors] = useState({});
+  const [isSearching, setIsSearching] = useState(false);
+
+
+  const [isFirstRender, setIsFirstRender] = useState(true);
+
+  useEffect(() => {
+    if (isFirstRender) {
+      setIsFirstRender(false);
+      return;
+    }
+    if (!formData.address?.trim() && !formData.barangay?.trim()) return;
+
+    const delayDebounceFn = setTimeout(async () => {
+      setIsSearching(true);
+      const combinedAddress = `${formData.address}, ${formData.barangay}`;
+      
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(combinedAddress)}&limit=1`,
+          { headers: { "User-Agent": "Planwise-Capstone" } }
+        );
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+          const { lat, lon } = data[0];
+          setFormData((prev) => ({
+            ...prev,
+            latitude: parseFloat(parseFloat(lat).toFixed(6)),
+            longitude: parseFloat(parseFloat(lon).toFixed(6))
+          }));
+          if (errors.latitude || errors.longitude) {
+            setErrors((prev) => ({ ...prev, latitude: "", longitude: "" }));
+          }
+        }
+      } catch (err) {
+        console.error("Auto-geocoding failed:", err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 1200);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [formData.address, formData.barangay]);
+
+  // Leaflet component to visually pan the map when search completes or on initial open
+  function ChangeMapView({ coords }) {
+    const map = useMapEvents({});
+    useEffect(() => {
+      if (coords[0] && coords[1]) {
+        map.setView(coords, 14);
+      }
+    }, [coords, map]);
+    return null;
+  }
+
+  // Leaflet component to handle fallback manual clicks on map
+  function MapClickHandler() {
+    useMapEvents({
+      click(e) {
+        setFormData((prev) => ({
+          ...prev,
+          latitude: parseFloat(e.latlng.lat.toFixed(6)),
+          longitude: parseFloat(e.latlng.lng.toFixed(6))
+        }));
+      }
+    });
+    return null;
+  }
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -13,6 +104,11 @@ function ClientEditModal({ client, onClose, onSuccess }) {
     if (errors[e.target.name]) {
       setErrors({ ...errors, [e.target.name]: "" });
     }
+  };
+
+  const handleCoordinateChange = (e) => {
+    const val = e.target.value === "" ? "" : parseFloat(e.target.value);
+    setFormData({ ...formData, [e.target.name]: val });
   };
 
   const handleUpdate = async (e) => {
@@ -25,7 +121,7 @@ function ClientEditModal({ client, onClose, onSuccess }) {
       "name", "spouse_name", "birthdate_male", "birthdate_female",
       "educational_attainment_male", "educational_attainment_female",
       "civil_status_male", "civil_status_female", "address", "barangay",
-      "no_of_children"
+      "no_of_children", "latitude", "longitude"
     ];
 
     fieldsToValidate.forEach((key) => {
@@ -195,7 +291,7 @@ function ClientEditModal({ client, onClose, onSuccess }) {
             </div>
             
             <div className="form-group-edit">
-              <label>Address</label>
+              <label>Address {isSearching && <span style={{ color: "#3b82f6", fontSize: "12px" }}>(Updating Map...)</span>}</label>
               <input 
                 name="address" 
                 value={formData.address || ""} 
@@ -214,6 +310,40 @@ function ClientEditModal({ client, onClose, onSuccess }) {
                 className={errors.barangay ? "input-error" : ""} 
               />
               {errors.barangay && <span className="error-text">{errors.barangay}</span>}
+            </div>
+
+            <div className="form-group-edit">
+              <label>Latitude</label>
+              <input type="number" step="any" name="latitude" value={formData.latitude} onChange={handleCoordinateChange}
+                className={errors.latitude ? "input-error" : ""} />
+              {errors.latitude && <span className="error-text">{errors.latitude}</span>}
+            </div>
+
+            <div className="form-group-edit">
+              <label>Longitude</label>
+              <input type="number" step="any" name="longitude" value={formData.longitude} onChange={handleCoordinateChange}
+                className={errors.longitude ? "input-error" : ""} />
+              {errors.longitude && <span className="error-text">{errors.longitude}</span>}
+            </div>
+
+            {/* Leaflet Verification and Adjustment Panel */}
+            <div className="form-group-edit" style={{ gridColumn: "1 / -1", height: "250px", marginBottom: "15px" }}>
+              <label style={{ marginBottom: "5px", display: "block" }}>Location Visual Verification</label>
+              <MapContainer 
+                center={[formData.latitude || 14.82, formData.longitude || 121.05]} 
+                zoom={14} 
+                style={{ height: "100%", width: "100%", borderRadius: "4px", zIndex: "1" }}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <MapClickHandler />
+                <ChangeMapView coords={[formData.latitude, formData.longitude]} />
+                {formData.latitude && formData.longitude && (
+                  <Marker position={[formData.latitude, formData.longitude]} />
+                )}
+              </MapContainer>
             </div>
             
             <div className="form-group-edit">
@@ -331,4 +461,5 @@ function ClientEditModal({ client, onClose, onSuccess }) {
     </div>
   );
 }
+
 export default ClientEditModal;

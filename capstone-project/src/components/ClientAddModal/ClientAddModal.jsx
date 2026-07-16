@@ -1,8 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { collection, addDoc, doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebase-config";
 import { findDuplicate } from "../../utils/checkDuplicates";
+import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import "./client-add-modal.css";
+
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+
+const DefaultIcon = L.icon({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+L.Marker.prototype.options.icon = DefaultIcon;
 
 function ClientAddModal({ onClose, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -21,12 +39,73 @@ function ClientAddModal({ onClose, onSuccess }) {
     intention_to_shift: "",
     type: "",
     status: "",
-    reason: ""
+    reason: "",
+    latitude: 14.82,
+    longitude: 121.05
   });
 
   const [errors, setErrors] = useState({});
   const [dupModalOpen, setDupModalOpen] = useState(false);
   const [existingRecord, setExistingRecord] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    if (!formData.address.trim() && !formData.barangay.trim()) return;
+
+    const delayDebounceFn = setTimeout(async () => {
+      setIsSearching(true);
+      const combinedAddress = `${formData.address}, ${formData.barangay}`;
+
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(combinedAddress)}&limit=1`,
+          { headers: { "User-Agent": "Planwise-Capstone" } }
+        );
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+          const { lat, lon } = data[0];
+          setFormData((prev) => ({
+            ...prev,
+            latitude: parseFloat(parseFloat(lat).toFixed(6)),
+            longitude: parseFloat(parseFloat(lon).toFixed(6))
+          }));
+          if (errors.latitude || errors.longitude) {
+            setErrors((prev) => ({ ...prev, latitude: "", longitude: "" }));
+          }
+        }
+      } catch (err) {
+        console.error("Auto-geocoding failed:", err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 1000); 
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [formData.address, formData.barangay]);
+
+  function ChangeMapView({ coords }) {
+    const map = useMapEvents({});
+    useEffect(() => {
+      if (coords[0] && coords[1]) {
+        map.setView(coords, 14);
+      }
+    }, [coords, map]);
+    return null;
+  }
+
+  function MapClickHandler() {
+    useMapEvents({
+      click(e) {
+        setFormData((prev) => ({
+          ...prev,
+          latitude: parseFloat(e.latlng.lat.toFixed(6)),
+          longitude: parseFloat(e.latlng.lng.toFixed(6))
+        }));
+      }
+    });
+    return null;
+  }
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -35,7 +114,12 @@ function ClientAddModal({ onClose, onSuccess }) {
     }
   };
 
-const handleAdd = async (e) => {
+  const handleCoordinateChange = (e) => {
+    const val = e.target.value === "" ? "" : parseFloat(e.target.value);
+    setFormData({ ...formData, [e.target.name]: val });
+  };
+
+  const handleAdd = async (e) => {
     e.preventDefault();
 
     let newErrors = {};
@@ -53,19 +137,21 @@ const handleAdd = async (e) => {
       "address",
       "barangay",
       "no_of_children",
-      "fp_method"
+      "fp_method",
+      "latitude",
+      "longitude"
     ];
 
     mandatoryFields.forEach((key) => {
-      if (!formData[key] || String(formData[key]).trim() === "") {
+      if (formData[key] === undefined || formData[key] === null || String(formData[key]).trim() === "") {
         newErrors[key] = "This field is required";
         isValid = false;
       }
     });
 
-    if (!isValid) { 
-      setErrors(newErrors); 
-      return; 
+    if (!isValid) {
+      setErrors(newErrors);
+      return;
     }
 
     try {
@@ -76,14 +162,13 @@ const handleAdd = async (e) => {
       };
 
       const duplicate = await findDuplicate("clients_public", "public", cleanedData);
-      console.log("duplicate result:", duplicate);
-      
+
       if (duplicate) {
         setExistingRecord(duplicate);
         setDupModalOpen(true);
         return;
       }
-      
+
       await saveRecord();
     } catch (err) {
       console.error("findDuplicate error:", err);
@@ -113,7 +198,6 @@ const handleAdd = async (e) => {
     }
   };
 
-  // Fields to show in the side-by-side comparison
   const comparisonFields = [
     { label: "Male Partner", key: "name" },
     { label: "Female Partner", key: "spouse_name" },
@@ -121,6 +205,8 @@ const handleAdd = async (e) => {
     { label: "Birthdate (F)", key: "birthdate_female" },
     { label: "Address", key: "address" },
     { label: "Barangay", key: "barangay" },
+    { label: "Latitude", key: "latitude" },
+    { label: "Longitude", key: "longitude" },
     { label: "FP Method", key: "fp_method" },
     { label: "No. of Children", key: "no_of_children" },
     { label: "Civil Status (M)", key: "civil_status_male" },
@@ -239,7 +325,7 @@ const handleAdd = async (e) => {
               </div>
 
               <div className="form-group">
-                <label>Address</label>
+                <label>Address {isSearching && <span style={{ color: "#3b82f6", fontSize: "12px" }}>(Searching Map...)</span>}</label>
                 <input name="address" value={formData.address} onChange={handleInputChange}
                   placeholder="Address" className={errors.address ? "input-error" : ""} />
                 {errors.address && <span className="error-text">{errors.address}</span>}
@@ -250,6 +336,40 @@ const handleAdd = async (e) => {
                 <input name="barangay" value={formData.barangay} onChange={handleInputChange}
                   placeholder="Barangay" className={errors.barangay ? "input-error" : ""} />
                 {errors.barangay && <span className="error-text">{errors.barangay}</span>}
+              </div>
+
+              <div className="form-group">
+                <label>Latitude</label>
+                <input type="number" step="any" name="latitude" value={formData.latitude} onChange={handleCoordinateChange}
+                  className={errors.latitude ? "input-error" : ""} />
+                {errors.latitude && <span className="error-text">{errors.latitude}</span>}
+              </div>
+
+              <div className="form-group">
+                <label>Longitude</label>
+                <input type="number" step="any" name="longitude" value={formData.longitude} onChange={handleCoordinateChange}
+                  className={errors.longitude ? "input-error" : ""} />
+                {errors.longitude && <span className="error-text">{errors.longitude}</span>}
+              </div>
+
+              {/* Leaflet Visualization Block */}
+              <div className="form-group" style={{ gridColumn: "1 / -1", height: "250px", marginBottom: "15px" }}>
+                <label style={{ marginBottom: "5px", display: "block" }}>Location Visual Verification</label>
+                <MapContainer
+                  center={[formData.latitude || 14.82, formData.longitude || 121.05]}
+                  zoom={13}
+                  style={{ height: "100%", width: "100%", borderRadius: "4px", zIndex: "1" }}
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  <MapClickHandler />
+                  <ChangeMapView coords={[formData.latitude, formData.longitude]} />
+                  {formData.latitude && formData.longitude && (
+                    <Marker position={[formData.latitude, formData.longitude]} />
+                  )}
+                </MapContainer>
               </div>
 
               <div className="form-group">
@@ -361,7 +481,7 @@ const handleAdd = async (e) => {
                   {comparisonFields.map(({ label, key }) => (
                     <div key={key} className={`dup-field-row ${formData[key] !== existingRecord[key] ? "dup-field-row--diff" : ""}`}>
                       <span className="dup-field-label">{label}</span>
-                      <span>{formData[key] || "—"}</span>
+                      <span>{formData[key] !== undefined && formData[key] !== null ? String(formData[key]) : "—"}</span>
                     </div>
                   ))}
                 </div>
@@ -373,7 +493,7 @@ const handleAdd = async (e) => {
                   {comparisonFields.map(({ label, key }) => (
                     <div key={key} className={`dup-field-row ${formData[key] !== existingRecord[key] ? "dup-field-row--diff" : ""}`}>
                       <span className="dup-field-label">{label}</span>
-                      <span>{existingRecord[key] || "—"}</span>
+                      <span>{existingRecord[key] !== undefined && existingRecord[key] !== null ? String(existingRecord[key]) : "—"}</span>
                     </div>
                   ))}
                 </div>

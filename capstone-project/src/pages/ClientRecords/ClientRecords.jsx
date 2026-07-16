@@ -14,7 +14,7 @@ import { saveAs } from "file-saver";
 import ClientTable from "../../components/ClientTable/ClientTable";
 import ClientTablePrivate from "../../components/ClientTablePrivate/ClientTablePrivate";
 import ClientArchive from "../../components/ClientArchive/ClientArchive";
-import { Search, Filter, Download, Upload, Plus } from 'lucide-react';
+import { Search, Filter, Download, Upload, Plus, RefreshCw } from 'lucide-react';
 import "./client-records.css";
 import { db } from "../../firebase-config";
 import ClientAddModal from "../../components/ClientAddModal/ClientAddModal";
@@ -29,6 +29,7 @@ import ReferredAndServed from "../../components/ReferredAndServed/ReferredAndSer
 import ClientAddModalReferred from "../../components/ClientAddModalReferred/ClientAddModalReferred";
 import ClientEditModalReferred from "../../components/ClientEditModalReferred/ClientEditModalReferred";
 import ClientViewModalReferred from "../../components/ClientViewModalReferred/ClientViewModalReferred";
+import KoboSyncModal from "../../components/KoboSyncModal/KoboSyncModal";
 
 function ClientRecords() {
 
@@ -46,6 +47,7 @@ function ClientRecords() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showKoboSyncModal, setShowKoboSyncModal] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
 
   // Form state
@@ -480,7 +482,7 @@ function ClientRecords() {
                     <option value="Tubal Ligation">Tubal Ligation</option>
                     <option value="Implant">Implant</option>
                     <option value="CMM/Billings">CMM/Billings</option>
-                    <option value="BTT">BTT</option>
+                    <option value="BBT">BBT</option>
                     <option value="Symptothermal">Symptothermal</option>
                     <option value="SDM">SDM</option>
                     <option value="LAM">LAM</option>
@@ -489,6 +491,11 @@ function ClientRecords() {
 
                 {/* Main Action Buttons */}
                 <div className="toolbar-actions">
+
+                  <button className="btn-sync" onClick={() => setShowKoboSyncModal(true)}>
+                    <RefreshCw size={14} /> Sync Kobo
+                  </button>
+
                   <button className="btn-export" onClick={handleExport}>
                     <Download size={14} /> Export
                   </button>
@@ -628,6 +635,14 @@ function ClientRecords() {
           selectedClient={selectedClient}
           onClose={() => setShowDeleteModal(false)}
           handleDelete={handleDelete}
+        />
+      )}
+
+      {/* KOBO SYNC MODAL */}
+      {showKoboSyncModal && (
+        <KoboSyncModal
+          onClose={() => setShowKoboSyncModal(false)}
+          onSuccess={fetchClients}
         />
       )}
     </>
