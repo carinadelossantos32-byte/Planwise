@@ -14,7 +14,7 @@ import { saveAs } from "file-saver";
 import ClientTable from "../../components/ClientTable/ClientTable";
 import ClientTablePrivate from "../../components/ClientTablePrivate/ClientTablePrivate";
 import ClientArchive from "../../components/ClientArchive/ClientArchive";
-import { Search, Filter, Download, Upload, Plus, RefreshCw } from 'lucide-react';
+import { Search, Filter, Download, Upload, CirclePlus, RefreshCw, CloudSync } from 'lucide-react';
 import "./client-records.css";
 import { db } from "../../firebase-config";
 import ClientAddModal from "../../components/ClientAddModal/ClientAddModal";
@@ -30,6 +30,7 @@ import ClientAddModalReferred from "../../components/ClientAddModalReferred/Clie
 import ClientEditModalReferred from "../../components/ClientEditModalReferred/ClientEditModalReferred";
 import ClientViewModalReferred from "../../components/ClientViewModalReferred/ClientViewModalReferred";
 import KoboSyncModal from "../../components/KoboSyncModal/KoboSyncModal";
+import { PUBLIC_FORM_CONFIG, PRIVATE_FORM_CONFIG } from "../../utils/kobo-form-configs.js";
 
 function ClientRecords() {
 
@@ -48,6 +49,7 @@ function ClientRecords() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showKoboSyncModal, setShowKoboSyncModal] = useState(false);
+  const [syncConfig, setSyncConfig] = useState(null);
   const [selectedClient, setSelectedClient] = useState(null);
 
   // Form state
@@ -68,7 +70,8 @@ function ClientRecords() {
     intention_to_shift: "",
     type: "",
     status: "",
-    reason: ""
+    reason: "",
+    classes_held: ""
   });
 
   // COLLECTION HELPER
@@ -345,7 +348,8 @@ function ClientRecords() {
       intention_to_shift: "",
       type: "",
       status: "",
-      reason: ""
+      reason: "",
+      classes_held: ""
     });
     setSelectedClient(null);
   };
@@ -417,21 +421,34 @@ function ClientRecords() {
           <p className="p-sub-title-client">Responsible Parenthood and Family Planning Program</p>
 
           {/* TABS */}
-          <div className="view-tabs-client">
-            <button
-              className={`tab-button ${activeTab === "public" ? "tab-active" : ""}`}
-              onClick={() => { setActiveTab("public"); setFilterCategory(""); }}>FP Public</button>
-            <button
-              className={`tab-button ${activeTab === "private" ? "tab-active" : ""}`}
-              onClick={() => setActiveTab("private")}>FP Private</button>
+          <div className="tabs-client">
+            <div className="view-tabs-client">
+              <button
+                className={`tab-button ${activeTab === "public" ? "tab-active" : ""}`}
+                onClick={() => { setActiveTab("public"); setFilterCategory(""); }}>FP Public</button>
+              <button
+                className={`tab-button ${activeTab === "private" ? "tab-active" : ""}`}
+                onClick={() => setActiveTab("private")}>FP Private</button>
 
-            <button
-              className={`tab-button ${activeTab === "referred" ? "tab-active" : ""}`}
-              onClick={() => setActiveTab("referred")}>Referred & Served</button>
+              <button
+                className={`tab-button ${activeTab === "referred" ? "tab-active" : ""}`}
+                onClick={() => setActiveTab("referred")}>Referred & Served</button>
 
-            <button
-              className={`tab-button ${activeTab === "archived" ? "tab-active" : ""}`}
-              onClick={() => setActiveTab("archived")}>Archived</button>
+              <button
+                className={`tab-button ${activeTab === "archived" ? "tab-active" : ""}`}
+                onClick={() => setActiveTab("archived")}>Archived</button>
+            </div>
+            {(activeTab === "public" || activeTab === "private" || activeTab === "referred") && (
+            <div className="btn-tab-actions">
+              <button className="btn-export" onClick={handleExport}>
+                <Download size={14} /> Export
+              </button>
+
+              <button className="btn-import" onClick={() => setShowImportModal(true)}>
+                <Upload size={14} /> Import
+              </button>
+            </div>
+            )}
           </div>
 
           <div className="client-toolbar">
@@ -467,7 +484,7 @@ function ClientRecords() {
                   </select>
                 )}
 
-                {(activeTab === "public" || activeTab === "private") && (
+                {(activeTab === "public" || activeTab === "private"|| activeTab === "referred") && (
                   <select
                     className="client-filter-select"
                     value={filterMethod}
@@ -487,25 +504,22 @@ function ClientRecords() {
                     <option value="SDM">SDM</option>
                     <option value="LAM">LAM</option>
                   </select>
+
                 )}
+
 
                 {/* Main Action Buttons */}
                 <div className="toolbar-actions">
-
-                  <button className="btn-sync" onClick={() => setShowKoboSyncModal(true)}>
-                    <RefreshCw size={14} /> Sync Kobo
-                  </button>
-
-                  <button className="btn-export" onClick={handleExport}>
-                    <Download size={14} /> Export
-                  </button>
-
-                  <button className="btn-import" onClick={() => setShowImportModal(true)}>
-                    <Upload size={14} /> Import
-                  </button>
-
+                  {activeTab === "public" && (
+                    <button className="btn-sync-client" onClick={() => { setSyncConfig(PUBLIC_FORM_CONFIG); setShowKoboSyncModal(true); }}>
+                      <CloudSync size={16} color="#ffffff" strokeWidth={2.0} /> Sync Public Form
+                    </button>)}
+                  {activeTab === "private" && (
+                    <button className="btn-sync-client" onClick={() => { setSyncConfig(PRIVATE_FORM_CONFIG); setShowKoboSyncModal(true); }}>
+                      <CloudSync size={16} color="#ffffff" strokeWidth={2.00} />Sync Private Form
+                    </button>)}
                   <button className="btn-add-client" onClick={() => setShowAddModal(true)}>
-                    <Plus size={14} />
+                    <CirclePlus size={16} color="#ffffff" strokeWidth={1.75} />
                     {activeTab === "referred" ? "Add New Referral" : "Add New Client"}
                   </button>
                 </div>
@@ -643,6 +657,7 @@ function ClientRecords() {
         <KoboSyncModal
           onClose={() => setShowKoboSyncModal(false)}
           onSuccess={fetchClients}
+          config={syncConfig}
         />
       )}
     </>

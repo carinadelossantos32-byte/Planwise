@@ -38,3 +38,33 @@ exports.koboSync = onRequest(
     });
   }
 );
+
+const FORM_2_ID = "aW7kYXty3e9JZ9on94eZYk";
+
+exports.koboSyncPrivate = onRequest(
+  { secrets: [KOBO_TOKEN], region: "asia-southeast1" },
+  (req, res) => {
+    cors(req, res, async () => {
+      try {
+        const response = await axios.get(
+          `https://kf.kobotoolbox.org/api/v2/assets/${FORM_2_ID}/data/`,
+          { headers: { Authorization: `Token ${KOBO_TOKEN.value()}`, Accept: "application/json" } }
+        );
+
+        const normalized = response.data.results.map((submission) => {
+          const clean = {};
+          Object.entries(submission).forEach(([key, value]) => {
+            const field = key.includes("/") ? key.split("/").pop() : key;
+            clean[field] = value;
+          });
+          return clean;
+        });
+
+        res.json({ count: normalized.length, results: normalized });
+      } catch (error) {
+        console.error("Kobo Form 2 fetch error:", error.message);
+        res.status(500).json({ error: error.message });
+      }
+    });
+  }
+);

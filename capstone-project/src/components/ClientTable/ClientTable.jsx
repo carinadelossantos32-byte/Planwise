@@ -83,6 +83,7 @@ function ClientTable({ clients, loading, onView, onEdit, onDelete, isArchived, o
                                     <td>Type</td>
                                     <td>Status</td>
                                     <td>Reason</td>
+                                    <td>Classes Held</td>
                                     <td>Actions</td>
                                 </tr>
                             </thead>
@@ -140,6 +141,7 @@ function ClientTable({ clients, loading, onView, onEdit, onDelete, isArchived, o
                                             <span>{client.status}</span>
                                         </td>
                                         <td>{client.reason}</td>
+                                        <td>{client.classes_held}</td>
                                         <td>
                                             <div className="action-buttons">
 

@@ -73,7 +73,6 @@ function ClientEditModal({ client, onClose, onSuccess }) {
     return () => clearTimeout(delayDebounceFn);
   }, [formData.address, formData.barangay]);
 
-  // Leaflet component to visually pan the map when search completes or on initial open
   function ChangeMapView({ coords }) {
     const map = useMapEvents({});
     useEffect(() => {
@@ -84,7 +83,6 @@ function ClientEditModal({ client, onClose, onSuccess }) {
     return null;
   }
 
-  // Leaflet component to handle fallback manual clicks on map
   function MapClickHandler() {
     useMapEvents({
       click(e) {
@@ -121,7 +119,7 @@ function ClientEditModal({ client, onClose, onSuccess }) {
       "name", "spouse_name", "birthdate_male", "birthdate_female",
       "educational_attainment_male", "educational_attainment_female",
       "civil_status_male", "civil_status_female", "address", "barangay",
-      "no_of_children", "latitude", "longitude"
+      "no_of_children", "latitude", "longitude", "classes_held"
     ];
 
     fieldsToValidate.forEach((key) => {
@@ -450,6 +448,25 @@ function ClientEditModal({ client, onClose, onSuccess }) {
                 <option value="Achieving">3 - Achieving</option>
               </select>
             </div>
+
+            <div className="form-group-edit">
+              <label>Classes Held</label>
+              <select 
+                name="classes_held" 
+                value={formData.classes_held || ""} 
+                onChange={handleInputChange} 
+              >
+                  <option value="">Select</option>
+                  <option value="4Ps">4Ps</option>
+                  <option value="Non-4Ps">Non-4Ps</option>
+                  <option value="Faith-Based Organization">Faith-Based Organization</option>
+                  <option value="USAPAN">USAPAN</option>
+                  <option value="PMOC">PMOC</option>
+                  <option value="House to House">House to House</option>
+                  <option value="Profiled Only">Profiled Only</option>
+                  <option value="Others">Others</option>
+              </select>
+            </div>  
 
             <div className="modal-btn-edit" style={{ gridColumn: "1 / -1", display: "flex", gap: "10px", marginTop: "15px" }}>
               <button type="button" className="btn-cancel" onClick={onClose}>Cancel</button>

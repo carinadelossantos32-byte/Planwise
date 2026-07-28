@@ -44,6 +44,7 @@ function ClientViewModal({ client, onClose }) {
               <div className="view-item"><span className="view-label">Type</span><span className="view-value">{client.type}</span></div>
               <div className="view-item"><span className="view-label">Status</span><span className="view-value">{client.status}</span></div>
               <div className="view-item"><span className="view-label">Reason</span><span className="view-value">{client.reason}</span></div>
+              <div className="view-item"><span className="view-label">Classes Held</span><span className="view-value">{client.classes_held}</span></div>
               
               {/* Geographic Coordinate Text Displays */}
               <div className="view-item"><span className="view-label">Latitude</span><span className="view-value">{client.latitude || "—"}</span></div>
@@ -56,9 +57,9 @@ function ClientViewModal({ client, onClose }) {
                   <MapContainer 
                     center={[client.latitude, client.longitude]} 
                     zoom={15} 
-                    dragging={false}       // Prevents dragging/panning the preview map
-                    scrollWheelZoom={false} // Prevents scrolling to change zoom levels
-                    zoomControl={false}     // Hides zoom dashboard buttons
+                    dragging={false}       
+                    scrollWheelZoom={false} 
+                    zoomControl={false}     
                     style={{ height: "100%", width: "100%", borderRadius: "4px", zIndex: "1" }}
                   >
                     <TileLayer

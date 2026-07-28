@@ -41,7 +41,8 @@ function ClientAddModal({ onClose, onSuccess }) {
     status: "",
     reason: "",
     latitude: 14.82,
-    longitude: 121.05
+    longitude: 121.05,
+    classes_held: ""
   });
 
   const [errors, setErrors] = useState({});
@@ -79,7 +80,7 @@ function ClientAddModal({ onClose, onSuccess }) {
       } finally {
         setIsSearching(false);
       }
-    }, 1000); 
+    }, 1000);
 
     return () => clearTimeout(delayDebounceFn);
   }, [formData.address, formData.barangay]);
@@ -139,7 +140,8 @@ function ClientAddModal({ onClose, onSuccess }) {
       "no_of_children",
       "fp_method",
       "latitude",
-      "longitude"
+      "longitude",
+      "classes_held"
     ];
 
     mandatoryFields.forEach((key) => {
@@ -217,6 +219,7 @@ function ClientAddModal({ onClose, onSuccess }) {
     { label: "Type", key: "type" },
     { label: "Status", key: "status" },
     { label: "Reason", key: "reason" },
+    { label: "Classes Held", key: "classes_held" }
   ];
 
   return (
@@ -448,6 +451,21 @@ function ClientAddModal({ onClose, onSuccess }) {
                   <option value="Spacing">1 - Spacing</option>
                   <option value="Limiting">2 - Limiting</option>
                   <option value="Achieving">3 - Achieving</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Classes Held</label>
+                <select name="classes_held" value={formData.classes_held} onChange={handleInputChange}>
+                  <option value="">Select</option>
+                  <option value="4Ps">4Ps</option>
+                  <option value="Non-4Ps">Non-4Ps</option>
+                  <option value="Faith-Based Organization">Faith-Based Organization</option>
+                  <option value="USAPAN">USAPAN</option>
+                  <option value="PMOC">PMOC</option>
+                  <option value="House to House">House to House</option>
+                  <option value="Profiled Only">Profiled Only</option>
+                  <option value="Others">Others</option>
                 </select>
               </div>
 
