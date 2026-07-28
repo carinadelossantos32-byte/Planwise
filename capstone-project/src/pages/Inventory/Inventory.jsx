@@ -1,4 +1,4 @@
-// import "./inventory.css"
+import "./inventory.css"
 import { useEffect, useState } from "react";
 import {db} from "../../firebaseConfig"
 import { doc, getDoc, getDocs, updateDoc, setDoc, collection } from "firebase/firestore";
@@ -199,55 +199,45 @@ function Inventory(){
 
     return(
         <>
-            
-                <div className=" flex items-center justify-between px-5 py-1  border-b border-gray-300">
-                     <h1 className="font-bold" >CHC Stocks</h1>`
-
-                    <div className="flex gap-3">
-                        <button className="btn bg-white w-40 h-8 border border-[#D1D5DC] rounded-lg px-2 py-5 flex items-center justify-center gap-2 hover:bg-gray-300 text-[16px] text-[#364153]"
-                       onClick={fetchRHUData} >
-                         <RefreshCw className={`w-5 h-5 ${isLoading ? "animate-spin" : ""}`} />  
-                            {isLoading ? "Refreshing..." : "Refresh Data"}</button>
-                        {/* <button className="btn bg-[#E7000B] w-40 h-8 rounded-lg px-2 py-5 border-0 hover:bg-red-700 text-[16px]">
-                            <Upload className="w-5 h-5"/>  
-                            Export as PDF</button>
-                        <button className="btn bg-[#009966] w-40 h-8 rounded-lg px-2 py-5 border-0 hover:bg-green-800  text-[16px]">
-                             <FileText className="w-5 h-5"/>
-                            Export as Excel</button> */}
-                    </div>
+            <div id="inventory-container">
+                <div id= "inventory-topbar">
+                                        <h1>CHC Stocks</h1>
+                                        <button id="refresh-button" onClick={fetchRHUData}>
+                                                <RefreshCw className={isLoading ? "spin-icon" : ""} />
+                                                {isLoading ? "Refreshing..." : "Refresh Data"}
+                                        </button>
+                       
                 </div>
 
-                <div className=" flex items-start border border-gray-300 px-15 py-3">
-                    <h3 className="font-bold text-gray-900">Inventory Report</h3>
+                <div id="inventory-report-label">
+                    <h3>Inventory Report</h3>
                 </div>
 
-                <div className="flex gap-10 w-full px-20 py-9 ">
-                    <div className="flex flex-col gap-1 flex-1 max-w-xs rounded-lg p-4 bg-[#4478FE]">
-                        <h3 className="text-white text-sm">Overall Stocks</h3>
-                        <h2 className="text-white text-3xl font-bold">{rhuData.reduce((sum, item) => sum + item.stock, 0)}</h2>
-                        <p className="text-white text-xs">This Month</p>
+                <div className = "cards-container">
+                    <div className="inventory-header-content" id="overall-stocks-card">
+                        <h3 >Overall Stocks</h3>
+                        <h2>{rhuData.reduce((sum, item) => sum + item.stock, 0)}</h2>
+                        
                     </div>
-                    <div className="flex flex-col gap-1 flex-1 max-w-xs rounded-lg p-4  bg-[#22C55E]">
-                        <h3 className="text-white text-sm">RHU with Low Stocks</h3>
-                        <h2 className="text-white text-3xl font-bold">
-                            {rhuData.filter((item) => item.stock <= lowStockLimit).length}
-                        </h2>
-                        <p className="text-white text-xs">Out of 10 RHUs</p>
+                    <div className="inventory-header-content" id="low-stock-card">
+                        <h3 >RHU with Low Stocks</h3>
+                        <h2>{rhuData.filter((item) => item.stock <= lowStockLimit).length}</h2>
+                        <p>Out of 10 RHUs</p>
                     </div>
                                         
                 </div>
 
-                <div className="card bg-white border border-gray-400 rounded-lg p-6  mx-20 my-4">
-                    <h3 className="font-bold text-lg mb-4 text-[#00017A]">City Health Center</h3>
+                <div id="inventory-content">
+                    <h3 id="rhu-title">City Health Center</h3>
 
-                    <div className="flex flex-col gap-3">
                         {sortedRHUData.map((item) => (
-                            <div className="flex items-center gap-3 justify-start mx-10" key={item.id}>
-                                <span className="text-[15px] font-medium text-gray-700 w-12">{item.name}</span>
-                                <progress className="mx-5 progress flex-1 [&::-webkit-progress-value]:bg-[#4478FE] [&::-webkit-progress-bar]:bg-gray-400 h-7 max-w-3xl rounded-xl" 
-                                value={item.stock} max={Math.max(...sortedRHUData.map(r => r.stock), 1)} ></progress>
-                                <span className="text-[15px] font-medium     text-gray-600 w-20 text-right">{item.stock} stocks</span>
-                                <SquarePen color="#14086d" hover:color="#6f26e4" strokeWidth={0.75} className="text-white  w-10 h-5 border-none rounded-xl cursor-pointer"
+                            <div className="rhu-row" key={item.id}>
+                                <span className="rhu-name">{item.name}</span>
+                                <progress className="rhu-progress" 
+                                value={item.stock} 
+                                max={Math.max(...sortedRHUData.map(r => r.stock), 1)} ></progress>
+                                <span className="rhu-stock-count">{item.stock} stocks</span>
+                                <SquarePen color="#14086d" hover:color="#6f26e4" strokeWidth={0.75} className="rhu-edit-icon"
                                     onClick={() => { setSelectedRHU(item); setshowRHUInfo(true); setEditingRHUId(null); }}
                                     Update
                                 />
@@ -255,67 +245,68 @@ function Inventory(){
                             </div>
                             
                         ))}
-                    </div>
+                </div>           
 
 
 
                     {showRHUInfo && selectedRHU && (
-                        <div className="modal modal-open flex items-center justify-center z-50">
-                            <div className="modal-box max-w-xl h-3/4 bg-white text-center flex flex-col items-center justify-start gap-6 px-8 py-6 rounded-2xl">
-                                <div className="w-full flex flex-col gap-2 items-start my-2 mx-2 px-3 ">
-                                <p className="text-3xl text-black font-bold mx-46"> {selectedRHU.name}</p>
-                                <p className="text-lg text-black font-medium my-3">Current Stock: {selectedRHU.stock}</p>
-                                <p className="text-lg text-black font-medium ">Total Population: {selectedRHU ? Number(selectedRHU.total_population || 0).toLocaleString() : 0}</p>
-                                    <div className="flex items-start gap-2 flex-col w-full h-full border-1-gray-300 border rounded-lg px-3 py-2 my-5">
-                                      <div className="flex items-center justify-between w-full ">
-                                        <p className="text-lg text-black font-medium  my-3">Barangays: </p>
-                                        <SquarePen color="#14086d" hover:color="#6f26e4" strokeWidth={0.75} className="text-white  w-10 h-5 border-none rounded-xl cursor-pointer"
+                        <div className="modal-overlay">
+                            <div className="modal-content rhu-info-box">
+
+                                <div className="rhu-detail-header">
+                                <p className="rhu-detail-name"> {selectedRHU.name}</p>
+
+                                <div className="rhu-stat-card">
+                                    <p className="rhu-stat">Current Stock: {selectedRHU.stock}</p>
+                                    <p className="rhu-stat ">Total Population: {selectedRHU ? Number(selectedRHU.total_population || 0).toLocaleString() : 0}</p>
+                                </div>
+                                
+                                    <div className="barangay-section">
+                                      <div className="barangay-header">
+                                        <p>Barangays: </p>
+                                        <SquarePen color="#14086d" hover:color="#6f26e4" strokeWidth={0.75} className="rhu-edit-icon"
                                         onClick={() => setEditingRHUId(selectedRHU.id)}
                                         Update
                                     />
-                                        </div>
+                                     </div>
                                        
 
                                         {editingRHUId === selectedRHU?.id ? (
-                                            <div className="flex flex-col gap-2 w-full">
+                                            <div className="barangay-edit-list">
                                                 {selectedRHU.barangays?.map((brgy, index) => (
                                                     <input
                                                         key={index}
                                                         value={brgy}
                                                         onChange={(e) => handleBarangay(index, e.target.value)}
-                                                        className="input input-bordered w-full text-sm"
+                                                        className="barangay-input"
                                                     />
                                                 ))}
-                                                <button
-                                                    onClick={handleAddBarangay}
-                                                    className="text-base font-medium text-blue-600 text-left hover:text-blue-700 cursor-pointer"
-                                                >
+                                                <button onClick={handleAddBarangay}className="add-barangay-link">
                                                     + Add Barangay
                                                 </button>
                                             </div>
                                         ) : (
                                             <>
                                                 {selectedRHU.barangays?.map((barangay, index) => (
-                                                    <p key={index}>{barangay}</p>
+                                                    <p key={index} className="barangay-item">{barangay}</p>
                                                 ))}
                                             </>
                                         )}
                                     </div>
                                 </div>
-                                <div className="w-full flex justify-end items-center gap-2 mt-auto">
-                                    <button className="btn bg-gray-500  text-white hover:bg-gray-600 border-none rounded-xl"
-                                    onClick={() => { setshowRHUInfo(false); setSelectedRHU(null); setEditingRHUId(null); }}>
+                                <div className="modal-footer">
+                                    <button className="btn-cancel" onClick={() => { setshowRHUInfo(false); setSelectedRHU(null); setEditingRHUId(null); }}>
                                         Close
                                     </button>
 
                                     {editingRHUId === selectedRHU?.id ? (
-                                        <button className="btn bg-red-500 text-white hover:bg-red-600 border-none rounded-xl"
+                                        <button className="btn-confirm"
                                             onClick={() => setEditingRHUId(null)}>
                                             Cancel Edit
                                         </button>
                                     ) : null}
 
-                                    <button className="btn bg-[#4602c5] text-white hover:bg-[#24035a] border-none rounded-xl"
+                                    <button className="btn-save-changes"
                                     onClick={handleSaveBarangayChanges}>
                                         Update Changes
                                     </button>
@@ -330,46 +321,42 @@ function Inventory(){
                 
                 
 
-                <div className="flex justify-end gap-2 mx-20 mb-10">
+                <div id="inventory-actions">
 
-                        <button className="btn rounded-lg px-6 py-4 border-none hover:bg-red-800 text-[18px] text-white bg-[#E7000B]" 
-                        onClick={()=>setShowDeductModal(true)}>Deduct Stock</button>
+                        <button id="deduct-button" onClick={()=>setShowDeductModal(true)}>
+                            Deduct Stock</button>
 
-                        <button className="btn rounded-lg px-6 py-4 border-none hover:bg-[#1a5c2a] text-[18px] text-white bg-[#237237]" 
-                        onClick={()=>setshowAllocateModal(true)}>Allocate Stock</button>
+                        <button id="allocate-button"onClick={()=>setshowAllocateModal(true)}>
+                            Allocate Stock</button>
+                </div>
 
                 {showAllocateModal && (
-                        <div className="modal modal-open flex items-center justify-center">
-                            <div className="modal-box max-w-3xl h-150 bg-white text-start flex flex-col items-center gap-6 px-8 py-6 rounded-2xl">
+                        <div className="modal-overlay">
+                            <div className="modal-content allocate-box">
                                 
-                             <div className="w-full flex flex-col gap-2">
-                                <h3 className="font-bold text-2xl text-center ">  Allocate Stock</h3>
-                                <h4 className="text-sm font-bold text-emerald-700 bg-emerald-50/80 px-4 py-2.5 rounded-xl leading-relaxed">
-                                    Enter total quantity to allocate. It will auto-distributed to each RHU</h4>
+                             <div className="modal-header">
+                                <h3>  Allocate Stock</h3>
+                                <p className="modal-subtext">Enter total quantity to allocate. It will auto-distributed to each RHU</p>
                             </div>
                         
-                            <div className="w-full flex flex-col items-start ml-3 ">
+                            <div className="allocate-input-section">
                                 <input type="number" value={stockValue} 
                                 onChange={(e) => {setStockValue(e.target.value);handleAllocateValue(e.target.value);}}
-                                className="  focus:outline-none focus:border-[#4602c5] focus:ring-2 focus:ring-[#4602c5]/20 w-48 h-12 text-center text-xl font-bold rounded-xl bg-white border-gray-500 text-gray-900 [&::-webkit-inner-spin-button]:bg-gray-200 [&::-webkit-inner-spin-button]:opacity-40" />
+                                className="allocate-input" />
 
                                  {showAllocateError && (
-                                        <div role="alert" className="alert alert-error fixed right-20 m-1 py-0 w-100 h-10 shadow-lg z-20">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                        </svg>
+                                        <div className="error-banner">
                                         <span>Please enter a number to allocate</span>
-                                        
                                         </div>
                                     )}
                             </div>
-                            {errorMessage && <p className="px-5 text-red-500 text-base font-medium ">{errorMessage}</p>}
+                            {errorMessage && <p className="error-text">{errorMessage}</p>}
 
-                            <div className="overflow-x-auto w-full h-full items-center justify-center rounded-box border  border-gray-200 bg-white">
-                                <table className="table rounded-lg w-full">
+                            <div className="modal-table-wrapper">
+                                <table className="modal-table">
                                     {/* head */}
                                     <thead>
-                                    <tr className="bg-gray-200 text-black" >
+                                    <tr>
                                         <th></th>
                                         <th>RHU</th>
                                         <th>Current Stock</th>
@@ -377,7 +364,7 @@ function Inventory(){
                                         <th>Allocated</th>
                                     </tr>
                                     </thead>
-                                    <tbody className="bg-gray-200 w-full rounded-lg border border-gray-300">
+                                    <tbody>
                                         {sortedRHUData.map((item, index) => {
                                             const totalPopulation = rhuData.reduce((sum, row) => sum + Number(row.total_population || 0), 0);
                                             const population = Number(item.total_population || 0);
@@ -395,44 +382,28 @@ function Inventory(){
                                     </tbody>
                                 </table>
 
-                                <div className="w-full flex justify-end items-center gap-3 mt-5 px-3    ">
+                                <div className="modal-footer">
                 
-                                      <button className="btn bg-gray-400 border-none text-black text-base w-20 h-10 hover:bg-gray-600 rounded-xl"
-                                        onClick={()=>setshowAllocateModal(false)}>
+                                      <button className="btn-cancel"onClick={()=>setshowAllocateModal(false)}>
                                         Cancel</button>
 
-                                        <button className="btn bg-[#237237]  border-none text-white text-base w-40 h-10 hover:bg-[#1a5c2a] rounded-xl"
-                                        onClick={handleStockValue}>
-                                        Confirm</button>
+                                        <button className="btn-confirm-success"onClick={handleStockValue}>Confirm</button>
                                 </div>
                             </div>
                             {showConfirmAllocate && (
-                            <div className="modal modal-open flex items-center justify-center bg-black/40 backdrop-blur-sm z-50">
-                                <div className="modal-box bg-white text-center flex flex-col items-center justify-center gap-5 px-8 py-7 rounded-2xl max-w-large">
+                            <div className="modal-overlay confirm-overlay">
+                                <div className="modal-content confirm-box">
+                                    <h3 className="confirm-title">Confirm Stock Allocation</h3>
+                                    <p className="confirm-note"> Note: This action will allocate stocks to all RHUs. </p>
+                                   <p className="confirm-detail" >Please ensure you have reviewed the current stock levels and the allocation quantities for each RHU before confirming. Click Confirm to authorize the automated ledger updates and finalize the distribution process.</p>
+                               
                                 
-                              
-                                <div className="flex flex-col gap-4">
-                                    <h3 className="font-black text-2xl text-gray-900 leading-tight">
-                                    Confirm Stock Allocation
-                                    </h3>
-                                    <p className="bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl p-3.5 font-bold text-lg shadow-sm">
-                                    Note: This action will allocate stocks to all RHUs. 
-                                   </p>
-                                   <p className="text-sm text-gray-600 font-medium leading-relaxed px-2" >Please ensure you have reviewed the current stock levels and the allocation quantities for each RHU before confirming. Click Confirm to authorize the automated ledger updates and finalize the distribution process.</p>
-                                </div>
-                                
-                                <div className="w-full flex mt-2 gap-5 items-center justify-center">
-                                    <button 
-                                    className="btn px-10 h-12 bg-gray-500 hover:bg-gray-700 text-white font-bold text-lg border-none rounded-xl tracking-wide normal-case shadow-md shadow-gray-200 transition-all duration-200"
-                                    onClick={()=> {setShowConfirmAllocate(false); setshowAllocateModal(true);}}
-                                    >
-                                    Cancel
+                                <div className="modal-footer confirm-footer">
+                                    <button className="btn-cancel-large" onClick={()=> {setShowConfirmAllocate(false); setshowAllocateModal(true);}}
+                                    >Cancel
                                     </button>
-                                    <button 
-                                    className="btn px-10 h-12 bg-green-600 hover:bg-green-700 text-white font-bold text-lg border-none rounded-xl tracking-wide normal-case shadow-md shadow-green-200 transition-all duration-200"
-                                    onClick={ConfirmAllocation}
-                                    >
-                                    Confirm
+                                    <button className="btn-confirm-success-large"onClick={ConfirmAllocation}
+                                    >Confirm
                                     </button>
                                 </div>
 
@@ -450,15 +421,15 @@ function Inventory(){
 
                     {showDeductModal && (
 
-                        <div className="modal modal-open flex items-center justify-center">
-                                <div className="modal-box max-w-3xl bg-white ">
-                                    <h3 className="font-bold text-lg mb-5">Deduct Stock</h3>
+                        <div className="modal-overlay">
+                                <div className="modal-content deduct-box ">
+                                    <h3 className="modal-title">Deduct Stock</h3>
 
-                                    <div className="overflow-x-auto">
-                                    <table className="table rounded-lg w-full">
+                                    <div className="modal-table-wrapper">
+                                    <table className="modal-table">
                                         {/* head */}
                                         <thead>
-                                        <tr className="bg-gray-200 text-black  ">
+                                        <tr>
                                             <th>#</th>
                                             <th>RHU Name</th>
                                             <th>Current Stock</th>
@@ -467,16 +438,16 @@ function Inventory(){
 
                                         </tr>
                                         </thead>
-                                        <tbody className="bg-gray-200 w-full rounded-lg border border-gray-300"    >
+                                        <tbody>
                                         {/* row 1 */}
                                         {sortedRHUData.map((item,index)=>(
-                                        <tr key={item.id} className="bg-white hover:bg-gray-50">
+                                        <tr key={item.id}>
                                             <th>{index + 1}</th>
                                             <td>{item.name}</td>
                                             <td>{item.stock} stocks</td>
                                             
                                             <td>
-                                               <span className={`px-2 py-1 rounded-full text-xs font-bold ${item.stock <= lowStockLimit ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                                               <span className={`status-badge ${item.stock <= lowStockLimit ? "status-low" : "status-sufficient"}`}>
                                                 {item.stock <=lowStockLimit ? 'Low Stock' : 'Sufficient'}</span>
                                             </td>
                                             <td>
@@ -490,7 +461,7 @@ function Inventory(){
                                                         ...prev,
                                                         [item.id]: e.target.value
                                                     }))}
-                                                    className="input input-bordered input-sm w-full max-w-xs"
+                                                    className="deduct-qty-input"
                                                 />
                                             </td>
                                         </tr>
@@ -501,22 +472,18 @@ function Inventory(){
 
                                    
                                     
-                                    <div className="flex w-full justify-end items-center gap-3 mt-5">
+                                    <div className="modal-footer">
 
                                          {showDeductError && (
-                                        <div role="alert" className="alert alert-error fixed right-70 py-0  w-100 h-10 shadow-lg z-20">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                        </svg>
+                                        <div className="error-banner">
                                         <span>Please enter at least 1 deduction amount</span>
-                                        
                                         </div>
                                     )}
-                                        <button className="btn bg-gray-400 border-none text-black text-base w-20 h-10 hover:bg-gray-600 rounded-xl"
+                                        <button className="btn-cancel"
                                         onClick={()=>setShowDeductModal (false)}>
                                         Cancel</button>
 
-                                        <button className="btn bg-[#E7000B] border-none text-white text-base w-40 h-10 hover:bg-[#bb010a] rounded-xl"
+                                        <button className="btn-confirm-solid"
                                         onClick={handleConfirmDeduct}>
                                         Confirm Deduct</button>
                                     </div>
@@ -532,26 +499,20 @@ function Inventory(){
                    
 
                     {showConfirmDeduct && (
-                            <div className="modal modal-open flex items-center justify-center bg-black/40 backdrop-blur-sm z-50">
-                                <div className="modal-box bg-white text-center flex flex-col items-center justify-center gap-5 px-8 py-7 rounded-2xl max-w-large">
+                            <div className="modal-overlay confirm-overlay">
+                                <div className="modal-content confirm-box">
                                 
-                               
-                                <div className="flex flex-col gap-4">
-                                    <h3 className="font-black text-2xl text-gray-900 leading-tight">
-                                    Confirm Stock Deduction
-                                    </h3>
-                                    <p className="bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl p-3.5 font-bold text-lg shadow-sm">
-                                   Warning: This will permanently deduct stocks from the selected RHUs.
-                                    </p>
-                                   <p className="text-sm text-gray-600 font-medium leading-relaxed px-2" >Please review the quantities you entered for each RHU. Only RHUs with a filled quantity will be affected. This action cannot be undone.</p>
-                                </div>
+                                    <h3 className="confirm-title">Confirm Stock Deduction</h3>
+                                    <p className="confirm-note"> Warning: This will permanently deduct stocks from the selected RHUs.</p>
+                                   <p className="confirm-detail" >Please review the quantities you entered for each RHU. Only RHUs with a filled quantity will be affected. This action cannot be undone.</p>
                                 
-                                <div className="w-full flex justify-end mt-2 gap-5">
-                                     <button className="btn px-10 h-12 bg-gray-500 hover:bg-gray-700 text-white font-bold text-lg border-none rounded-xl tracking-wide normal-case shadow-md shadow-gray-200 transition-all duration-200"
+                                
+                                <div className="modal-footer confirm-footer">
+                                     <button className="btn-cancel-large"
                                     onClick={()=> {setShowConfirmDeduct(false); setShowDeductModal(true);}}
                                     >Cancel
                                     </button>
-                                    <button className="btn px-10 h-12 bg-green-600 hover:bg-green-700 text-white font-bold text-lg border-none rounded-xl tracking-wide normal-case shadow-md shadow-green-200 transition-all duration-200"
+                                    <button className="btn-confirm-success-large"
                                     onClick={ConfirmDeduction}
                                     >Confirm
                                     </button>
@@ -565,12 +526,12 @@ function Inventory(){
 
                       
                     {showToast && (
-                        <div className="toast toast-end toast-bottom z-50 p-4 ">
-                        <div className="alert alert-success bg-emerald-600 text-white font-bold text-md border-none shadow-xl rounded-xl p-4 flex gap-3 max-w-md">
-                            <CheckCircle className="w-6 h-6" />
+                        <div id="toast-container">
+                        <div id="toast-alert">
+                            <CheckCircle size={20} />
                             <div>
-                            <span className="block font-black text-lg">Inventory Updated</span>
-                            <span className="text-sm font-medium text-emerald-50 block mt-0.5">
+                            <span id="toast-title">Inventory Updated</span>
+                            <span id="toast-message">
                                 Allocation successful. {stockValue} units distributed to all RHUs.
                             </span>
                             </div>
@@ -579,10 +540,9 @@ function Inventory(){
                     )}
 
                         
-                    </div>
+                   
 
-                    
-                    
+            
 
                 
             
