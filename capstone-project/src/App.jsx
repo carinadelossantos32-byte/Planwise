@@ -6,6 +6,7 @@ import GisMap from "./pages/GisMap/GisMap";
 import Reports from "./pages/Reports/Reports";
 import Login from "./pages/Login/Login";
 import Settings from "./pages/Settings/settings";
+import Inventory from "./pages/Inventory/Inventory";
 
 const NO_SIDEBAR_ROUTES = ["/login"];
 
@@ -25,6 +26,7 @@ function Layout() {
           <Route path="/gis-map" element={<GisMap />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/inventory" element={<Inventory/>} />
         </Routes>
       </main>
     </div>

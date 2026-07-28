@@ -1,11 +1,5 @@
-h5{
-    font-size: 18px;
-    font-weight: normal;
-    margin: 0;
-    color: #444343;
-    
-}
-H1
+
+h1
 {
     font-size: 25px;
     font-weight: bold;
@@ -23,83 +17,29 @@ h2{
     display: flex;
     flex-direction: column;
     gap: 20px;
-    padding: 20px;
+    padding: 10px 25px 20px 25px;
     border: 1px solid #ccc;
     border-radius: 10px;
     height: auto;
-    margin-top: 20px;
+    margin: 20px auto;
+    width: 95%;
+    max-width:900px;
+    box-sizing: border-box;
+    background-color: #ffffff;
+    
 }
 
-#profile-field{
-    display: flex;
-    flex-direction: row;
-    gap: 20px;
-    flex:1;
-}
-
-#profile-picture{
-   height: 200px;
-   width: 200px;
-}
-
-#profile-logo{
-    height: 150px;
-    width: 150px;
-    border-radius: 10px;
-}
-
-#upload-picture-button{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top:10px;
-    padding: 10px 20px;
-    border-radius: 5px;
-    border: none;
-    background-color: #f7d097;
-    color: #f19a16;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: transform 0.3s;
-}
-
-#upload-picture-button:hover{
-    background-color: #f19a16;
-    color: #fff;
-    transition: transform 0.3s;
-    transform: scale(1.05);
-   
-}
-#upload-logo{
-    width: 20px;
-    height: 20px;
-    margin-right: 10px;
-    margin-left: -10px;
-    margin-top: 2px;
-    transition: transform 0.3s;
-}
-#upload-logo:hover{
-    transform: scale(1.1);
-}
 
 
 #personal-info{
     display:flex;
     flex-direction:column;
-    gap: 10px;
+    gap: 15px;
     flex:1;
+    margin-left:20px;
 }
-#name-field, #phone-dept-field{
-    display: flex;
-    flex-direction: row;
-    gap: 20px;
-}
-#name-field input, #phone-dept-field input{
-width: 100%;
-height: 48px;
-box-sizing: border-box;
-}
+
+
 
 .info-field{
     display: flex;
@@ -114,40 +54,62 @@ box-sizing: border-box;
 .info-field h3{
     margin-bottom: 5px; 
 }
+
+.info-field h3, #name-field h3, #email-field h3{
+    font-size: 15px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #000000;
+}
 input{
-    height: 30px;
-    padding:10px;
+    height: 48px;
+    padding:10px 44px 10px 14px;
     border: 1px solid #ccc;
-    border-radius: 7px;
-    font-size:16px;
+    border-radius: 10px;
+    font-size:15px;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+    width: 60%;
+    gap: 5px;
 
 
 }
+/* 
+#name-field input, #position-field input{
+    background-color: #fbf5f5;
+} */
 
 input:focus{
     outline: none;
     border-color: #1424fd;
 }
 
-#email-field input{
-    width: 98%;
-   
-}
+
 
 #email-field h3{
     margin-bottom:5px;
     
 }
+
+#position-display{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    height: 48px;
+    width: 60%
+}
+
+
 #buttons-field{
     display:flex;
     gap:10px;
-    border-radius: 10px;
-    height: 30px;
-   justify-content: flex-end;
-   margin-top: 20px;
-   padding-bottom: 20px;
-    
+    justify-content: flex-end;
+    margin-top: 20px;
 }
+
 #cancel-button, #save-button{
     padding: 5px 15px;
     border-radius: 10px;
@@ -155,7 +117,12 @@ input:focus{
     font-size: 15px;
     font-weight: bold;
     cursor: pointer;
-    height: 50px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap:8px;
+    
     
      
 }
@@ -183,6 +150,71 @@ input:focus{
     background-color: rgb(70, 2, 197);
     color: #ffffff;
 }
-#memory-logo{
-     filter: brightness(0) invert(1);
+
+
+.error-text{
+    color: red;
+    font-size: 15px;
+    margin-top: 5px;
+    font-weight: bold;
+    margin-left:5px;
+}
+
+.modal-overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+}
+
+.updated-modal-box{
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 24px;
+    width: 360px;
+    box-shadow: 0 10px 30px rgba(15,23,42,0.12);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    align-items: center;
+}
+.updated-icon{
+    
+    color: #15803d;
+    width: 40px;
+    height: 40px;
+}
+
+.modal-content{
+    display:flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.modal-content h3{
+    margin: 0;
+    font-size: 18px;
+}
+
+.modal-content p{
+    margin: 0;
+    color: #374151;
+}
+
+.modal-update-button{
+    padding: 10px 18px;
+    background-color: #4602c5;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.modal-update-button:hover{
+    background-color: #24035a;
 }
