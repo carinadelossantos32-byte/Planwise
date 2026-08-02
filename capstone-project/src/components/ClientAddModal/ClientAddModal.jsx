@@ -40,8 +40,8 @@ function ClientAddModal({ onClose, onSuccess }) {
     type: "",
     status: "",
     reason: "",
-    latitude: 14.82,
-    longitude: 121.05,
+    latitude: 14.8436,
+    longitude: 120.8114,
     classes_held: ""
   });
 
@@ -50,6 +50,7 @@ function ClientAddModal({ onClose, onSuccess }) {
   const [existingRecord, setExistingRecord] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
 
+  // Auto-geocode based on Address + Barangay
   useEffect(() => {
     if (!formData.address.trim() && !formData.barangay.trim()) return;
 
@@ -103,21 +104,29 @@ function ClientAddModal({ onClose, onSuccess }) {
           latitude: parseFloat(e.latlng.lat.toFixed(6)),
           longitude: parseFloat(e.latlng.lng.toFixed(6))
         }));
+        if (errors.latitude || errors.longitude) {
+          setErrors((prev) => ({ ...prev, latitude: "", longitude: "" }));
+        }
       }
     });
     return null;
   }
 
   const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    if (errors[e.target.name]) {
-      setErrors({ ...errors, [e.target.name]: "" });
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
   const handleCoordinateChange = (e) => {
-    const val = e.target.value === "" ? "" : parseFloat(e.target.value);
-    setFormData({ ...formData, [e.target.name]: val });
+    const { name, value } = e.target;
+    const val = value === "" ? "" : parseFloat(value);
+    setFormData((prev) => ({ ...prev, [name]: val }));
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   };
 
   const handleAdd = async (e) => {
@@ -145,7 +154,13 @@ function ClientAddModal({ onClose, onSuccess }) {
     ];
 
     mandatoryFields.forEach((key) => {
-      if (formData[key] === undefined || formData[key] === null || String(formData[key]).trim() === "") {
+      const val = formData[key];
+      if (
+        val === undefined ||
+        val === null ||
+        (typeof val === "string" && val.trim() === "") ||
+        (typeof val === "number" && isNaN(val))
+      ) {
         newErrors[key] = "This field is required";
         isValid = false;
       }
@@ -230,251 +245,330 @@ function ClientAddModal({ onClose, onSuccess }) {
             <h2>Create New Public Record</h2>
           </div>
 
-          <div className="modal-body">
-            <h3>Please verify that all entries are correct and no fields remain empty for secure processing.</h3>
+          <form onSubmit={handleAdd}>
+            <div className="modal-body">
+              <h3>Please verify that all entries are correct and no fields remain empty for secure processing.</h3>
 
-            <form className="form-grid" onSubmit={handleAdd}>
+              <div className="form-grid">
 
-              <div className="form-group">
-                <label>Male Partner</label>
-                <input name="name" value={formData.name} onChange={handleInputChange}
-                  placeholder="Male Partner" className={errors.name ? "input-error" : ""} />
-                {errors.name && <span className="error-text">{errors.name}</span>}
-              </div>
-
-              <div className="form-group">
-                <label>Female Partner</label>
-                <input name="spouse_name" value={formData.spouse_name} onChange={handleInputChange}
-                  placeholder="Female Partner" className={errors.spouse_name ? "input-error" : ""} />
-                {errors.spouse_name && <span className="error-text">{errors.spouse_name}</span>}
-              </div>
-
-              <div className="form-group">
-                <label>Birthdate Male</label>
-                <input type="date" name="birthdate_male" value={formData.birthdate_male}
-                  onChange={handleInputChange} className={errors.birthdate_male ? "input-error" : ""} />
-                {errors.birthdate_male && <span className="error-text">{errors.birthdate_male}</span>}
-              </div>
-
-              <div className="form-group">
-                <label>Birthdate Female</label>
-                <input type="date" name="birthdate_female" value={formData.birthdate_female}
-                  onChange={handleInputChange} className={errors.birthdate_female ? "input-error" : ""} />
-                {errors.birthdate_female && <span className="error-text">{errors.birthdate_female}</span>}
-              </div>
-
-              <div className="form-group">
-                <label>Educational Attainment Male</label>
-                <select name="educational_attainment_male" value={formData.educational_attainment_male}
-                  onChange={handleInputChange} className={errors.educational_attainment_male ? "input-error" : ""}>
-                  <option value="">Select</option>
-                  <option value="No Education">1 - No Education</option>
-                  <option value="Elementary Level">2 - Elementary Level</option>
-                  <option value="Elementary Graduate">3 - Elementary Graduate</option>
-                  <option value="High School Level">4 - High School Level</option>
-                  <option value="High School Graduate">5 - High School Graduate</option>
-                  <option value="Vocational">6 - Vocational</option>
-                  <option value="College Level">7 - College Level</option>
-                  <option value="College Graduate">8 - College Graduate</option>
-                  <option value="Post Graduate">9 - Post Graduate</option>
-                </select>
-                {errors.educational_attainment_male && <span className="error-text">{errors.educational_attainment_male}</span>}
-              </div>
-
-              <div className="form-group">
-                <label>Educational Attainment Female</label>
-                <select name="educational_attainment_female" value={formData.educational_attainment_female}
-                  onChange={handleInputChange} className={errors.educational_attainment_female ? "input-error" : ""}>
-                  <option value="">Select</option>
-                  <option value="No Education">1 - No Education</option>
-                  <option value="Elementary Level">2 - Elementary Level</option>
-                  <option value="Elementary Graduate">3 - Elementary Graduate</option>
-                  <option value="High School Level">4 - High School Level</option>
-                  <option value="High School Graduate">5 - High School Graduate</option>
-                  <option value="Vocational">6 - Vocational</option>
-                  <option value="College Level">7 - College Level</option>
-                  <option value="College Graduate">8 - College Graduate</option>
-                  <option value="Post Graduate">9 - Post Graduate</option>
-                </select>
-                {errors.educational_attainment_female && <span className="error-text">{errors.educational_attainment_female}</span>}
-              </div>
-
-              <div className="form-group">
-                <label>Civil Status Male</label>
-                <select name="civil_status_male" value={formData.civil_status_male}
-                  onChange={handleInputChange} className={errors.civil_status_male ? "input-error" : ""}>
-                  <option value="">Select</option>
-                  <option value="Single">1 - Single</option>
-                  <option value="Married">2 - Married</option>
-                  <option value="Widowed">3 - Widowed</option>
-                  <option value="Separated">4 - Separated</option>
-                  <option value="Live-In">5 - Live-In</option>
-                </select>
-                {errors.civil_status_male && <span className="error-text">{errors.civil_status_male}</span>}
-              </div>
-
-              <div className="form-group">
-                <label>Civil Status Female</label>
-                <select name="civil_status_female" value={formData.civil_status_female}
-                  onChange={handleInputChange} className={errors.civil_status_female ? "input-error" : ""}>
-                  <option value="">Select</option>
-                  <option value="Single">1 - Single</option>
-                  <option value="Married">2 - Married</option>
-                  <option value="Widowed">3 - Widowed</option>
-                  <option value="Separated">4 - Separated</option>
-                  <option value="Live-In">5 - Live-In</option>
-                </select>
-                {errors.civil_status_female && <span className="error-text">{errors.civil_status_female}</span>}
-              </div>
-
-              <div className="form-group">
-                <label>Address {isSearching && <span style={{ color: "#3b82f6", fontSize: "12px" }}>(Searching Map...)</span>}</label>
-                <input name="address" value={formData.address} onChange={handleInputChange}
-                  placeholder="Address" className={errors.address ? "input-error" : ""} />
-                {errors.address && <span className="error-text">{errors.address}</span>}
-              </div>
-
-              <div className="form-group">
-                <label>Barangay</label>
-                <input name="barangay" value={formData.barangay} onChange={handleInputChange}
-                  placeholder="Barangay" className={errors.barangay ? "input-error" : ""} />
-                {errors.barangay && <span className="error-text">{errors.barangay}</span>}
-              </div>
-
-              <div className="form-group">
-                <label>Latitude</label>
-                <input type="number" step="any" name="latitude" value={formData.latitude} onChange={handleCoordinateChange}
-                  className={errors.latitude ? "input-error" : ""} />
-                {errors.latitude && <span className="error-text">{errors.latitude}</span>}
-              </div>
-
-              <div className="form-group">
-                <label>Longitude</label>
-                <input type="number" step="any" name="longitude" value={formData.longitude} onChange={handleCoordinateChange}
-                  className={errors.longitude ? "input-error" : ""} />
-                {errors.longitude && <span className="error-text">{errors.longitude}</span>}
-              </div>
-
-              {/* Leaflet Visualization Block */}
-              <div className="form-group" style={{ gridColumn: "1 / -1", height: "250px", marginBottom: "15px" }}>
-                <label style={{ marginBottom: "5px", display: "block" }}>Location Visual Verification</label>
-                <MapContainer
-                  center={[formData.latitude || 14.82, formData.longitude || 121.05]}
-                  zoom={13}
-                  style={{ height: "100%", width: "100%", borderRadius: "4px", zIndex: "1" }}
-                >
-                  <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                <div className="form-group">
+                  <label>Male Partner</label>
+                  <input
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    placeholder="Male Partner"
+                    className={errors.name ? "input-error" : ""}
                   />
-                  <MapClickHandler />
-                  <ChangeMapView coords={[formData.latitude, formData.longitude]} />
-                  {formData.latitude && formData.longitude && (
-                    <Marker position={[formData.latitude, formData.longitude]} />
-                  )}
-                </MapContainer>
-              </div>
+                  {errors.name && <span className="error-text">{errors.name}</span>}
+                </div>
 
-              <div className="form-group">
-                <label>No. of Children</label>
-                <input type="number" name="no_of_children" value={formData.no_of_children}
-                  onChange={handleInputChange} min="0" className={errors.no_of_children ? "input-error" : ""} />
-                {errors.no_of_children && <span className="error-text">{errors.no_of_children}</span>}
-              </div>
+                <div className="form-group">
+                  <label>Female Partner</label>
+                  <input
+                    name="spouse_name"
+                    value={formData.spouse_name}
+                    onChange={handleInputChange}
+                    placeholder="Female Partner"
+                    className={errors.spouse_name ? "input-error" : ""}
+                  />
+                  {errors.spouse_name && <span className="error-text">{errors.spouse_name}</span>}
+                </div>
 
-              <div className="form-group">
-                <label>Method Used</label>
-                <select name="fp_method" value={formData.fp_method} onChange={handleInputChange}>
-                  <option value="">Select</option>
-                  <option value="Condom">1 - Condom</option>
-                  <option value="IUD">2 - IUD</option>
-                  <option value="Pills">3 - Pills</option>
-                  <option value="Injectable">4 - Injectable</option>
-                  <option value="Vasectomy">5 - Vasectomy</option>
-                  <option value="Tubal Ligation">6 - Tubal Ligation</option>
-                  <option value="Implant">7 - Implant</option>
-                  <option value="CMM/Billings">8 - CMM/Billings</option>
-                  <option value="BBT">9 - BBT</option>
-                  <option value="Symptothermal">10 - Symptothermal</option>
-                  <option value="SDM">11 - SDM</option>
-                  <option value="LAM">12 - LAM</option>
-                </select>
-              </div>
+                <div className="form-group">
+                  <label>Birthdate Male</label>
+                  <input
+                    type="date"
+                    name="birthdate_male"
+                    value={formData.birthdate_male}
+                    onChange={handleInputChange}
+                    className={errors.birthdate_male ? "input-error" : ""}
+                  />
+                  {errors.birthdate_male && <span className="error-text">{errors.birthdate_male}</span>}
+                </div>
 
-              <div className="form-group">
-                <label>Intention to Shift</label>
-                <select name="intention_to_shift" value={formData.intention_to_shift} onChange={handleInputChange}>
-                  <option value="">Select</option>
-                  <option value="Condom">1 - Condom</option>
-                  <option value="IUD">2 - IUD</option>
-                  <option value="Pills">3 - Pills</option>
-                  <option value="Injectable">4 - Injectable</option>
-                  <option value="Vasectomy">5 - Vasectomy</option>
-                  <option value="Tubal Ligation">6 - Tubal Ligation</option>
-                  <option value="Implant">7 - Implant</option>
-                  <option value="CMM/Billings">8 - CMM/Billings</option>
-                  <option value="BBT">9 - BBT</option>
-                  <option value="Symptothermal">10 - Symptothermal</option>
-                  <option value="SDM">11 - SDM</option>
-                  <option value="LAM">12 - LAM</option>
-                </select>
-              </div>
+                <div className="form-group">
+                  <label>Birthdate Female</label>
+                  <input
+                    type="date"
+                    name="birthdate_female"
+                    value={formData.birthdate_female}
+                    onChange={handleInputChange}
+                    className={errors.birthdate_female ? "input-error" : ""}
+                  />
+                  {errors.birthdate_female && <span className="error-text">{errors.birthdate_female}</span>}
+                </div>
 
-              <div className="form-group">
-                <label>Traditional FP User: Type</label>
-                <select name="type" value={formData.type} onChange={handleInputChange}>
-                  <option value="">Select</option>
-                  <option value="Withdrawal">1 - Withdrawal</option>
-                  <option value="Rhythm">2 - Rhythm</option>
-                  <option value="Calendar">3 - Calendar</option>
-                  <option value="Abstinence">4 - Abstinence</option>
-                  <option value="Herbal">5 - Herbal</option>
-                  <option value="No Method">6 - No Method</option>
-                </select>
-              </div>
+                <div className="form-group">
+                  <label>Educational Attainment Male</label>
+                  <select
+                    name="educational_attainment_male"
+                    value={formData.educational_attainment_male}
+                    onChange={handleInputChange}
+                    className={errors.educational_attainment_male ? "input-error" : ""}
+                  >
+                    <option value="">Select</option>
+                    <option value="No Education">1 - No Education</option>
+                    <option value="Elementary Level">2 - Elementary Level</option>
+                    <option value="Elementary Graduate">3 - Elementary Graduate</option>
+                    <option value="High School Level">4 - High School Level</option>
+                    <option value="High School Graduate">5 - High School Graduate</option>
+                    <option value="Vocational">6 - Vocational</option>
+                    <option value="College Level">7 - College Level</option>
+                    <option value="College Graduate">8 - College Graduate</option>
+                    <option value="Post Graduate">9 - Post Graduate</option>
+                  </select>
+                  {errors.educational_attainment_male && <span className="error-text">{errors.educational_attainment_male}</span>}
+                </div>
 
-              <div className="form-group">
-                <label>Traditional FP User: Status</label>
-                <select name="status" value={formData.status} onChange={handleInputChange}>
-                  <option value="">Select</option>
-                  <option value="Expressing Intention to Use Modern FP">A - Expressing Intention to Use Modern FP</option>
-                  <option value="Undecided">B - Undecided</option>
-                  <option value="Currently Pregnant">C - Currently Pregnant</option>
-                  <option value="No Intention to Use">D - No Intention to Use</option>
-                </select>
-              </div>
+                <div className="form-group">
+                  <label>Educational Attainment Female</label>
+                  <select
+                    name="educational_attainment_female"
+                    value={formData.educational_attainment_female}
+                    onChange={handleInputChange}
+                    className={errors.educational_attainment_female ? "input-error" : ""}
+                  >
+                    <option value="">Select</option>
+                    <option value="No Education">1 - No Education</option>
+                    <option value="Elementary Level">2 - Elementary Level</option>
+                    <option value="Elementary Graduate">3 - Elementary Graduate</option>
+                    <option value="High School Level">4 - High School Level</option>
+                    <option value="High School Graduate">5 - High School Graduate</option>
+                    <option value="Vocational">6 - Vocational</option>
+                    <option value="College Level">7 - College Level</option>
+                    <option value="College Graduate">8 - College Graduate</option>
+                    <option value="Post Graduate">9 - Post Graduate</option>
+                  </select>
+                  {errors.educational_attainment_female && <span className="error-text">{errors.educational_attainment_female}</span>}
+                </div>
 
-              <div className="form-group">
-                <label>Reason</label>
-                <select name="reason" value={formData.reason} onChange={handleInputChange}>
-                  <option value="">Select</option>
-                  <option value="Spacing">1 - Spacing</option>
-                  <option value="Limiting">2 - Limiting</option>
-                  <option value="Achieving">3 - Achieving</option>
-                </select>
-              </div>
+                <div className="form-group">
+                  <label>Civil Status Male</label>
+                  <select
+                    name="civil_status_male"
+                    value={formData.civil_status_male}
+                    onChange={handleInputChange}
+                    className={errors.civil_status_male ? "input-error" : ""}
+                  >
+                    <option value="">Select</option>
+                    <option value="Single">1 - Single</option>
+                    <option value="Married">2 - Married</option>
+                    <option value="Widowed">3 - Widowed</option>
+                    <option value="Separated">4 - Separated</option>
+                    <option value="Live-In">5 - Live-In</option>
+                  </select>
+                  {errors.civil_status_male && <span className="error-text">{errors.civil_status_male}</span>}
+                </div>
 
-              <div className="form-group">
-                <label>Classes Held</label>
-                <select name="classes_held" value={formData.classes_held} onChange={handleInputChange}>
-                  <option value="">Select</option>
-                  <option value="4Ps">4Ps</option>
-                  <option value="Non-4Ps">Non-4Ps</option>
-                  <option value="Faith-Based Organization">Faith-Based Organization</option>
-                  <option value="USAPAN">USAPAN</option>
-                  <option value="PMOC">PMOC</option>
-                  <option value="House to House">House to House</option>
-                  <option value="Profiled Only">Profiled Only</option>
-                  <option value="Others">Others</option>
-                </select>
-              </div>
+                <div className="form-group">
+                  <label>Civil Status Female</label>
+                  <select
+                    name="civil_status_female"
+                    value={formData.civil_status_female}
+                    onChange={handleInputChange}
+                    className={errors.civil_status_female ? "input-error" : ""}
+                  >
+                    <option value="">Select</option>
+                    <option value="Single">1 - Single</option>
+                    <option value="Married">2 - Married</option>
+                    <option value="Widowed">3 - Widowed</option>
+                    <option value="Separated">4 - Separated</option>
+                    <option value="Live-In">5 - Live-In</option>
+                  </select>
+                  {errors.civil_status_female && <span className="error-text">{errors.civil_status_female}</span>}
+                </div>
 
-              <div className="modal-btn" style={{ gridColumn: "1 / -1", display: "flex", gap: "10px", marginTop: "15px" }}>
-                <button type="button" className="btn-cancel" onClick={onClose}>Cancel</button>
-                <button type="submit" className="btn-save">Create Record</button>
+                <div className="form-group">
+                  <label>Address {isSearching && <span style={{ color: "#3b82f6", fontSize: "12px" }}>(Searching Map...)</span>}</label>
+                  <input
+                    name="address"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                    placeholder="Address"
+                    className={errors.address ? "input-error" : ""}
+                  />
+                  {errors.address && <span className="error-text">{errors.address}</span>}
+                </div>
+
+                <div className="form-group">
+                  <label>Barangay</label>
+                  <input
+                    name="barangay"
+                    value={formData.barangay}
+                    onChange={handleInputChange}
+                    placeholder="Barangay"
+                    className={errors.barangay ? "input-error" : ""}
+                  />
+                  {errors.barangay && <span className="error-text">{errors.barangay}</span>}
+                </div>
+
+                <div className="form-group">
+                  <label>Latitude</label>
+                  <input
+                    type="number"
+                    step="any"
+                    name="latitude"
+                    value={formData.latitude}
+                    onChange={handleCoordinateChange}
+                    className={errors.latitude ? "input-error" : ""}
+                  />
+                  {errors.latitude && <span className="error-text">{errors.latitude}</span>}
+                </div>
+
+                <div className="form-group">
+                  <label>Longitude</label>
+                  <input
+                    type="number"
+                    step="any"
+                    name="longitude"
+                    value={formData.longitude}
+                    onChange={handleCoordinateChange}
+                    className={errors.longitude ? "input-error" : ""}
+                  />
+                  {errors.longitude && <span className="error-text">{errors.longitude}</span>}
+                </div>
+
+                {/* Leaflet Visualization Block */}
+                <div className="form-group" style={{ gridColumn: "1 / -1", height: "250px", marginBottom: "15px" }}>
+                  <label style={{ marginBottom: "5px", display: "block" }}>Location Visual Verification</label>
+                  <MapContainer
+                    center={[formData.latitude || 14.8436, formData.longitude || 120.8114]}
+                    zoom={13}
+                    style={{ height: "100%", width: "100%", borderRadius: "4px", zIndex: "1" }}
+                  >
+                    <TileLayer
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    <MapClickHandler />
+                    <ChangeMapView coords={[formData.latitude, formData.longitude]} />
+                    {formData.latitude && formData.longitude && (
+                      <Marker position={[formData.latitude, formData.longitude]} />
+                    )}
+                  </MapContainer>
+                </div>
+
+                <div className="form-group">
+                  <label>No. of Children</label>
+                  <input
+                    type="number"
+                    name="no_of_children"
+                    value={formData.no_of_children}
+                    onChange={handleInputChange}
+                    min="0"
+                    className={errors.no_of_children ? "input-error" : ""}
+                  />
+                  {errors.no_of_children && <span className="error-text">{errors.no_of_children}</span>}
+                </div>
+
+                <div className="form-group">
+                  <label>Method Used</label>
+                  <select
+                    name="fp_method"
+                    value={formData.fp_method}
+                    onChange={handleInputChange}
+                    className={errors.fp_method ? "input-error" : ""}
+                  >
+                    <option value="">Select</option>
+                    <option value="Condom">1 - Condom</option>
+                    <option value="IUD">2 - IUD</option>
+                    <option value="Pills">3 - Pills</option>
+                    <option value="Injectable">4 - Injectable</option>
+                    <option value="Vasectomy">5 - Vasectomy</option>
+                    <option value="Tubal Ligation">6 - Tubal Ligation</option>
+                    <option value="Implant">7 - Implant</option>
+                    <option value="CMM/Billings">8 - CMM/Billings</option>
+                    <option value="BBT">9 - BBT</option>
+                    <option value="Symptothermal">10 - Symptothermal</option>
+                    <option value="SDM">11 - SDM</option>
+                    <option value="LAM">12 - LAM</option>
+                  </select>
+                  {errors.fp_method && <span className="error-text">{errors.fp_method}</span>}
+                </div>
+
+                <div className="form-group">
+                  <label>Intention to Shift</label>
+                  <select name="intention_to_shift" value={formData.intention_to_shift} onChange={handleInputChange}>
+                    <option value="">Select</option>
+                    <option value="Condom">1 - Condom</option>
+                    <option value="IUD">2 - IUD</option>
+                    <option value="Pills">3 - Pills</option>
+                    <option value="Injectable">4 - Injectable</option>
+                    <option value="Vasectomy">5 - Vasectomy</option>
+                    <option value="Tubal Ligation">6 - Tubal Ligation</option>
+                    <option value="Implant">7 - Implant</option>
+                    <option value="CMM/Billings">8 - CMM/Billings</option>
+                    <option value="BBT">9 - BBT</option>
+                    <option value="Symptothermal">10 - Symptothermal</option>
+                    <option value="SDM">11 - SDM</option>
+                    <option value="LAM">12 - LAM</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Traditional FP User: Type</label>
+                  <select name="type" value={formData.type} onChange={handleInputChange}>
+                    <option value="">Select</option>
+                    <option value="Withdrawal">1 - Withdrawal</option>
+                    <option value="Rhythm">2 - Rhythm</option>
+                    <option value="Calendar">3 - Calendar</option>
+                    <option value="Abstinence">4 - Abstinence</option>
+                    <option value="Herbal">5 - Herbal</option>
+                    <option value="No Method">6 - No Method</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Traditional FP User: Status</label>
+                  <select name="status" value={formData.status} onChange={handleInputChange}>
+                    <option value="">Select</option>
+                    <option value="Expressing Intention to Use Modern FP">A - Expressing Intention to Use Modern FP</option>
+                    <option value="Undecided">B - Undecided</option>
+                    <option value="Currently Pregnant">C - Currently Pregnant</option>
+                    <option value="No Intention to Use">D - No Intention to Use</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Reason</label>
+                  <select name="reason" value={formData.reason} onChange={handleInputChange}>
+                    <option value="">Select</option>
+                    <option value="Spacing">1 - Spacing</option>
+                    <option value="Limiting">2 - Limiting</option>
+                    <option value="Achieving">3 - Achieving</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Classes Held</label>
+                  <select
+                    name="classes_held"
+                    value={formData.classes_held}
+                    onChange={handleInputChange}
+                    className={errors.classes_held ? "input-error" : ""}
+                  >
+                    <option value="">Select</option>
+                    <option value="4Ps">4Ps</option>
+                    <option value="Non-4Ps">Non-4Ps</option>
+                    <option value="Faith-Based Organization">Faith-Based Organization</option>
+                    <option value="USAPAN">USAPAN</option>
+                    <option value="PMOC">PMOC</option>
+                    <option value="House to House">House to House</option>
+                    <option value="Profiled Only">Profiled Only</option>
+                    <option value="Others">Others</option>
+                  </select>
+                  {errors.classes_held && <span className="error-text">{errors.classes_held}</span>}
+                </div>
+
               </div>
-            </form>
-          </div>
+            </div>
+
+            <div className="modal-btn">
+              <button type="button" className="btn-cancel-cr" onClick={onClose}>Cancel</button>
+              <button type="submit" className="btn-save">Create Record</button>
+            </div>
+          </form>
         </div>
       </div>
 
@@ -520,16 +614,16 @@ function ClientAddModal({ onClose, onSuccess }) {
               <p className="dup-legend">🟡 Highlighted fields have different values.</p>
 
               <div className="dup-actions">
-                <button className="dup-btn-cancel" onClick={() => { setDupModalOpen(false); setExistingRecord(null); }}>
+                <button type="button" className="dup-btn-cancel" onClick={() => { setDupModalOpen(false); setExistingRecord(null); }}>
                   Cancel (go back)
                 </button>
-                <button className="dup-btn-skip" onClick={() => { setDupModalOpen(false); onClose(); }}>
+                <button type="button" className="dup-btn-skip" onClick={() => { setDupModalOpen(false); onClose(); }}>
                   Skip (don't save)
                 </button>
-                <button className="dup-btn-overwrite" onClick={() => { setDupModalOpen(false); saveRecord(existingRecord.id); }}>
+                <button type="button" className="dup-btn-overwrite" onClick={() => { setDupModalOpen(false); saveRecord(existingRecord.id); }}>
                   Overwrite Existing
                 </button>
-                <button className="dup-btn-save" onClick={() => { setDupModalOpen(false); saveRecord(); }}>
+                <button type="button" className="dup-btn-save" onClick={() => { setDupModalOpen(false); saveRecord(); }}>
                   Save as New
                 </button>
               </div>

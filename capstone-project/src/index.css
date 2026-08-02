@@ -11,12 +11,12 @@ body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  background-color: #f5f5f5;
+  background-color: #E4ECFF;
   color: #000000;
 }
 
 input{
-  background:white;
+  background:#E4ECFF;
   border:1px solid #d1d5db;
   border-radius:10px;
 }
@@ -40,7 +40,7 @@ input{
 }
 
 body {
-  background-color: white;
+  background-color: #E4ECFF;
   color: black;
 }
 .toggle:before{

@@ -2,7 +2,7 @@
 .modal-overlay-edit {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.644);
+  background: rgba(27, 27, 27, 0.644);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -15,7 +15,7 @@
   border-radius: 15px;
   width: 90%;
   max-width: 900px;
-  max-height: 80vh;
+  max-height: 500px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
@@ -27,9 +27,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 34px;
+  padding: 17px 24px;
   border-bottom: 1px solid #e5e7eb;
-  background: #5415e9;
+  background: #f97316;
 }
 
 .modal-header-edit h2 {
@@ -66,7 +66,7 @@
 .modal-body-edit h3{
     font-size: 15px;
     font-weight: 400;
-    color: #5417e9;
+    color: #f97316;
     font-family: 'Segoe UI', sans-serif;
     margin-bottom: 25px;
     
@@ -107,8 +107,8 @@
 
 .form-group-edit input:focus,
 .form-group-edit select:focus {
-  border-color: #5415e9;
-  box-shadow: 0 0 0 3px rgba(19, 160, 54, 0.1);
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(228, 178, 14, 0.137);
 }
 
 /* BUTTON */
@@ -121,41 +121,39 @@
   
 }
 
-
-
-.btn-cancel {
-  padding: 8px 38px;
+.btn-cancel-cr {
+  padding: 11px 38px;
   border-radius: 6px;
-  border: 1px solid #d1d5db;
-  background: #e94646;
-  color: #ffffff;
+  background: #f3f4f6;
+  color: #374151;
   font-size: 14px;
   cursor: pointer;
   margin-right: 13px;
 }
 
-.btn-cancel:hover {
-  background: #eb7474;
-    color: #fff;
+.btn-cancel-cr:hover {
+ background: #e5e7eb;
 }
 
 .btn-edit {
   padding: 10px 18px;
   border-radius: 6px;
   border: none;
-  background: #5415e9;
+  background: #f97316;
   color: #ffffff;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   justify-content: center;
+  align-items: center;
   display: inline-flex;
   margin-left: 10px;
   gap: 6px;
 }
 
 .btn-edit:hover {
-  background: #7856c7;
+  background: #ff8b39c2;
+  color: #a14909;
 }
 
 /* RESPONSIVE */

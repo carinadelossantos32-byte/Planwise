@@ -2,7 +2,7 @@
 .modal-overlay-delete {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(27, 27, 27, 0.644);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -49,7 +49,7 @@
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: #f97316;
+  background: #a70707;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -73,7 +73,7 @@
 }
 
 .archive-name {
-  color: #f97316;
+  color: #a70707;
   font-weight: 600;
 }
 
@@ -106,7 +106,7 @@
   padding: 12px;
   border-radius: 10px;
   border: none;
-  background: #f97316;
+  background: #a70707;
   color: #fff;
   font-size: 0.9rem;
   font-weight: 600;
@@ -118,7 +118,8 @@
 }
 
 .btn-archive:hover {
-  background: #ea6c0a;
+  background-color: #a707078f;
+  color: #810909;
 }
 
 /* FOOTER NOTE */

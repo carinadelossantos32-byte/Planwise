@@ -4,7 +4,7 @@ const normalizeKoboValue = (value) => {
     if (!value) return "";
 
     return String(value)
-        // remove Kobo prefixes like 1___, 8___, a___, etc.
+        // remove Kobo prefixes 1___, 8___, a___, etc.
         .replace(/^[0-9a-zA-Z]+___/, "")
         // convert option_9 -> ""
         .replace(/^option_\d+$/, "")
@@ -31,6 +31,7 @@ export const PUBLIC_FORM_CONFIG = {
         { label: "Civil Status (F)", key: "civil_status_female" },
         { label: "Birthdate (M)", key: "birthdate_male" },
         { label: "Birthdate (F)", key: "birthdate_female" },
+        { label: "Classes Held", key: "classes_held"},
         { label: "Address", key: "address" },
         { label: "Barangay", key: "barangay" },
         { label: "Educational Attainment (M)", key: "educational_attainment_male" },
@@ -47,6 +48,7 @@ export const PUBLIC_FORM_CONFIG = {
             birthdate_male: survey["Kailan_ipinanganak_a_laki_Birthday_Male"] || "",
             birthdate_female: survey["Kailan_ipinanganak_a_ae_Birthday_Female"] || "",
 
+            classes_held: survey["Classes_Held"] || "",
             educational_attainment_male: normalizeKoboValue(
                 survey["Ano_ang_pinakamataas_onal_Attainment_Male"]
             ),
@@ -63,8 +65,9 @@ export const PUBLIC_FORM_CONFIG = {
             no_of_children: survey["No_of_Children"] ? String(survey["No_of_Children"]) : "0",
             fp_method: survey["Method_Used"] || "",
 
-            latitude: survey._geolocation ? parseFloat(survey._geolocation[0]) : 14.8534,
-            longitude: survey._geolocation ? parseFloat(survey._geolocation[1]) : 120.8174,
+            latitude: survey._geolocation ? parseFloat(survey._geolocation[0]) : 14.8436,
+            longitude: survey._geolocation ? parseFloat(survey._geolocation[1]) : 120.8114,
+
         };
 
         client._errors = [];

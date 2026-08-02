@@ -27,13 +27,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 34px;
+  padding: 17px 34px;
   border-bottom: 1px solid #e5e7eb;
   background: #16a34a;
 }
 
 .modal-header h2 {
-  font-size: 17px;
+  font-size: 18px;
   font-family: 'Segoe UI', sans-serif;
   font-weight: 600;
   margin: 0;
@@ -71,7 +71,7 @@
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 19px;
 }
 
 .form-group label {
@@ -104,21 +104,19 @@
 .modal-btn {
   display: flex;
   justify-content: center;
-  padding: 10px 5px 10px 0;
+  padding: 11px 5px 11px 0;
   border-top: 1px solid #e5e7eb;
   margin:0;
   
 }
 
-
-
 .btn-cancel {
-  padding: 8px 38px;
+  padding: 9px 38px;
   border-radius: 6px;
   border: 1px solid #d1d5db;
   background: #e94646;
   color: #ffffff;
-  font-size: 14px;
+  font-size: 15px;
   cursor: pointer;
   margin-right: 13px;
 }
@@ -129,12 +127,12 @@
 }
 
 .btn-save {
-  padding: 10px 18px;
+  padding: 15px 18px;
   border-radius: 6px;
   border: none;
   background: #16a34a;
   color: #ffffff;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   cursor: pointer;
   justify-content: center;

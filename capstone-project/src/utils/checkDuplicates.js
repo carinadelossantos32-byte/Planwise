@@ -8,17 +8,20 @@ export const findDuplicate = async (collectionName, tabType, record) => {
   if (tabType === "public") {
     q = query(ref,
       where("name", "==", record.name.trim()),
-      where("spouse_name", "==", (record.spouse_name || "").trim())
+      where("spouse_name", "==", (record.spouse_name || "").trim()),
+      where("is_archived", "==", false)
     );
   } else if (tabType === "private") {
     q = query(ref,
       where("name", "==", record.name.trim()),
-      where("birthdate", "==", (record.birthdate || "").trim())
+      where("birthdate", "==", (record.birthdate || "").trim()),
+      where("is_archived", "==", false)
     );
   } else if (tabType === "referred") {
     q = query(ref,
       where("name", "==", record.name.trim()),
-      where("address", "==", (record.address || "").trim())
+      where("address", "==", (record.address || "").trim()),
+      where("is_archived", "==", false)
     );
   }
 
