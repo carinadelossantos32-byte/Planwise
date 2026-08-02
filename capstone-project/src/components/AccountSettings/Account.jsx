@@ -1,4 +1,4 @@
-// import "./account.css"
+import "./account.css"
 import Settings from "../../pages/Settings/settings";
 import { Camera, CheckCircle,CardSim } from 'lucide-react';
 import { useState,useEffect } from "react";
@@ -104,66 +104,66 @@ function Account(){
         <>
         
 
-<div className=" p-2 w-full bg-gray-100 min-h-screen flex flex-col ">
-    <h1 className="text-2xl font-bold mb-0 mt-0 p-0">Account Settings</h1>
-    <p className="text-sm text-[#444343] mt-0 p-0 mb-2">Manage your personal information and preferences</p>
+<div id="account-settings-page">
+    <h1 >Account Settings</h1>
+    <p >Manage your personal information and preferences</p>
 
-    <div className="card bg-white border border-gray-300 rounded-lg p-3 w-full flex-1 mx-auto my-20 mt-6">
-        <div className="card-body">
-            <h2 className="text-xl font-bold mb-4">Profile Information</h2>
+    <div  id="account-settings-container">
+            <h2 >Profile Information</h2>
 
-            <div className="flex gap-5">
+            
 
                 {/* Form */}
-                <div className="flex flex-col flex-1 justify-between min-h-0 gap-4 mx-10 my-2">
-                    <div className="flex gap-10 ">
-                        <label className="flex flex-col flex-1 gap-1">
-                            <span className="font-semibold text-[16px] mb-0.5">Username</span>
+                <div id="personal-info">
+                    <div id="name-field">
+                            <h3>Username</h3>
                             <input type="text" placeholder="Enter your username" 
                             value={userData.username}
-                            className="bg-white text-black font-semibold  text-base border border-gray-900 placeholder:text-base placeholder:text-gray-500 placeholder:font-medium px-3 focus:outline-none! focus:border-[#4602c5]! w-120 h-12 rounded-xl transition-all duration-200"
                              onChange={verifyUsername}/>
-                             <p className="text-red-500 text-sm font-medium">{errors.username}</p>
-                    </label>
-
-                       
+                             <p className="error-text">{errors.username}</p>
                     </div>
+                
 
-                    <label className="flex flex-col gap-1 ">
-                        <span className="font-semibold text-[16px] mb-0.5">Email Address</span>
-                        <input type="email" placeholder="Enter your email address" 
-                         value={userData.email}
-                        className="bg-white font-semibold text-base border border-gray-500 placeholder:text-gray-500 placeholder:text-base placeholder:font-medium 
-                        px-3 focus:outline-none! focus:border-[#4602c5]! w-120 h-12 rounded-xl transition-all duration-200"
-                        onChange={verifyEmail}/> 
-                        <p className="text-red-500 text-sm font-medium">{errors.email}</p>
-                       </label>
+                 <div id="email-field" className="info-field">
+                            <h3>Email</h3>
+                            <input type="email" placeholder="Enter your email address" 
+                            value={userData.email}
+                             onChange={verifyEmail}/>
+                             <p className="error-text">{errors.email}</p>
+                </div>
 
-                    <label className="flex flex-col gap-1 ">
-                        <span className="font-semibold text-[16px] mb-0.5">Position</span>
-                        <div className="bg-gray-100 font-semibold text-base border border-gray-300 rounded-xl px-3 py-3 text-gray-900 flex items-center w-120 h-12">
-                            {userData.role === "cpd" ? "CPD Personnel" : "Health Personnel"}
+                <div id="position-field" className="info-field">
+                       <h3>Position</h3>
+                       <div id="position-display">
+                        {userData.role === "cpd" ? "CPD Personnel" : "Health Personnel"}
                         </div>
-                    </label>
+                </div>
+            </div>
 
-                    <div className="flex justify-end gap-5 py-0  mt-6">
-                        <button className="btn btn-outline bg-gray-100 hover:bg-gray-500 py-6 px-5 border rounded-md">Cancel</button>
-                        <button className="btn bg-[#4602c5] text-white hover:bg-[#24035a] border-none py-6  border rounded-md"
+              <div id="buttons-field">
+                        <button id="cancel-button">Cancel</button>
+                        <button id="save-button"
                         onClick={handleUpdateInfo}><CardSim className="w-5 h-5" />Update Changes
                         </button>
                     </div>
 
+            </div>
+
+
+                  
+
                     {showModal && (
-                        <div className="modal modal-open flex items-center justify-center">
-                            <div className="modal-box bg-white text-center flex flex-col items-center justify-between gap-6 px-8 py-6 rounded-2xl">
+                        <div className="modal-overlay">
+                            <div className="updated-modal-box">
                                 
-                             <div className="flex flex-col items-center text-center flex-1">
-                                <h3 className="font-bold text-lg">Updated Successfully!</h3>
-                                <p className="text-sm mb-2"> Your changes has been saved.</p>
-                                <CheckCircle className="w-10 h-10 text-green-500" />
+                             <div className="modal-content">
+                                <CheckCircle className="update-icon" />
+                                <h3 >Updated Successfully!</h3>
+                                <p> Your changes has been saved.</p>
+                                
                                 </div>
                           
-                                    <button className="btn w-20 h-12 bg-[#4602c5] text-base text-white hover:bg-[#24035a]  transition-all duration-200 border-none"
+                                    <button className="modal-update-button"
                                     onClick={()=>setShowModal(false)}>OK</button>
                               
                             </div>
@@ -180,12 +180,12 @@ function Account(){
                    
               
 
-            </div>
+           
                     
         </div>
-    </div>
-</div>
-   </div>    
+
+
+      
         </>
     )
 

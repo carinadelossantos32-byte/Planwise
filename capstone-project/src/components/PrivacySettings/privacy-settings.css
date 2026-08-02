@@ -10,11 +10,17 @@ h1{
     font-size: 24px;
     margin:20px 0 20px 0;
 }
+h3{
+    font-size: 20px;
+    font-weight: bold;
+    margin:0;
+}
 
 h5{
     font-size: 15px;
     font-weight: bold;
     color: #000000;
+
 }
 #privacy-settings-container{
     display: flex;
@@ -27,7 +33,8 @@ h5{
     background-color: #ffffff;
     height: auto;
     margin:20px auto;
-    width:90%;
+    width:95%;
+    height: auto;
     max-width:900px;
     box-sizing: border-box;
     
@@ -37,7 +44,8 @@ h5{
     display: flex;
     flex-direction: column;
     gap: 5px;
-    margin:0 0 20px 0;
+    margin-top: 15px;
+    padding-left: 10px; 
     width:100%;
     }
 #change-password-section{
@@ -46,36 +54,60 @@ h5{
     flex-direction: column;
     font-size: 18px;
     font-weight: bold;
-   margin:0;
+    margin:0;
 }
 
 #change-password-section input{
-  
-   height: 25px;
-   padding-right: 35px;
+    box-sizing: border-box;
+    width: 100%;
+    height: 48px;
+    padding: 10px 44px 10px 14px;
+    border: 1px solid #e6e6e6;
+    background: #ffffff;
+    border-radius: 10px;
+    font-size: 15px;
+    color: #111827;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+
+#change-password-section input:focus {
+    border-color: #4F39F6;
+    outline: none;
 }
 
 #change-password-section .password-input-wrapper{
     position: relative;
-   
-    width:50%;
-    
+    width: 70%; 
 }
 
 #change-password-section .password-input-wrapper input{
-    width: 100%;
-    height: 25px;
-    padding-right: 35px;
+    width: 100%; 
 }
 
-#change-password-section .password-input-wrapper img{
+.asterisk{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.asterisk h5{
+    margin: 0;
+}
+
+.password-toggle-icon{
     position: absolute;
-    right:-20px;
+    right: 12px;
     top: 50%;
     transform: translateY(-50%);
     cursor: pointer;
     width: 20px;
     height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color:#6b7280;
 }
 
 
@@ -91,9 +123,75 @@ h5{
     font-size: 16px;
     font-weight: bold;
     height:45px;
+    margin-left: 10px;
 }
 
 #update-password-button:hover{
     background-color: rgb(70, 0, 200);
     transition: background-color 0.2s ease;
+}
+
+.error-text{
+    color: #b91c1c;
+    font-size: 13px;
+    margin-top: 6px;
+}
+
+.modal-overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+}
+
+.success-modal-box{
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 24px;
+    width: 360px;
+    box-shadow: 0 10px 30px rgba(15,23,42,0.12);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    align-items: center;
+}
+.success-icon{
+    
+    color: #15803d;
+    width: 40px;
+    height: 40px;
+}
+
+.modal-content{
+    display:flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.modal-content h3{
+    margin: 0;
+    font-size: 18px;
+}
+
+.modal-content p{
+    margin: 0;
+    color: #374151;
+}
+
+.modal-ok-button{
+    padding: 10px 18px;
+    background-color: #4602c5;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.modal-ok-button:hover{
+    background-color: #24035a;
 }
