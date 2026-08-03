@@ -1,0 +1,596 @@
+/* =====================================================
+   FORM C ANALYTICS
+===================================================== */
+
+.form-c-container{
+    display:flex;
+    flex-direction:column;
+    gap:28px;
+    margin-top:20px;
+    width:100%;
+    max-width:100%;
+    box-sizing:border-box;
+}
+
+
+/* =====================================================
+   KPI CARDS
+===================================================== */
+
+.form-c-cards{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:20px;
+    width:100%;
+    max-width:100%;
+}
+
+.form-c-card{
+    min-width:0;
+    border-radius:16px;
+    padding:24px;
+    color:#fff;
+    box-shadow:0 10px 24px rgba(0,0,0,.08);
+    box-sizing:border-box;
+}
+
+
+.form-c-card small{
+    display:block;
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+    opacity:.9;
+    margin-bottom:12px;
+}
+
+.form-c-card h2{
+    margin:0;
+    font-size:36px;
+    font-weight:700;
+}
+
+.form-c-card span{
+    display:block;
+    margin-top:10px;
+    font-size:13px;
+    opacity:.9;
+}
+
+
+/* =====================================================
+   COLORS
+===================================================== */
+
+.form-c-card.blue{
+    background:linear-gradient(135deg,#2563eb,#60a5fa);
+}
+
+.form-c-card.green{
+    background:linear-gradient(135deg,#16a34a,#4ade80);
+}
+
+.form-c-card.orange{
+    background:linear-gradient(135deg,#ea580c,#fb923c);
+}
+
+
+/* =====================================================
+   METHOD SUMMARY
+===================================================== */
+
+.form-c-summary-card{
+    background:#fff;
+    border-radius:16px;
+    padding:28px;
+    box-shadow:0 8px 24px rgba(0,0,0,.05);
+
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    box-sizing:border-box;
+    overflow:hidden;
+}
+
+.form-c-summary-card h3{
+    margin:0 0 24px;
+    font-size:22px;
+    color:#1e293b;
+    font-weight:700;
+}
+
+.method-summary-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:24px;
+    width:100%;
+    max-width:100%;
+}
+
+.method-category{
+    background:#f8fafc;
+    border-radius:14px;
+    padding:20px;
+    border:1px solid #e2e8f0;
+
+    min-width:0;
+    max-width:100%;
+    box-sizing:border-box;
+    overflow:hidden;
+}
+
+.method-category h4{
+    margin:0 0 18px;
+    color:#2563eb;
+    font-size:17px;
+    font-weight:700;
+}
+
+.method-row{
+    display:grid;
+    grid-template-columns:minmax(45px,75px) minmax(0,1fr) minmax(35px,50px);
+    align-items:center;
+    gap:8px;
+    margin-bottom:16px;
+    min-width:0;
+}
+
+.method-row:last-child{
+    margin-bottom:0;
+}
+
+.method-row span{
+    color:#475569;
+    font-size:14px;
+    font-weight:500;
+
+    min-width:0;
+    overflow-wrap:anywhere;
+    word-break:break-word;
+}
+
+.method-progress{
+    height:8px;
+    background:#e2e8f0;
+    border-radius:999px;
+    overflow:hidden;
+    min-width:0;
+}
+
+.method-progress-fill{
+    height:100%;
+    border-radius:999px;
+    transition:.35s ease;
+}
+
+.method-row strong{
+    text-align:right;
+    color:#1e293b;
+    font-size:13px;
+
+    min-width:0;
+}
+
+
+/* =====================================================
+   MONTHLY SUMMARY
+===================================================== */
+
+.form-c-monthly-card{
+    background:#fff;
+    border-radius:16px;
+    padding:28px;
+    box-shadow:0 8px 24px rgba(0,0,0,.05);
+
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    box-sizing:border-box;
+    overflow:hidden;
+}
+
+.form-c-monthly-card h3{
+    margin:0 0 20px;
+    color:#1e293b;
+    font-size:22px;
+    font-weight:700;
+}
+
+
+/* =====================================================
+   MONTHLY TABLE
+===================================================== */
+
+.monthly-summary-table{
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    table-layout:fixed;
+    border-collapse:collapse;
+}
+
+.monthly-summary-table thead{
+    background:#2563eb;
+    color:#fff;
+}
+
+.monthly-summary-table th{
+    padding:10px 5px;
+    font-size:12px;
+    font-weight:600;
+    text-align:center;
+
+    white-space:normal;
+    word-break:break-word;
+    overflow-wrap:anywhere;
+    line-height:1.1;
+}
+
+.monthly-summary-table td{
+    padding:10px 5px;
+    text-align:center;
+    border-bottom:1px solid #e5e7eb;
+    font-size:13px;
+
+    white-space:normal;
+    word-break:break-word;
+    overflow-wrap:anywhere;
+}
+
+.monthly-summary-table tbody tr:nth-child(even){
+    background:#fafafa;
+}
+
+.monthly-summary-table tbody tr:hover{
+    background:#eff6ff;
+}
+
+.monthly-summary-table .highlight-method{
+    color:#2563eb;
+    font-weight:600;
+}
+
+.monthly-summary-table tfoot{
+    background:#dbeafe;
+    font-weight:700;
+}
+
+.monthly-summary-table tfoot td{
+    padding:10px 5px;
+}
+
+
+/* =====================================================
+   OFFICIAL REPORT
+===================================================== */
+
+.official-report-card{
+    background:#fff;
+    border-radius:16px;
+    padding:28px;
+    box-shadow:0 8px 24px rgba(0,0,0,.05);
+
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    box-sizing:border-box;
+}
+
+.official-report-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:24px;
+    gap:20px;
+
+    min-width:0;
+}
+
+.official-report-header h3{
+    margin:0;
+    font-size:24px;
+    color:#1e293b;
+}
+
+.official-report-header p{
+    margin-top:6px;
+    color:#64748b;
+    font-size:14px;
+}
+
+.official-report-table thead th:first-child,
+.official-report-table thead th:last-child{
+    background:#1d4ed8 !important;
+    color:#fff;
+}
+
+
+/* =====================================================
+   ACTION BUTTONS
+===================================================== */
+
+.report-buttons{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    max-width:100%;
+}
+
+.refresh-btn,
+.pdf-btn,
+.excel-btn{
+    border:none;
+    border-radius:8px;
+    padding:10px 18px;
+    cursor:pointer;
+    font-weight:600;
+    transition:.25s ease;
+}
+
+.refresh-btn{
+    background:#f3f4f6;
+    color:#374151;
+}
+
+.refresh-btn:hover{
+    background:#e5e7eb;
+}
+
+.pdf-btn{
+    background:#dc2626;
+    color:#fff;
+}
+
+.pdf-btn:hover{
+    background:#b91c1c;
+}
+
+.excel-btn{
+    background:#16a34a;
+    color:#fff;
+}
+
+.excel-btn:hover{
+    background:#15803d;
+}
+
+
+
+
+
+
+/* =====================================================
+   OFFICIAL REPORT TABLE
+   NO HORIZONTAL SCROLLBAR
+===================================================== */
+
+.official-report-table{
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+
+    table-layout:fixed;
+    border-collapse:collapse;
+    border-spacing:0;
+
+    box-sizing:border-box;
+}
+
+
+/* =====================================================
+   TABLE HEADER
+===================================================== */
+
+.official-report-table thead{
+    background:#3b82f6;
+}
+
+.official-report-table th{
+    color:#fff;
+
+    padding:8px 4px;
+
+    font-size:12px;
+    font-weight:600;
+
+    border:1px solid #60a5fa;
+
+    text-align:center;
+    vertical-align:middle;
+
+    white-space:normal;
+    word-break:break-word;
+    overflow-wrap:anywhere;
+
+    line-height:1.1;
+
+    box-sizing:border-box;
+}
+
+
+/* =====================================================
+   TABLE BODY
+===================================================== */
+
+.official-report-table td{
+    padding:8px 4px;
+
+    border:1px solid #e5e7eb;
+
+    text-align:center;
+
+    font-size:13px;
+    color:#475569;
+
+    white-space:normal;
+    word-break:break-word;
+    overflow-wrap:anywhere;
+
+    box-sizing:border-box;
+}
+
+.official-report-table tbody tr:nth-child(even){
+    background:#f8fafc;
+}
+
+.official-report-table tbody tr:hover{
+    background:#eff6ff;
+}
+
+
+/* =====================================================
+   GRAND TOTAL
+===================================================== */
+
+
+.official-report-table tfoot th,
+.official-report-table tfoot td{
+    background:#3b82f6;
+    color:#fff;
+        padding:15px;
+
+    font-weight:700;
+}
+
+/* Make only the first cell darker */
+.official-report-table tfoot .grand-total-title{
+    background:#1d4ed8 !important;
+    color:#fff !important;
+}
+
+/* =====================================================
+   COMPACT COLUMN WIDTHS
+===================================================== */
+
+/* Month column */
+.official-report-table th:first-child,
+.official-report-table td:first-child{
+    width:14%;
+}
+
+
+/* All method columns */
+.official-report-table th:not(:first-child),
+.official-report-table td:not(:first-child){
+    width:auto;
+}
+
+
+/* =====================================================
+   STICKY MONTH COLUMN
+===================================================== */
+
+.official-report-table th:first-child,
+.official-report-table td:first-child{
+    position:sticky;
+    left:0;
+
+    font-weight:600;
+
+    z-index:2;
+}
+
+.official-report-table tbody td:first-child{
+    background:#f8fafc;
+}
+
+.official-report-table thead th:first-child{
+    background:#2563eb;
+    color:#fff;
+}
+
+.official-report-table tfoot th:first-child,
+.official-report-table tfoot td:first-child{
+    background:#dbeafe;
+}
+
+
+/* =====================================================
+   IMPORTANT:
+   REMOVE ALL SCROLLING FROM TABLE AREA
+===================================================== */
+
+.table-wrapper{
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+
+    overflow:hidden !important;
+
+    box-sizing:border-box;
+}
+
+
+/* Prevent any child from creating horizontal overflow */
+.table-wrapper,
+.official-report-card{
+    min-width:0 !important;
+    max-width:100% !important;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width:900px){
+
+    .official-report-table th{
+        padding:6px 3px;
+        font-size:10px;
+    }
+
+    .official-report-table td{
+        padding:6px 3px;
+        font-size:11px;
+    }
+
+}
+
+
+@media (max-width:600px){
+
+    .official-report-table th{
+        padding:5px 2px;
+        font-size:8px;
+    }
+
+    .official-report-table td{
+        padding:5px 2px;
+        font-size:9px;
+    }
+
+    .official-report-table tfoot th,
+    .official-report-table tfoot td{
+        padding:5px 2px;
+        font-size:9px;
+    }
+
+}
+
+
+/* =====================================================
+   ANIMATIONS
+===================================================== */
+
+.form-c-card,
+.method-category,
+.form-c-summary-card,
+.form-c-monthly-card,
+.official-report-card{
+    animation:fadeUp .35s ease;
+}
+
+@keyframes fadeUp{
+
+    from{
+        opacity:0;
+        transform:translateY(10px);
+    }
+
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+
+}

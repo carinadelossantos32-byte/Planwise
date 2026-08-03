@@ -2,10 +2,13 @@ import "./reports.css";
 import { barangays } from "../../data/barangays";
 import { familyPlanningMethods } from "../../data/familyPlanningMethods";
 import { useEffect, useMemo, useState } from "react";
-import FormAAnalytics from "./FormAAnalytics";
-import FormBAnalytics from "./FormBAnalytics";
-import FormCAnalytics from "./FormCAnalytics";
-import MonthlyReportTable from "./MonthlyReportTable";
+import FormAAnalytics from "./form-reports/FormAAnalytics";
+import FormBAnalytics from "./form-reports/FormBAnalytics";
+import FormCAnalytics from "./form-reports/FormCAnalytics";
+import Form1Analytics from "./form-reports/Form1Analytics";
+import ModernFPUsersAnalytics from "./additional-reports/ModernFPUsersAnalytics";
+import ModernShifters from "./additional-reports/ModernShifters";
+import InventoryReport from "./inventory-reports/InventoryReport";
 import { db } from "../../firebase-config";
 import { collection, getDocs } from "firebase/firestore";
 
@@ -50,7 +53,7 @@ function Reports() {
         let isMounted = true;
 
         const fetchClients = async () => {
-            const collectionNames = ["clients_public", "clients_referred"];
+            const collectionNames = ["clients_public", "clients_private", "clients_referred"];
             const loadedClients = [];
 
             for (const collectionName of collectionNames) {
@@ -146,13 +149,13 @@ function Reports() {
 
             const methodValue = slugify(
                 client.fp_method ||
-                    client.FP_method ||
-                    client.method ||
-                    client.family_planning_method ||
-                    client.type ||
-                    client.category ||
-                    client.program ||
-                    client.intention_to_shift
+                client.FP_method ||
+                client.method ||
+                client.family_planning_method ||
+                client.type ||
+                client.category ||
+                client.program ||
+                client.intention_to_shift
             );
             const selectedMethod = slugify(methodFilter);
             const matchesMethod = !selectedMethod || selectedMethod === "all" || methodValue === selectedMethod;
@@ -210,12 +213,58 @@ function Reports() {
     const renderAnalytics = () => {
         switch (reportType) {
             case "form-b":
-                return <FormBAnalytics clients={filteredClients} loading={loading} error={error} />;
+                return (
+                    <FormBAnalytics
+                        clients={filteredClients}
+                        loading={loading}
+                        error={error}
+                    />
+                );
+
             case "form-c":
-                return <FormCAnalytics clients={filteredClients} loading={loading} error={error} />;
+                return (
+                    <FormCAnalytics
+                        clients={filteredClients}
+                        loading={loading}
+                        error={error}
+                    />
+                );
+
+            case "form-1":
+                return (
+                    <Form1Analytics
+                        clients={filteredClients}
+                        loading={loading}
+                        error={error}
+                    />
+                );
+
+            case "modern-fp":
+                return (
+                    <ModernFPUsersAnalytics
+                        clients={filteredClients}
+                        loading={loading}
+                        error={error}
+                    />
+                );
+
+            case "modern-shifters":
+                return (
+                    <ModernShifters
+                        clients={filteredClients}
+                        loading={loading}
+                    />
+                );
+
             case "form-a":
             default:
-                return <FormAAnalytics clients={filteredClients} loading={loading} error={error} />;
+                return (
+                    <FormAAnalytics
+                        clients={filteredClients}
+                        loading={loading}
+                        error={error}
+                    />
+                );
         }
     };
 
@@ -225,8 +274,6 @@ function Reports() {
                 <h3>Reports & Analytics</h3>
                 <div className="reports-header-actions">
                     <button className="refresh-btn">⟳ Refresh Data</button>
-                    <button className="export-pdf-btn"> Export as PDF</button>
-                    <button className="export-excel-btn"> Export as Excel</button>
                 </div>
             </div>
 
@@ -238,12 +285,7 @@ function Reports() {
                     >
                         Client Reports
                     </button>
-                    <button
-                        className={`tab-btn ${activeTab === "monthly" ? "active" : ""}`}
-                        onClick={() => setActiveTab("monthly")}
-                    >
-                        Monthly Report
-                    </button>
+
                     <button
                         className={`tab-btn ${activeTab === "inventory" ? "active" : ""}`}
                         onClick={() => setActiveTab("inventory")}
@@ -264,6 +306,16 @@ function Reports() {
                                     <option value="form-a">FORM A</option>
                                     <option value="form-b">FORM B</option>
                                     <option value="form-c">FORM C</option>
+                                    <option value="form-1">FORM 1</option>
+
+                                    <optgroup label="Additional Reports">
+                                        <option value="modern-fp">
+                                            Modern FP Users
+                                        </option>
+                                        <option value="modern-shifters">
+                                            Modern FP Shifters
+                                        </option>
+                                    </optgroup>
                                 </select>
                             </div>
 
@@ -331,9 +383,7 @@ function Reports() {
                 )}
 
                 {activeTab === "inventory" && (
-                    <div className="clients-report-content">
-                        <p>Inventory Report content will go here</p>
-                    </div>
+                    <InventoryReport />
                 )}
             </div>
         </>

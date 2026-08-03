@@ -1,0 +1,198 @@
+.form1-analytics {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+.form1-analytics h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.form1-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.form1-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.06);
+}
+
+.form1-card h4 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b7280;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.form1-card span {
+  display: block;
+  margin-top: 16px;
+  font-size: 34px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.form1-panel-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.form1-panel {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.05);
+}
+
+.form1-panel h3,
+.panel-heading h3 {
+  margin: 0 0 18px;
+  font-size: 18px;
+  color: #111827;
+}
+
+.detail-row,
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.detail-row:last-child,
+.summary-item:last-child {
+  border-bottom: none;
+}
+
+.detail-row span,
+.summary-item span {
+  color: #374151;
+  font-size: 14px;
+}
+
+.detail-row strong,
+.summary-item strong {
+  color: #111827;
+  font-size: 15px;
+}
+
+.form1-summary-panel {
+  min-height: 260px;
+}
+
+.summary-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.table-header h3 {
+  margin: 0;
+}
+
+.export-excel-button {
+  border: none;
+  background: #2563eb;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: background 0.2s ease;
+}
+
+.export-excel-button:hover {
+  background: #1d4ed8;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  background: #ffffff;
+}
+
+.form1-report-table {
+  border-collapse: collapse;
+  width: max-content;
+  min-width: 100%;
+}
+
+.form1-report-table th,
+.form1-report-table td {
+  padding: 16px 18px;
+  text-align: left;
+  white-space: nowrap;
+  font-size: 13px;
+  color: #111827;
+}
+
+.form1-report-table th {
+  position: sticky;
+  top: 0;
+  background: #f8fafc;
+  border-bottom: 2px solid #e5e7eb;
+  z-index: 1;
+}
+
+.form1-report-table tbody tr:nth-child(odd) {
+  background: #ffffff;
+}
+
+.form1-report-table tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+.form1-report-table td {
+  border-bottom: 1px solid #eff2f7;
+}
+
+@media (max-width: 1200px) {
+  .form1-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .form1-panel-row,
+  .form1-panel-row.form1-panel-row-compact {
+    grid-template-columns: 1fr;
+  }
+
+  .form1-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .table-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .export-excel-button {
+    width: 100%;
+  }
+}

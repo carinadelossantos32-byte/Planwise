@@ -1,0 +1,421 @@
+/* ===========================
+   FORM B ANALYTICS
+=========================== */
+
+.form-b-container {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    margin-top: 20px;
+}
+
+/* ===========================
+   KPI CARDS
+=========================== */
+
+.form-b-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.fb-card {
+    border-radius: 16px;
+    padding: 24px;
+    color: #fff;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
+    transition: .25s ease;
+}
+
+.fb-card:hover {
+    transform: translateY(-4px);
+}
+
+.fb-card small {
+    display: block;
+    font-size: 13px;
+    opacity: .9;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+
+.fb-card h2 {
+    margin: 0;
+    font-size: 36px;
+    font-weight: 700;
+}
+
+.fb-card span {
+    display: block;
+    margin-top: 10px;
+    font-size: 13px;
+    opacity: .9;
+}
+
+/* Colors */
+
+.fb-card.green {
+    background: linear-gradient(135deg, #16a34a, #4ade80);
+}
+
+.fb-card.orange {
+    background: linear-gradient(135deg, #ea580c, #fb923c);
+}
+
+.fb-card.blue {
+    background: linear-gradient(135deg, #2563eb, #60a5fa);
+}
+
+.fb-card.red {
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+}
+
+/* ===========================
+   SUMMARY GRID
+=========================== */
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+.summary-panel {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .05);
+}
+
+.summary-panel h3 {
+    margin: 0 0 22px;
+    color: #1e293b;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid #edf2f7;
+}
+
+.summary-row:last-child {
+    border-bottom: none;
+}
+
+.summary-row span {
+    color: #64748b;
+    font-size: 14px;
+}
+
+.summary-row strong {
+    font-size: 17px;
+    color: #2563eb;
+}
+
+/* ===========================
+   LOADING
+=========================== */
+
+.form-b-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 350px;
+    font-size: 18px;
+    color: #64748b;
+}
+
+/* ==========================================
+   MONTHLY SUMMARY
+========================================== */
+
+.monthly-summary {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .05);
+}
+
+.monthly-summary h3 {
+    margin: 0 0 20px;
+    color: #1e293b;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.monthly-summary table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.monthly-summary thead {
+    background: #2563eb;
+    color: #fff;
+}
+
+.monthly-summary th {
+    padding: 14px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.monthly-summary td {
+    padding: 14px;
+    text-align: center;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 14px;
+}
+
+.monthly-summary tbody tr:hover {
+    background: #f8fafc;
+}
+
+.monthly-summary tfoot {
+    background: #eff6ff;
+    font-weight: 700;
+}
+
+
+
+
+/* ==========================================
+   OFFICIAL FORM B REPORT
+========================================== */
+
+.official-table-wrapper{
+    width:100%;
+    max-width:100%;
+
+    overflow-x:auto;
+    overflow-y:hidden;
+
+    border:1px solid #dbeafe;
+    border-radius:12px;
+
+    box-sizing:border-box;
+}
+
+/* ==========================================
+   OFFICIAL TABLE
+========================================== */
+
+.official-table{
+    width:100%;
+    min-width:0;
+
+    table-layout:fixed;
+    border-collapse:collapse;
+    border-spacing:0;
+
+    margin:0;
+}
+
+/* ==========================================
+   HEADER
+========================================== */
+
+.official-table thead{
+    background:#2563eb;
+}
+
+.official-table th{
+    color:#fff;
+    padding:10px;
+
+    font-size:13px;
+    font-weight:600;
+
+    border:1px solid #60a5fa;
+
+    text-align:center;
+    vertical-align:middle;
+
+    white-space:normal;
+    word-break:normal;
+    overflow-wrap:break-word;
+
+    line-height:1.1;
+
+    box-sizing:border-box;
+}
+
+/* ==========================================
+   BODY
+========================================== */
+
+.official-table tbody td{
+    padding:10px;
+
+    border:1px solid #e5e7eb;
+
+    text-align:center;
+
+    font-size:14px;
+
+    color:#475569;
+
+    white-space:normal;
+    word-break:break-word;
+    overflow-wrap:break-word;
+
+    box-sizing:border-box;
+}
+
+.official-table tbody tr:nth-child(even){
+    background:#f8fafc;
+}
+
+.official-table tbody tr:hover{
+    background:#eff6ff;
+}
+
+/* ==========================================
+   FOOTER
+========================================== */
+
+/* Grand Total row */
+.official-table tfoot th,
+.official-table tfoot td{
+    background:#3b82f6;
+    color:#fff;
+    font-weight:700;
+    padding:15px;
+    border:1px solid #bcd4ff;
+}
+
+/* Grand Total label */
+.official-table tfoot .grand-total-title{
+    background:#1d4ed8 !important;
+    color:#fff !important;
+}
+
+
+/* All footer cells */
+.official-table tfoot td{
+    background:#3b82f6;
+    color:#fff;
+    font-weight:700;
+    padding:15px;
+    border:1px solid #bcd4ff;
+}
+
+/* Grand Total title */
+.official-table tfoot th:first-child{
+    background:#1d4ed8;   /* darker than #3b82f6 */
+    color:#fff;
+    font-weight:700;
+    padding:15px;
+    border:1px solid #bcd4ff;
+}
+
+/* Other footer headers (if any) */
+.official-table tfoot th:not(:first-child){
+    background:#3b82f6;
+    color:#fff;
+    font-weight:700;
+    padding:15px;
+    border:1px solid #bcd4ff;
+}
+/* ==========================================
+   KEEP COLUMNS COMPACT
+========================================== */
+
+.official-table th,
+.official-table td{
+    max-width:140px;
+    box-sizing:border-box;
+}
+
+/* ==========================================
+   STICKY MONTH COLUMN
+========================================== */
+
+.official-table th:first-child,
+.official-table td:first-child{
+    position:sticky;
+
+    left:0;
+
+    background:#fff;
+
+    font-weight:600;
+
+    z-index:2;
+}
+
+.official-table thead th:first-child{
+    background:#2563eb;
+    color:#fff;
+}
+
+.official-table tfoot th:first-child{
+    background:#dbeafe;
+}
+
+/* ==========================================
+   SCROLLBAR
+========================================== */
+
+.official-table-wrapper::-webkit-scrollbar{
+    height:8px;
+}
+
+.official-table-wrapper::-webkit-scrollbar-track{
+    background:#e5e7eb;
+    border-radius:10px;
+}
+
+.official-table-wrapper::-webkit-scrollbar-thumb{
+    background:#94a3b8;
+    border-radius:10px;
+}
+
+.official-table-wrapper::-webkit-scrollbar-thumb:hover{
+    background:#64748b;
+}
+/* ==========================================
+   RESPONSIVE
+========================================== */
+
+@media (max-width:100px) {
+
+    .form-b-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+@media (max-width:768px) {
+
+    .form-b-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .official-report-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .report-actions {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .report-actions button {
+        flex: 1;
+        min-width: 140px;
+    }
+
+}
+
