@@ -10,8 +10,21 @@
     transition: font-size 0.2s ease;
 }
 
-.color-short-modern { color: #ff4d4d; }    
-.color-long-modern { color: #90c7ff; }   
-.color-natural-modern { color: #41d641; }    
-.color-traditional { color: #e45f00; }   
+.color-short-modern { color: #FB2C36; }    
+.color-long-modern { color: #2B7FFF; }   
+.color-natural-modern { color: #00BC7D; }    
+.color-traditional { color: #6d2d00; }   
 .color-no-method { color: #696969; } 
+
+.view-mode-options .option-item {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Style kapag active / napili */
+.view-mode-options .option-item.active {
+  background-color: #e0e7ff; /* Soft blue background */
+  color: #4f46e5;            /* Darker accent text/icon */
+  border-radius: 6px;
+  font-weight: bold;
+}
