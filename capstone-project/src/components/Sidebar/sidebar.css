@@ -3,23 +3,37 @@
   top: 0;
   overflow-y: auto;
   width: 260px;
-  
-  /* CHANGE THIS LINE */
-  height: 100vh; 
-  
-  background-color: #3822db;
+
+  height: 100vh;
+  height: 100dvh;
+
+  background: linear-gradient(180deg, #091F7A 0%, #0a1a5e 100%);
   display: flex;
   flex-direction: column;
   font-family: 'Segoe UI', system-ui, sans-serif;
   flex-shrink: 0;
+  box-shadow: 2px 0 12px rgba(9, 31, 122, 0.15);
+
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 15px 20px 15px 20px;
-  background-color: #f5b800;
+  padding: 18px 20px;
+  background-color: #ffffff;
+  border-bottom: 3px solid #14990D;
 }
 
 .logo-wrapper {
@@ -27,11 +41,12 @@
   height: 48px;
   border-radius: 50%;
   overflow: hidden;
-  background-color: #fff;
+  background-color: #f4f8ff;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  border: 2px solid #091F7A;
 }
 
 .logo {
@@ -45,34 +60,35 @@
   height: 100%;
   align-items: center;
   justify-content: center;
-  background-color: #3b29df;
+  background-color: #091F7A;
   display: none;
 }
 
 .logo-fallback-text {
-  color: #f5b800;
+  color: #ffffff;
   font-weight: 700;
   font-size: 20px;
 }
 
 .brand-name {
-  color: #1e2a6e;
+  color: #091F7A;
   font-weight: 700;
   font-size: 18px;
   line-height: 1.2;
 }
 
 .brand-sub {
-  color: #1e2a6e;
+  color: #14990D;
   font-size: 12px;
-  opacity: 0.75;
+  font-weight: 600;
+  opacity: 0.9;
 }
 
 .nav {
   display: flex;
   flex-direction: column;
   gap: 5px;
-  padding: 10px 0;
+  padding: 14px 0;
   flex: 1;
 }
 
@@ -81,37 +97,38 @@
   display: flex;
   align-items: center;
   gap: 15px;
-  padding: 16px 28px;
+  padding: 14px 28px;
   text-decoration: none;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s ease, transform 0.1s ease;
 }
 
 .nav-item:hover {
-  background-color: #2816ca;
-  margin: 0 10px 0 10px;
-  border-radius:  15px ;
+  background-color: rgba(255, 255, 255, 0.08);
 }
 
 .nav-item.active {
-  background-color: #2c14b4dc;
-  margin: 0 10px 0 10px;
-  border-radius: 0 15px 15px 0 ;
+  background-color: rgba(84, 118, 231, 0.479);
 }
 
- .active-bar {
+.active-bar {
   position: absolute;
   left: 0;
   top: 0;
   bottom: 0;
-  width: 8px;
-  background-color: #f5b800;
-  border-radius:  30px 0 0 30px ;
-} 
+  width: 4px;
+  background-color: #14990D;
+  box-shadow: 0 0 8px rgba(20, 153, 13, 0.6);
+}
 
 .nav-icon {
-  color: #ffffff;
+  color: rgba(255, 255, 255, 0.85);
   flex-shrink: 0;
+  transition: color 0.15s ease;
+}
+
+.nav-item:hover .nav-icon {
+  color: #ffffff;
 }
 
 .nav-item.active .nav-icon {
@@ -119,9 +136,14 @@
 }
 
 .nav-label {
-  color: #ffffff;
-  font-size: 16px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 15px;
   font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+.nav-item:hover .nav-label {
+  color: #ffffff;
 }
 
 .nav-item.active .nav-label {
@@ -130,9 +152,9 @@
 }
 
 .bottom {
-  border-top: 1px solid rgba(255, 255, 255, 0.199);
-  padding-top: 8px;
-  padding-bottom: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
 .user-row {
@@ -144,19 +166,20 @@
 }
 
 .user-avatar {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  background-color: #2d3d8f;
+  background-color: #14990D;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 .user-avatar-text {
-  color: #f0f0f0;
-  font-size: 16px;
+  color: #ffffff;
+  font-size: 15px;
   font-weight: 600;
 }
 
@@ -167,7 +190,7 @@
 
 .user-name {
   color: #ffffff;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
@@ -179,11 +202,16 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px;
+  padding: 6px;
   display: flex;
   align-items: center;
-  border-radius: 4px;
+  border-radius: 8px;
   flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+
+.logout-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .logout-btn:hover .nav-icon {

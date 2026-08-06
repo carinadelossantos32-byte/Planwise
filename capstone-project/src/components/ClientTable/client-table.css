@@ -1,10 +1,9 @@
-
 /* STATS BANNER */
 
 .stats-banner {
   display: flex;
   align-items: center;
-  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  background: linear-gradient(135deg, #091F7A, #142c9e);
   border-radius: 12px 12px 0 0;
   padding: 20px 24px;
   margin-bottom: 0;
@@ -22,6 +21,8 @@
 
 .stat-item:last-of-type {
   border-right: none;
+  padding-right: 0;
+  margin-right: 0;
 }
 
 .stat-label {
@@ -50,9 +51,9 @@
 /* HEADER */
 
 .client-table-container thead tr {
-  background-color: #eef0f1;
-  border-bottom: 1px solid #e5e7eb;
-
+  background-color: #f1f4fc;
+  border-bottom: 2px solid #0a1e75;
+  
 }
 
 .client-table-container thead td,
@@ -62,19 +63,18 @@
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.6px;
-  color: #6b7280;
-  
+  color: #091F7A;
 }
 
 /* BODY ROWS */
 
 .client-table-container tbody tr {
-  border-bottom: 1px solid #e5eaf5;
+  border-bottom: 1px solid #d0defa;
   transition: background-color 0.15s ease;
 }
 
 .client-table-container tbody tr:hover {
-  background-color: #ebf5ff;
+  background-color: #eef1fb;
 }
 
 .client-table-container tbody tr:last-child {
@@ -136,12 +136,11 @@
   font-size: 10px;
   font-weight: 500;
   padding: 5px;
-  
 }
 
 .sex-badge.male {
-  background-color: #dbeafe;
-  color: #1d4ed8;
+  background-color: #dbe3fb;
+  color: #091F7A;
 }
 
 .sex-badge.female {
@@ -162,7 +161,7 @@
 /* Educational Attainment */
 
 .client-educational-attainment {
-    align-items: left;
+  align-items: left;
   justify-content: left;
   display: flex;
   flex-direction: column;
@@ -178,8 +177,8 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background-color: #ede9fe;
-  color: #6d28d9;
+  background-color: #e5e0fb;
+  color: #091F7A;
   font-size: 12px;
   font-weight: 600;
 }
@@ -210,25 +209,6 @@
   white-space: nowrap;
 }
 
-/* STATUS BADGE*/
-
-.status-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.status-badge.active {
-  background-color: #dcfce7;
-  color: #15803d;
-}
-
-.status-badge.inactive {
-  background-color: #fee2e2;
-  color: #b91c1c;
-}
 
 /* ACTION BUTTONS */
 
@@ -251,15 +231,14 @@
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-
 /* Edit button */
 .action-btn.edit {
   color: #6b7280;
 }
 
 .action-btn.edit:hover {
-  background-color: #eff6ff;
-  color: #2563eb;
+  background-color: #eef1fb;
+  color: #091F7A;
 }
 
 /* Delete button */
@@ -294,8 +273,8 @@
 }
 
 .action-btn.restore:hover {
-  background-color: #ecfdf5;
-  color: #16a34a;
+  background-color: #ecfdf0;
+  color: #14990D;
 }
 
 /* View button */
@@ -304,46 +283,47 @@
 }
 
 .action-btn.view:hover {
-  background-color: #f5f3ff;
-  color: #7c3aed;
+  background-color: #eef1fb;
+  color: #091F7A;
 }
 
 /* PAGINATION STYLES */
 .pagination-controls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-    padding: 15px 0;
-    margin-top: 10px;
-    border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  padding: 15px 0;
+  margin-top: 10px;
+  border-top: 1px solid #e5e7eb;
 }
 
 .page-btn {
-    padding: 8px 16px;
-    background-color: #ffffff;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 14px;
-    color: #374151;
-    cursor: pointer;
-    transition: all 0.2s ease;
+  padding: 8px 16px;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .page-btn:hover:not(:disabled) {
-    background-color: #f3f4f6;
-    border-color: #9ca3af;
+  background-color: #eef1fb;
+  border-color: #091F7A;
+  color: #091F7A;
 }
 
 .page-btn:disabled {
-    background-color: #f9fafb;
-    color: #9ca3af;
-    cursor: not-allowed;
-    opacity: 0.7;
+  background-color: #f9fafb;
+  color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .page-info {
-    font-size: 14px;
-    color: #4b5563;
-    font-weight: 500;
+  font-size: 14px;
+  color: #4b5563;
+  font-weight: 500;
 }

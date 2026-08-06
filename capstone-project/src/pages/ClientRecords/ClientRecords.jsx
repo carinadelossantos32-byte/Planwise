@@ -417,7 +417,7 @@ function ClientRecords() {
 
         {/* HEADER */}
         <div className="toolbar-header-client">
-          <h2>Client Records</h2>
+          <h2 className="client-record-h2">Client Records</h2>
           <p className="p-sub-title-client">Responsible Parenthood and Family Planning Program</p>
 
           {/* TABS */}
@@ -438,17 +438,22 @@ function ClientRecords() {
                 className={`tab-button ${activeTab === "archived" ? "tab-active" : ""}`}
                 onClick={() => setActiveTab("archived")}>Archived</button>
             </div>
-            {(activeTab === "public" || activeTab === "private" || activeTab === "referred") && (
-            <div className="btn-tab-actions">
-              <button className="btn-export" onClick={handleExport}>
-                <Download size={14} /> Export
-              </button>
 
-              <button className="btn-import" onClick={() => setShowImportModal(true)}>
-                <Upload size={14} /> Import
-              </button>
-            </div>
-            )}
+                  <div className="toolbar-actions">
+                  {activeTab === "public" && (
+                    <button className="btn-sync-client" onClick={() => { setSyncConfig(PUBLIC_FORM_CONFIG); setShowKoboSyncModal(true); }}>
+                      <CloudSync size={16} strokeWidth={2.0} /> Sync Public Form
+                    </button>)}
+                  {activeTab === "private" && (
+                    <button className="btn-sync-client" onClick={() => { setSyncConfig(PRIVATE_FORM_CONFIG); setShowKoboSyncModal(true); }}>
+                      <CloudSync size={16} strokeWidth={2.00} />Sync Private Form
+                    </button>)}
+                  <button className="btn-add-client" onClick={() => setShowAddModal(true)}>
+                    <CirclePlus size={16}  strokeWidth={1.75} />
+                    {activeTab === "referred" ? "Add New Referral" : "Add New Client"}
+                  </button>
+                </div>
+      
           </div>
 
           <div className="client-toolbar">
@@ -509,20 +514,17 @@ function ClientRecords() {
 
 
                 {/* Main Action Buttons */}
-                <div className="toolbar-actions">
-                  {activeTab === "public" && (
-                    <button className="btn-sync-client" onClick={() => { setSyncConfig(PUBLIC_FORM_CONFIG); setShowKoboSyncModal(true); }}>
-                      <CloudSync size={16} color="#ffffff" strokeWidth={2.0} /> Sync Public Form
-                    </button>)}
-                  {activeTab === "private" && (
-                    <button className="btn-sync-client" onClick={() => { setSyncConfig(PRIVATE_FORM_CONFIG); setShowKoboSyncModal(true); }}>
-                      <CloudSync size={16} color="#ffffff" strokeWidth={2.00} />Sync Private Form
-                    </button>)}
-                  <button className="btn-add-client" onClick={() => setShowAddModal(true)}>
-                    <CirclePlus size={16} color="#ffffff" strokeWidth={1.75} />
-                    {activeTab === "referred" ? "Add New Referral" : "Add New Client"}
-                  </button>
-                </div>
+            {(activeTab === "public" || activeTab === "private" || activeTab === "referred") && (
+            <div className="btn-tab-actions">
+              <button className="btn-export" onClick={handleExport}>
+                <Download size={14} /> Export
+              </button>
+
+              <button className="btn-import" onClick={() => setShowImportModal(true)}>
+                <Upload size={14} /> Import
+              </button>
+            </div>
+            )}
               </>
             )}
           </div>

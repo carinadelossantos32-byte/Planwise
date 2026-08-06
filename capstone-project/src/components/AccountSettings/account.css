@@ -120,12 +120,13 @@
 /* Button Action Field  */
 #buttons-field {
     display: flex;
-    flex-wrap: wrap;
     gap: 1rem;
-    justify-content: start;
-    margin-top: 5px;
-    margin-left: 50px;
+    justify-content: flex-start;
+    align-items: flex-start;
+    margin: 0;
     padding-top: 1.5rem;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 
@@ -141,6 +142,7 @@
     justify-content: center;
     gap: 0.4rem;
     flex: 0 1 auto;
+    align-self: flex-start;
     transition: background-color 0.2s ease, border-color 0.2s ease, 
                 box-shadow 0.2s ease, transform 0.12s ease;
 }
@@ -310,7 +312,7 @@
         justify-content: stretch;
     }
 
-    #cancel-button, #save-button {
+    #save-button {
         flex: 1 1 auto;
     }
 

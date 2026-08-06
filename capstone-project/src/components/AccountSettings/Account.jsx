@@ -171,13 +171,15 @@ function Account(){
                         {userData.role === "cpd" ? "CPD Personnel" : "Health Personnel"}
                         </div>
                 </div>
-            </div>
 
-              <div id="buttons-field">
+                <div id="buttons-field">
                         <button id="save-button"
                         onClick={handleUpdateInfo}><CardSim className="w-5 h-5" />Update Changes
                         </button>
                     </div>
+            </div>
+
+              
 
             </div>
 
