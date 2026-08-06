@@ -107,7 +107,7 @@ function ClientTable({ clients, loading, onView, onEdit, onDelete, isArchived, o
                                             </div>
                                         </td>
                                         <td>
-                                            <div className="client-birthdate">
+                                            <div className="client-civil-status">
                                                 <span>{client.civil_status_male}</span>
                                                 <span>{client.civil_status_female}</span>
                                             </div>

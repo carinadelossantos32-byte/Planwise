@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
-import { collection, writeBatch, doc, serverTimestamp } from "firebase/firestore";
+import { collection, writeBatch, doc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
 import { db } from "../../firebase-config";
 import { AlertCircle, CheckCircle } from "lucide-react";
 import { findDuplicate } from "../../utils/checkDuplicates";
 import "../ImportModal/import-modal.css";
-
 
 function KoboSyncModal({ onClose, onSuccess, config }) {
     const [step, setStep] = useState("fetching");
@@ -23,16 +22,30 @@ function KoboSyncModal({ onClose, onSuccess, config }) {
                 const submissions = data.results || [];
 
                 if (submissions.length === 0) {
-                    alert(config.emptyMessage || "No remote submissions found inside KoboToolBox.");
-                    onClose();
+                    setStep("empty");
                     return;
                 }
 
-                console.log(submissions);
-
-                const records = submissions.map(config.mapFields);
-
                 setStep("checking");
+
+                // 1. Fetch all existing kobo_ids from Firestore to prevent re-importing past submissions
+                const existingSnap = await getDocs(
+                    query(collection(db, config.collectionName), where("kobo_id", "!=", null))
+                );
+                const existingKoboIds = new Set(existingSnap.docs.map((doc) => doc.data().kobo_id));
+
+                // 2. Filter out submissions that are already in the database
+                const newSubmissions = submissions.filter((sub) => !existingKoboIds.has(sub._id));
+
+                if (newSubmissions.length === 0) {
+                    setStep("empty"); // Switch step state instead of using alert()
+                    return;
+                }
+
+                // 3. Map only the new, unsynced submissions
+                const records = newSubmissions.map(config.mapFields);
+
+                // 4. Run secondary duplicate check (name & demographical match) on remaining items
                 const dupResults = [];
                 for (let i = 0; i < records.length; i++) {
                     const existing = await findDuplicate(
@@ -107,8 +120,9 @@ function KoboSyncModal({ onClose, onSuccess, config }) {
                 <div className="modal-header-import">
                     <h2>
                         {step === "fetching" && "Connecting to KoboToolBox..."}
-                        {step === "checking" && `Checking for Duplicate ${config.recordLabel} Records...`}
-                        {step === "preview" && `Kobo Sync — ${parsedClients.length} ${config.recordLabel} Records Found`}
+                        {step === "checking" && `Checking Database for Synced ${config.recordLabel} Records...`}
+                        {step === "empty" && "Sync Check Complete"}
+                        {step === "preview" && `Kobo Sync — ${parsedClients.length} New ${config.recordLabel} Records Found`}
                         {step === "saving" && "Saving Records to Database..."}
                         {step === "done" && "Synchronization Complete"}
                     </h2>
@@ -123,13 +137,13 @@ function KoboSyncModal({ onClose, onSuccess, config }) {
                         <div className="import-spinner" />
                         <p>
                             {step === "fetching" && "Downloading field survey records..."}
-                            {step === "checking" && "Scanning registries for identical names..."}
+                            {step === "checking" && "Scanning database to exclude previously synced entries..."}
                             {step === "saving" && `Saving entries (${savedCount}/${parsedClients.length})...`}
                         </p>
                     </div>
                 )}
 
-                {/* PREVIEW AND CLASH RESOLUTION WORKSPACE */}
+                {/* PREVIEW WORKSPACE */}
                 {step === "preview" && (
                     <>
                         {duplicates.length > 0 && (
@@ -230,7 +244,27 @@ function KoboSyncModal({ onClose, onSuccess, config }) {
                 {step === "done" && (
                     <div className="import-status">
                         <CheckCircle size={40} color="#16a34a" />
-                        <p>Ecosystem data synced successfully!</p>
+                        <p>Data synced successfully!</p>
+                    </div>
+                )}
+
+                {/* ALREADY UP TO DATE (EMPTY) STATUS */}
+                {step === "empty" && (
+                    <div className="import-status">
+                        <CheckCircle size={44} color="#3b82f6" />
+                        <h3 style={{ marginTop: "12px", fontSize: "16px", fontWeight: "600", color: "#1e293b" }}>
+                            Already Up to Date
+                        </h3>
+                        <p style={{ color: "#6b7280", fontSize: "14px", marginTop: "4px" }}>
+                            All KoboToolBox entries have already been synchronized to PlanWise.
+                        </p>
+                        <button 
+                            className="btn-confirm-import" 
+                            onClick={onClose} 
+                            style={{ marginTop: "20px", padding: "8px 24px" }}
+                        >
+                            Got it
+                        </button>
                     </div>
                 )}
             </div>

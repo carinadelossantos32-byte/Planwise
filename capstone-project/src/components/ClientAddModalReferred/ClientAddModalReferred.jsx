@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { collection, addDoc, doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "../../firebase-config";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, storage } from "../../firebase-config";
 import { findDuplicate } from "../../utils/checkDuplicates";
 import "./client-add-modal-referred.css";
 import { ImageIcon, X } from "lucide-react";
@@ -9,17 +10,19 @@ function ClientAddModalReferred({ onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     name: "",
     address: "",
-    FP_method: "",
+    fp_method: "",
+    with_intention_to_shift: "",
     facility_name: "",
     facility_address: "",
     referred_by: "",
     volunteer_contact: "",
     date: "",
-    referral_slip_file: ""
+    referral_slip_file: "" // Stores the Firebase Storage HTTPS URL
   });
 
   const [errors, setErrors] = useState({});
   const [imagePreview, setImagePreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const [dupModalOpen, setDupModalOpen] = useState(false);
   const [existingRecord, setExistingRecord] = useState(null);
 
@@ -28,68 +31,70 @@ function ClientAddModalReferred({ onClose, onSuccess }) {
     if (errors[e.target.name]) setErrors({ ...errors, [e.target.name]: "" });
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const img = new Image();
-        img.src = reader.result;
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          const MAX_WIDTH = 800;
-          const MAX_HEIGHT = 800;
-          let width = img.width;
-          let height = img.height;
-          if (width > height) {
-            if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-          } else {
-            if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
-          }
-          canvas.width = width;
-          canvas.height = height;
-          canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-          const compressed = canvas.toDataURL("image/jpeg", 0.5);
-          setFormData(prev => ({ ...prev, referral_slip_file: compressed }));
-          setImagePreview(compressed);
-          if (errors.referral_slip_file) setErrors(prev => ({ ...prev, referral_slip_file: "" }));
-        };
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    // Show instant local preview while uploading to cloud
+    const localPreview = URL.createObjectURL(file);
+    setImagePreview(localPreview);
+    setUploading(true);
+
+    try {
+      // 1. Create a reference path in Firebase Storage
+      const fileRef = ref(storage, `referral_slips/${Date.now()}_${file.name}`);
+
+      // 2. Upload raw file bytes
+      const snapshot = await uploadBytes(fileRef, file);
+
+      // 3. Retrieve public HTTPS URL
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      // 4. Update state with URL string
+      setFormData(prev => ({ ...prev, referral_slip_file: downloadURL }));
+      if (errors.referral_slip_file) setErrors(prev => ({ ...prev, referral_slip_file: "" }));
+    } catch (err) {
+      console.error("Firebase Storage Upload Error:", err);
+      alert("Failed to upload referral slip picture. Please try again.");
+      removeImage();
+    } finally {
+      setUploading(false);
     }
   };
 
   const removeImage = () => {
-    setFormData({ ...formData, referral_slip_file: "" });
+    setFormData(prev => ({ ...prev, referral_slip_file: "" }));
     setImagePreview(null);
   };
 
-const handleAdd = async (e) => {
-  e.preventDefault();
-  let newErrors = {};
-  let isValid = true;
-  Object.keys(formData).forEach((key) => {
-    if (!formData[key] || String(formData[key]).trim() === "") {
-      newErrors[key] = "This field is required";
-      isValid = false;
-    }
-  });
-  if (!isValid) { setErrors(newErrors); return; }
+  const handleAdd = async (e) => {
+    e.preventDefault();
+    if (uploading) return; // Prevent submission while upload is running
 
-  try {
-    const duplicate = await findDuplicate("clients_referred", "referred", formData);
-    console.log("Duplicate result:", duplicate);
-    if (duplicate) {
-      setExistingRecord(duplicate);
-      setDupModalOpen(true);
-      return;
+    let newErrors = {};
+    let isValid = true;
+    Object.keys(formData).forEach((key) => {
+      if (!formData[key] || String(formData[key]).trim() === "") {
+        newErrors[key] = "This field is required";
+        isValid = false;
+      }
+    });
+    if (!isValid) { setErrors(newErrors); return; }
+
+    try {
+      const duplicate = await findDuplicate("clients_referred", "referred", formData);
+      console.log("Duplicate result:", duplicate);
+      if (duplicate) {
+        setExistingRecord(duplicate);
+        setDupModalOpen(true);
+        return;
+      }
+      await saveRecord();
+    } catch (err) {
+      console.error("Duplicate check failed:", err);
+      alert("Error checking for duplicates: " + err.message);
     }
-    await saveRecord();
-  } catch (err) {
-    console.error("Duplicate check failed:", err);
-    alert("Error checking for duplicates: " + err.message);
-  }
-};
+  };
 
   const saveRecord = async (overwriteId = null) => {
     try {
@@ -110,17 +115,18 @@ const handleAdd = async (e) => {
   };
 
   const comparisonFields = [
-    { label: "Client Name",       key: "name" },
-    { label: "Address",           key: "address" },
-    { label: "FP Method",         key: "FP_method" },
-    { label: "Facility Name",     key: "facility_name" },
-    { label: "Facility Address",  key: "facility_address" },
-    { label: "Referred By",       key: "referred_by" },
+    { label: "Client Name", key: "name" },
+    { label: "Address", key: "address" },
+    { label: "FP Method", key: "fp_method" },
+    { label: "With Intention to Shift", key: "with_intention_to_shift" },
+    { label: "Facility Name", key: "facility_name" },
+    { label: "Facility Address", key: "facility_address" },
+    { label: "Referred By", key: "referred_by" },
     { label: "Volunteer Contact", key: "volunteer_contact" },
-    { label: "Date",              key: "date" },
+    { label: "Date", key: "date" },
   ];
 
-return (
+  return (
     <>
       <div className="modal-overlay-add">
         <div className="modal">
@@ -157,13 +163,53 @@ return (
 
                 <div className="form-group">
                   <label>FP Method</label>
-                  <input
-                    name="FP_method"
-                    value={formData.FP_method}
+                  <select 
+                    name="fp_method" 
+                    value={formData.fp_method || ""} 
+                    onChange={handleInputChange} 
+                    className={errors.fp_method ? "input-error" : ""}
+                  >
+                    <option value="">Select</option>
+                    <option value="Condom">Condom</option>
+                    <option value="IUD">IUD</option>
+                    <option value="Pills">Pills</option>
+                    <option value="Injectable">Injectable</option>
+                    <option value="Vasectomy">Vasectomy</option>
+                    <option value="Tubal Ligation">Tubal Ligation</option>
+                    <option value="Implant">Implant</option>
+                    <option value="CMM/Billings">CMM/Billings</option>
+                    <option value="BBT">BBT</option>
+                    <option value="Symptothermal">Symptothermal</option>
+                    <option value="SDM">SDM</option>
+                    <option value="LAM">LAM</option>
+                  </select>
+                  {errors.fp_method && <span className="error-text">{errors.fp_method}</span>}
+                </div>
+
+                <div className="form-group">
+                  <label>With Intention to Shift</label>
+                  <select 
+                    name="with_intention_to_shift" 
+                    value={formData.with_intention_to_shift} 
                     onChange={handleInputChange}
-                    className={errors.FP_method ? "input-error" : ""}
-                  />
-                  {errors.FP_method && <span className="error-text">{errors.FP_method}</span>}
+                    className={errors.with_intention_to_shift ? "input-error" : ""}
+                  >
+                    <option value="">Select</option>
+                    <option value="No Intention">No Intention</option>
+                    <option value="Condom">Condom</option>
+                    <option value="IUD">IUD</option>
+                    <option value="Pills">Pills</option>
+                    <option value="Injectable">Injectable</option>
+                    <option value="Vasectomy">Vasectomy</option>
+                    <option value="Tubal Ligation">Tubal Ligation</option>
+                    <option value="Implant">Implant</option>
+                    <option value="CMM/Billings">CMM/Billings</option>
+                    <option value="BBT">BBT</option>
+                    <option value="Symptothermal">Symptothermal</option>
+                    <option value="SDM">SDM</option>
+                    <option value="LAM">LAM</option>
+                  </select>
+                  {errors.with_intention_to_shift && <span className="error-text">{errors.with_intention_to_shift}</span>}
                 </div>
 
                 <div className="form-group">
@@ -235,7 +281,12 @@ return (
                   ) : (
                     <div className="image-preview-container">
                       <img src={imagePreview} alt="Preview" className="slip-preview" />
-                      <button type="button" className="remove-img-btn" onClick={removeImage}>
+                      {uploading && (
+                        <span style={{ fontSize: "12px", color: "#3b82f6", marginTop: "4px" }}>
+                          Uploading...
+                        </span>
+                      )}
+                      <button type="button" className="remove-img-btn" onClick={removeImage} disabled={uploading}>
                         <X size={14} />
                       </button>
                     </div>
@@ -251,8 +302,8 @@ return (
               <button type="button" className="btn-cancel-cr" onClick={onClose}>
                 Cancel
               </button>
-              <button type="submit" className="btn-save">
-                Create Record
+              <button type="submit" className="btn-save" disabled={uploading}>
+                {uploading ? "Uploading Image..." : "Create Record"}
               </button>
             </div>
           </form>

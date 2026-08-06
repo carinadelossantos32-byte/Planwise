@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "../../firebase-config";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, storage } from "../../firebase-config";
 import { ImageIcon, X } from "lucide-react";
 
 function ClientEditModalReferred({ client, onClose, onSuccess }) {
   const [formData, setFormData] = useState({ ...client });
   const [errors, setErrors] = useState({});
   const [imagePreview, setImagePreview] = useState(client.referral_slip_file || null);
+  const [uploading, setUploading] = useState(false);
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -15,64 +17,53 @@ function ClientEditModalReferred({ client, onClose, onSuccess }) {
     }
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const img = new Image();
-        img.src = reader.result;
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          const MAX_WIDTH = 800; 
-          const MAX_HEIGHT = 800;
-          let width = img.width;
-          let height = img.height;
+    if (!file) return;
 
-          if (width > height) {
-            if (width > MAX_WIDTH) {
-              height *= MAX_WIDTH / width;
-              width = MAX_WIDTH;
-            }
-          } else {
-            if (height > MAX_HEIGHT) {
-              width *= MAX_HEIGHT / height;
-              height = MAX_HEIGHT;
-            }
-          }
+    // Show temporary local preview while uploading to Firebase Storage
+    const localPreview = URL.createObjectURL(file);
+    setImagePreview(localPreview);
+    setUploading(true);
 
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, 0, width, height);
+    try {
+      // 1. Create a reference in Firebase Storage
+      const fileRef = ref(storage, `referral_slips/${Date.now()}_${file.name}`);
 
-          const compressedBase64 = canvas.toDataURL("image/jpeg", 0.5);
-          
-          setFormData(prev => ({ ...prev, referral_slip_file: compressedBase64 }));
-          setImagePreview(compressedBase64);
-          
-          if (errors.referral_slip_file) {
-            setErrors(prev => ({ ...prev, referral_slip_file: "" }));
-          }
-        };
-      };
-      reader.readAsDataURL(file);
+      // 2. Upload file bytes
+      const snapshot = await uploadBytes(fileRef, file);
+
+      // 3. Get public HTTPS download URL
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      // 4. Save URL into form state
+      setFormData((prev) => ({ ...prev, referral_slip_file: downloadURL }));
+      if (errors.referral_slip_file) {
+        setErrors((prev) => ({ ...prev, referral_slip_file: "" }));
+      }
+    } catch (err) {
+      console.error("Firebase Storage Upload Error:", err);
+      alert("Failed to upload new referral slip picture. Please try again.");
+      removeImage();
+    } finally {
+      setUploading(false);
     }
   };
 
   const removeImage = () => {
-    setFormData({ ...formData, referral_slip_file: "" });
+    setFormData((prev) => ({ ...prev, referral_slip_file: "" }));
     setImagePreview(null);
   };
 
   const handleUpdate = async (e) => {
     e.preventDefault();
+    if (uploading) return; // Prevent submitting while image upload is running
     
     let newErrors = {};
     let isValid = true;
 
     const fieldsToValidate = [
-      "name", "address", "FP_method", "facility_name", "facility_address", 
+      "name", "address", "fp_method", "facility_name", "facility_address", 
       "referred_by", "volunteer_contact", "date", "referral_slip_file"
     ];
 
@@ -104,7 +95,7 @@ function ClientEditModalReferred({ client, onClose, onSuccess }) {
     }
   };
 
-return (
+  return (
     <div className="modal-overlay-edit">
       <div className="modal">
         <div className="modal-header-edit">
@@ -140,13 +131,51 @@ return (
 
               <div className="form-group-edit">
                 <label>FP Method</label>
-                <input 
-                  name="FP_method" 
-                  value={formData.FP_method || ""} 
+                <select 
+                  name="fp_method" 
+                  value={formData.fp_method || ""} 
                   onChange={handleInputChange} 
-                  className={errors.FP_method ? "input-error" : ""} 
-                />
-                {errors.FP_method && <span className="error-text">{errors.FP_method}</span>}
+                  className={errors.fp_method ? "input-error" : ""} 
+                >
+                  <option value="Condom">Condom</option>
+                  <option value="IUD">IUD</option>
+                  <option value="Pills">Pills</option>
+                  <option value="Injectable">Injectable</option>
+                  <option value="Vasectomy">Vasectomy</option>
+                  <option value="Tubal Ligation">Tubal Ligation</option>
+                  <option value="Implant">Implant</option>
+                  <option value="CMM/Billings">CMM/Billings</option>
+                  <option value="BBT">BBT</option>
+                  <option value="Symptothermal">Symptothermal</option>
+                  <option value="SDM">SDM</option>
+                  <option value="LAM">LAM</option>
+                </select>
+                {errors.fp_method && <span className="error-text">{errors.fp_method}</span>}
+              </div>
+
+              <div className="form-group-edit">
+                <label>With Intention to Shift</label>
+                <select 
+                  name="with_intention_to_shift" 
+                  value={formData.with_intention_to_shift || ""} 
+                  onChange={handleInputChange}
+                  className={errors.with_intention_to_shift ? "input-error" : ""}
+                >
+                  <option value="No Intention">No Intention</option>
+                  <option value="Condom">Condom</option>
+                  <option value="IUD">IUD</option>
+                  <option value="Pills">Pills</option>
+                  <option value="Injectable">Injectable</option>
+                  <option value="Vasectomy">Vasectomy</option>
+                  <option value="Tubal Ligation">Tubal Ligation</option>
+                  <option value="Implant">Implant</option>
+                  <option value="CMM/Billings">CMM/Billings</option>
+                  <option value="BBT">BBT</option>
+                  <option value="Symptothermal">Symptothermal</option>
+                  <option value="SDM">SDM</option>
+                  <option value="LAM">LAM</option>
+                </select>
+                {errors.with_intention_to_shift && <span className="error-text">{errors.with_intention_to_shift}</span>}
               </div>
 
               <div className="form-group-edit">
@@ -224,7 +253,12 @@ return (
                 ) : (
                   <div className="image-preview-container">
                     <img src={imagePreview} alt="Preview" className="slip-preview" />
-                    <button type="button" className="remove-img-btn" onClick={removeImage}>
+                    {uploading && (
+                      <span style={{ fontSize: "12px", color: "#3b82f6", marginTop: "4px" }}>
+                        Uploading...
+                      </span>
+                    )}
+                    <button type="button" className="remove-img-btn" onClick={removeImage} disabled={uploading}>
                       <X size={14} />
                     </button>
                   </div>
@@ -237,7 +271,9 @@ return (
 
           <div className="modal-btn-edit">
             <button type="button" className="btn-cancel-cr" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn-edit">Update Record</button>
+            <button type="submit" className="btn-edit" disabled={uploading}>
+              {uploading ? "Uploading Image..." : "Update Record"}
+            </button>
           </div>
         </form>
       </div>

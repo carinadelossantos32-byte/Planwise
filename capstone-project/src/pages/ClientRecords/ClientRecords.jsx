@@ -296,7 +296,7 @@ function ClientRecords() {
       setCell(sheet, `B${row}`, index + 1);
       setCell(sheet, `C${row}`, client.name || "", left);
       setCell(sheet, `D${row}`, client.address || "", left);
-      setCell(sheet, `E${row}`, client.FP_method || "");
+      setCell(sheet, `E${row}`, client.fp_method || "");
       setCell(sheet, `F${row}`, client.facility_name || "", left);
       setCell(sheet, `G${row}`, client.facility_address || "", left);
       setCell(sheet, `H${row}`, client.referred_by || "", left);
@@ -376,38 +376,39 @@ function ClientRecords() {
 
 
   // FILTER
-  const filteredClients = clients.filter((client) => {
-    const query = searchQuery.toLowerCase();
+const filteredClients = clients.filter((client) => {
+  const query = searchQuery.toLowerCase();
 
-    if (activeTab === "referred") {
-      return (
-        client.name?.toLowerCase().includes(query) ||
+  // 1. Search filter across tabs
+  const matchesSearch =
+    activeTab === "referred"
+      ? client.name?.toLowerCase().includes(query) ||
         client.facility_name?.toLowerCase().includes(query) ||
         client.referred_by?.toLowerCase().includes(query) ||
-        client.address?.toLowerCase().includes(query)
-      );
-    }
+        client.address?.toLowerCase().includes(query) ||
+        client.fp_method?.toLowerCase().includes(query)
+      : client.name?.toLowerCase().includes(query) ||
+        client.spouse_name?.toLowerCase().includes(query) ||
+        client.address?.toLowerCase().includes(query) ||
+        client.fp_method?.toLowerCase().includes(query);
 
-    const matchesSearch =
-      client.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.spouse_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.fp_method?.toLowerCase().includes(searchQuery.toLowerCase());
+  // 2. Method dropdown filter
+  const matchesMethod = filterMethod 
+    ? client.fp_method?.toLowerCase() === filterMethod.toLowerCase() 
+    : true;
 
-    const matchesMethod = filterMethod ? client.fp_method === filterMethod : true;
+  // 3. Category dropdown filter (Public tab)
+  const matchesCategory =
+    filterCategory === "fp_users"
+      ? client.fp_method && client.fp_method.trim() !== ""
+      : filterCategory === "unmet_needs"
+        ? client.type && client.type.trim() !== ""
+        : filterCategory === "intention_to_shift"
+          ? client.intention_to_shift && client.intention_to_shift.trim() !== ""
+          : true;
 
-    // FP Users 
-    const matchesCategory =
-      filterCategory === "fp_users" // FP Users
-        ? client.fp_method && client.fp_method.trim() !== ""
-        : filterCategory === "unmet_needs" // Unmet Needs
-          ? client.type && client.type.trim() !== ""
-          : filterCategory === "intention_to_shift" // Intention to Shift
-            ? client.intention_to_shift && client.intention_to_shift.trim() !== ""
-            : true; // All Records
-
-    return matchesSearch && matchesMethod && matchesCategory;
-  });
+  return matchesSearch && matchesMethod && matchesCategory;
+});
 
 
   // RENDER
@@ -448,10 +449,12 @@ function ClientRecords() {
                     <button className="btn-sync-client" onClick={() => { setSyncConfig(PRIVATE_FORM_CONFIG); setShowKoboSyncModal(true); }}>
                       <CloudSync size={16} strokeWidth={2.00} />Sync Private Form
                     </button>)}
+                  {activeTab !== "archived" && (
                   <button className="btn-add-client" onClick={() => setShowAddModal(true)}>
                     <CirclePlus size={16}  strokeWidth={1.75} />
                     {activeTab === "referred" ? "Add New Referral" : "Add New Client"}
                   </button>
+                  )}
                 </div>
       
           </div>

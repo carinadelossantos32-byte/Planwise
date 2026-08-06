@@ -16,6 +16,16 @@ function ClientViewModalReferred({ client, onClose }) {
             </div>
 
             <div className="view-item">
+              <span className="view-label">FP Method</span>
+              <p className="view-value">{client.fp_method || "—"}</p>
+            </div>
+
+            <div className="view-item">
+              <span className="view-label">With Intention to Shift</span>
+              <p className="view-value">{client.with_intention_to_shift || "—"}</p>
+            </div>
+
+            <div className="view-item">
               <span className="view-label">Address</span>
               <p className="view-value">{client.address || "—"}</p>
             </div>
@@ -45,18 +55,23 @@ function ClientViewModalReferred({ client, onClose }) {
               <p className="view-value">{client.date || "—"}</p>
             </div>
 
-
+            <div className="view-item" style={{ gridColumn: "1 / -1" }}>
+              <span className="view-label">Referral Slip Attachment</span>
               {client.referral_slip_file ? (
-                <div className="view-item">
-                  <span className="view-label">Referral Slip Attachment</span>
-                  <img className="slip-preview"
+                <div style={{ marginTop: "8px" }}>
+                  <img
+                    className="slip-preview"
                     src={client.referral_slip_file}
                     alt="Referral Slip Document"
+                    style={{ maxWidth: "100%", borderRadius: "6px" }}
                   />
                 </div>
               ) : (
-                <p className="view-value" style={{ color: "#9ca3af", fontStyle: "italic" }}>No image attached to this record.</p>
+                <p className="view-value" style={{ color: "#9ca3af", fontStyle: "italic" }}>
+                  No image attached to this record.
+                </p>
               )}
+            </div>
           </div>
         </div>
         <div className="modal-btn-view">

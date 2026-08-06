@@ -1,16 +1,10 @@
-
-
 const normalizeKoboValue = (value) => {
     if (!value) return "";
 
     return String(value)
-        // remove Kobo prefixes 1___, 8___, a___, etc.
         .replace(/^[0-9a-zA-Z]+___/, "")
-        // convert option_9 -> ""
         .replace(/^option_\d+$/, "")
-        // replace underscores with spaces
         .replace(/_/g, " ")
-        // capitalize words
         .replace(/\b\w/g, (char) => char.toUpperCase())
         .trim();
 };
@@ -42,6 +36,7 @@ export const PUBLIC_FORM_CONFIG = {
 
     mapFields: (survey) => {
         const client = {
+            kobo_id: survey._id, // Save unique submission ID
             name: survey["Pangalan_ng_LALAKI_Asawa_Partner"]?.trim() || "",
             spouse_name: survey["Pangalan_ng_BABAE_Asawa_Partner"]?.trim() || "",
 
@@ -67,7 +62,6 @@ export const PUBLIC_FORM_CONFIG = {
 
             latitude: survey._geolocation ? parseFloat(survey._geolocation[0]) : 14.8436,
             longitude: survey._geolocation ? parseFloat(survey._geolocation[1]) : 120.8114,
-
         };
 
         client._errors = [];
@@ -97,11 +91,11 @@ export const PRIVATE_FORM_CONFIG = {
     ],
 
     mapFields: (survey) => {
- 
         const rawBirthdate = survey["Birthday_Kaarawan"];
         const birthdate = rawBirthdate ? String(rawBirthdate).trim() : "";
 
         const client = {
+            kobo_id: survey._id, // Save unique submission ID
             name: survey["Name_Pangalan"]?.trim() || "",
             age: survey["Age_Edad"] ? String(survey["Age_Edad"]) : "",
             birthdate,

@@ -148,6 +148,14 @@
   color: #be185d;
 }
 
+.client-civil-status{
+  align-items: left;
+  justify-content: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 /* Birthdate Cell */
 
 .client-birthdate {
