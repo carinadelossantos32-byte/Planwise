@@ -80,8 +80,42 @@ function Account(){
             }, []);
 
             async function handleUpdateInfo(){
+                const nextErrors = { ...errors };
+                let hasError = false;
+
+                if (!userData.username.trim()) {
+                    nextErrors.username = "Please enter your username";
+                    hasError = true;
+                } else if (userData.username.trim().length < 3) {
+                    nextErrors.username = "At least 3 characters";
+                    hasError = true;
+                } else if (userData.username.includes(" ")) {
+                    nextErrors.username = "No spaces allowed";
+                    hasError = true;
+                } else if (!/^[a-zA-Z0-9_]+$/.test(userData.username)) {
+                    nextErrors.username = "Only letters, numbers and underscores allowed";
+                    hasError = true;
+                } else if (!/[0-9]/.test(userData.username)) {
+                    nextErrors.username = "Must contain at least 1 number";
+                    hasError = true;
+                }
+
+                if (!userData.email.trim()) {
+                    nextErrors.email = "Please enter your email";
+                    hasError = true;
+                } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(userData.email)) {
+                    nextErrors.email = "Invalid email address";
+                    hasError = true;
+                }
+
+                if (hasError) {
+                    setErrors(nextErrors);
+                    return;
+                }
+
+                if (errors.username || errors.email) return;
+
                 try{
-                    if(errors.username || errors.email) return;
                     const auth = getAuth();
                     const currentUserEmail = auth.currentUser?.email || userData.email;
                     if (!currentUserEmail) {
@@ -92,8 +126,8 @@ function Account(){
                     await updateDoc(doc(db, "users", currentUserEmail), {
                         username: userData.username,
                         email: userData.email,
-                        
                     });
+                    setErrors({ username: "", email: "" });
                     setShowModal(true);
                 } catch(error) {
                     console.error("error:"+ error);
@@ -106,7 +140,6 @@ function Account(){
 
 <div id="account-settings-page">
     <h1 >Account Settings</h1>
-    <p >Manage your personal information and preferences</p>
 
     <div  id="account-settings-container">
             <h2 >Profile Information</h2>
@@ -115,7 +148,7 @@ function Account(){
 
                 {/* Form */}
                 <div id="personal-info">
-                    <div id="name-field">
+                    <div id="name-field" className="info-field">
                             <h3>Username</h3>
                             <input type="text" placeholder="Enter your username" 
                             value={userData.username}
@@ -141,7 +174,6 @@ function Account(){
             </div>
 
               <div id="buttons-field">
-                        <button id="cancel-button">Cancel</button>
                         <button id="save-button"
                         onClick={handleUpdateInfo}><CardSim className="w-5 h-5" />Update Changes
                         </button>
@@ -157,7 +189,7 @@ function Account(){
                             <div className="updated-modal-box">
                                 
                              <div className="modal-content">
-                                <CheckCircle className="update-icon" />
+                                <CheckCircle className="updated-icon" />
                                 <h3 >Updated Successfully!</h3>
                                 <p> Your changes has been saved.</p>
                                 

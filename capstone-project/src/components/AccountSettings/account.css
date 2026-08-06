@@ -1,156 +1,187 @@
-
-h1
-{
-    font-size: 25px;
+/* Core Heading Styles */
+#account-settings-page h1 {
+    font-size: 1.5rem;
     font-weight: bold;
-    margin-bottom: 5px;
+    margin-bottom: 0.3rem;
 }
 
-h2{
-    font-size: 22px;
+#account-settings-container h2 {
+    font-size: 1.35rem;
     font-weight: bold;
-    margin-bottom: 10px;
+    margin-bottom: 0.6rem;
 }
 
-
-#account-settings-container{
+/* Profile Information Heading - Align with Input Fields */
+#account-settings-container h2 {
+    width: 100%;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    align-self: center;
+}
+/* Page Outer Wrapper */
+#account-settings-page {
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    padding: 10px 25px 20px 25px;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    height: auto;
-    margin: 20px auto;
-    width: 95%;
-    max-width:900px;
+    align-items: start;        /* CHANGED: was center */
+    width: 100%;
+    min-height: 100vh;
+    padding: 2rem 4.5rem;       /* CHANGED: matched Privacy's horizontal padding */
     box-sizing: border-box;
+}
+
+/* Page Title & Subtitle */
+#account-settings-page h1,
+#account-settings-page p {
+    align-self: flex-start;
+    width: 90%;                 /* CHANGED: matched Privacy */
+    max-width: 1100px;            /* CHANGED: matched card's new max-width */
+}
+
+/* Account Settings Main Card */
+#account-settings-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 2.5rem;
+    border: 1px solid #ccc;
+    border-radius: 12px;
     background-color: #ffffff;
-    
+    box-sizing: border-box;
+
+    width: 100%;
+    max-width: 1100px;
+    min-height: 65vh;
+    margin: 1.5rem auto;
+    overflow-x: hidden;
 }
-
-
-
-#personal-info{
-    display:flex;
-    flex-direction:column;
-    gap: 15px;
-    flex:1;
-    margin-left:20px;
-}
-
-
-
-.info-field{
+/* Form Container Inside Card */
+#personal-info {
     display: flex;
     flex-direction: column;
-    flex:1;
-    gap: 0px;
-    margin:0px;
-    
-    
-}
-
-.info-field h3{
-    margin-bottom: 5px; 
-}
-
-.info-field h3, #name-field h3, #email-field h3{
-    font-size: 15px;
-    font-weight: bold;
-    margin-bottom: 5px;
-    color: #000000;
-}
-input{
-    height: 48px;
-    padding:10px 44px 10px 14px;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    font-size:15px;
+    gap: 1.25rem;
+    align-items: center;
+    flex: 1;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
     box-sizing: border-box;
-    transition: border-color 0.2s ease;
-    width: 60%;
-    gap: 5px;
-
-
-}
-/* 
-#name-field input, #position-field input{
-    background-color: #fbf5f5;
-} */
-
-input:focus{
-    outline: none;
-    border-color: #1424fd;
 }
 
-
-
-#email-field h3{
-    margin-bottom:5px;
-    
+/* Info Field Wrappers */
+.info-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin: 0;
+    width: 100%;
 }
 
-#position-display{
+.info-field h3, 
+#name-field h3, 
+#email-field h3 {
+    font-size: 0.95rem;
+    font-weight: bold;
+    margin: 0 0 0.25rem 0;
+    color: #111827;
+}
+
+/* Inputs & Read-Only Display Boxes */
+#name-field input, 
+#email-field input,
+#position-display {
+    box-sizing: border-box;
+    height: 3rem;
+    padding: 0.6rem 2.75rem 0.6rem 0.875rem;
+    border: 1px solid #e6e6e6;
+    background: #ffffff;
+    border-radius: 10px;
+    font-size: 0.9375rem;
+    color: #111827;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    width: 100%;
+}
+
+#position-display {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    height: 48px;
-    width: 60%
+    gap: 0.6rem;
+    background-color: #f9fafb;
+    border-color: #ccc;
+}
+
+#name-field input:focus, 
+#email-field input:focus {
+    outline: none;
+    border-color: #4F39F6;
+}
+
+/* Button Action Field  */
+#buttons-field {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: start;
+    margin-top: 5px;
+    margin-left: 50px;
+    padding-top: 1.5rem;
 }
 
 
-#buttons-field{
-    display:flex;
-    gap:10px;
-    justify-content: flex-end;
-    margin-top: 20px;
-}
-
-#cancel-button, #save-button{
-    padding: 5px 15px;
+#save-button {
+    padding: 0.6rem 1.4rem;
     border-radius: 10px;
-    border:1px solid #ccc;
-    font-size: 15px;
-    font-weight: bold;
+    font-size: 0.95rem;
+    font-weight: 600;
     cursor: pointer;
-    height: 44px;
+    height: 3rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap:8px;
-    
-    
-     
+    gap: 0.4rem;
+    flex: 0 1 auto;
+    transition: background-color 0.2s ease, border-color 0.2s ease, 
+                box-shadow 0.2s ease, transform 0.12s ease;
 }
 
-#cancel-button{
-    color: #000000;
+#cancel-button {
+    color: #374151;
+    background-color: #ffffff;
+    border: 1px solid #d1d5db;
 }
 
-#save-button:hover{
-   
-   background-color: rgb(36, 10, 83);
-    transition: background-color 0.2s ease;;
+#cancel-button:hover {
+    background-color: #f3f4f6;
+    border-color: #b0b6bf;
 }
 
-#cancel-button:hover{
-   
-   background-color: rgb(90, 90, 90);
-    transition: background-color 0.2s ease;;
+#cancel-button:active {
+    transform: scale(0.97);
+    background-color: #e5e7eb;
 }
 
+#save-button {
+    background-color: #091F7A;
+    color: #ffffff;
+    border: 1px solid transparent;
+    box-shadow: 0 1px 3px rgba(70, 2, 197, 0.25);
+}
 
-
-
-#save-button{
-    background-color: rgb(70, 2, 197);
+#save-button:hover {
+    background-color: #041043;
     color: #ffffff;
 }
 
+#save-button:active {
+    transform: translateY(0) scale(0.97);
+    box-shadow: 0 1px 3px rgba(70, 2, 197, 0.25);
+}
+
+#save-button svg {
+    width: 1rem;
+    height: 1rem;
+}
 
 .error-text{
     color: red;
@@ -163,58 +194,127 @@ input:focus{
 .modal-overlay{
     position: fixed;
     inset: 0;
-    background: rgba(15,23,42,0.5);
+    background: rgba(15,23,42,0.55);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 99999;
+    animation: fadeIn 0.15s ease;
 }
 
 .updated-modal-box{
     background: #ffffff;
-    border-radius: 14px;
-    padding: 24px;
+    border-radius: 16px;
+    padding: 28px 24px;
     width: 360px;
-    box-shadow: 0 10px 30px rgba(15,23,42,0.12);
+    box-shadow: 0 20px 40px rgba(15,23,42,0.18);
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 20px;
     align-items: center;
+    animation: popIn 0.2s ease;
 }
+
 .updated-icon{
-    
     color: #15803d;
-    width: 40px;
-    height: 40px;
+    background-color: #dcfce7;
+    width: 56px;
+    height: 56px;
+    padding: 12px;
+    border-radius: 50%;
+    box-sizing: border-box;
 }
 
 .modal-content{
-    display:flex;
+    display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
+    width: 90%;
+    gap: 4px;
 }
 
 .modal-content h3{
     margin: 0;
     font-size: 18px;
+    font-weight: 700;
+    color: #111827;
 }
 
 .modal-content p{
     margin: 0;
-    color: #374151;
+    color: #6b7280;
+    font-size: 14px;
+    padding: 15px;
+    width: 100%;
 }
 
 .modal-update-button{
-    padding: 10px 18px;
-    background-color: #4602c5;
+    padding: 11px 32px;
+    background-color: #091F7A;
     color: #fff;
     border: none;
     border-radius: 10px;
     cursor: pointer;
     font-weight: 700;
+    font-size: 15px;
+    width:70%;
+    transition: background-color 0.2s ease, transform 0.12s ease;
 }
 
 .modal-update-button:hover{
-    background-color: #24035a;
+    background-color: #071758;
+}
+
+.modal-update-button:active{
+    transform: scale(0.97);
+}
+
+@keyframes fadeIn{
+    from{ opacity: 0; }
+    to{ opacity: 1; }
+}
+
+@keyframes popIn{
+    from{ opacity: 0; transform: scale(0.92); }
+    to{ opacity: 1; transform: scale(1); }
+}
+
+/* ===== RESPONSIVE BREAKPOINTS ===== */
+@media (max-width: 900px) {
+    #account-settings-container {
+        padding: 1.75rem 1.5rem;
+        min-height: auto;
+    }
+
+    #name-field input, 
+    #email-field input,
+    #position-display {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    #account-settings-page {
+        padding: 1rem 0.75rem;
+    }
+
+    #account-settings-container {
+        padding: 1.5rem 1rem;
+        margin: 1rem auto;
+        border-radius: 8px;
+    }
+
+    #buttons-field {
+        justify-content: stretch;
+    }
+
+    #cancel-button, #save-button {
+        flex: 1 1 auto;
+    }
+
+    .updated-modal-box {
+        width: 90%;
+    }
 }

@@ -96,9 +96,9 @@ function LowStock(){
                 </div>
             </div>
         )}
-        <h1>Low Stock Settings</h1>
+       
         <div className="lowstock-shell">
-        
+          <h1>Low Stock Settings</h1>
         <div id="notification-container">
 
         <div id="low-stock-item" className="notif-item">

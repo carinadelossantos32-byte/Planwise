@@ -11,7 +11,6 @@ const KOBO_FORM_ID = "a97Fh5NxbpGbDkHENH3qfG";
 
 admin.initializeApp();
 
-// Warn early if secrets aren't set — won't crash deploy, just logs a heads-up
 if (!process.env.BREVO_LOGIN || !process.env.BREVO_SMTPKEY || !process.env.BREVO_FROM_EMAIL) {
     console.warn(
         "BREVO_LOGIN / BREVO_SMTPKEY not set. Create functions/.env " +
@@ -63,10 +62,10 @@ exports.checkLowStock = onDocumentUpdated(
 
             if (allEmails.length > 0) {
                 const mailOptions = {
-                    from: `"PlanWise" <${process.env.BREVO_FROM_EMAIL}>`,
+                    from: `"PlanWise System" <${process.env.BREVO_FROM_EMAIL}>`,
                     to: allEmails.join(","),
                     subject: `Low Stock Alert: ${after.name}`,
-                    text: `${after.name} has reached low stock: ${after.stock} units remaining (threshold: ${threshold}).`,
+                    text: `${after.name} has reached low stock: ${after.stock} units remaining.`,
                 };
 
                 try {
@@ -89,7 +88,6 @@ exports.checkLowStock = onDocumentUpdated(
         return null;
     }
 );
-//ask claude why not just declare the login and smtpkey as secrets instead of env variables.
 
 //========================================
 exports.koboSync = onRequest(

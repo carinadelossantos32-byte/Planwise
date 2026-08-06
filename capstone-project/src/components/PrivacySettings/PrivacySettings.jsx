@@ -2,7 +2,8 @@ import "./privacy-settings.css"
 import {Eye, EyeOff,CheckCircle, Asterisk} from "lucide-react";
 import { useState,useEffect } from "react";
 import {db} from "../../firebase-config";
-import {doc, getDoc, updateDoc} from "firebase/firestore";
+import {  EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
+import { auth } from "../../firebase-config";
 
 
 function PrivacySettings(){
@@ -17,30 +18,58 @@ function PrivacySettings(){
     const [showModal,setShowModal]=useState(false);
     const [storedPass,setStoredPass]=useState();
 
-                 useEffect(() => {
-                    const fetchPassword = async () => {
-                        const userSnap = await getDoc(doc(db, "testusers", "testUID123"));
-                        if (userSnap.exists()) {
-                          const data=userSnap.data();
-                         setStoredPass(data.password);
-                        } else {
-                            console.log("No password found");
-                        }
-                    };
-                    fetchPassword();
-                }, []);
+                 
 
                 async function handleUpdatePassword(){
-                    if(errors.currentPassword || errors.newPassword || errors.confirmPassword)return;
-                    if(!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword )return;
+                    const nextErrors = {
+                        currentPassword: "",
+                        newPassword: "",
+                        confirmPassword: ""
+                    };
+                    let hasError = false;
+
+                    if (!passwordData.currentPassword.trim()) {
+                        nextErrors.currentPassword = "Please enter your current password";
+                        hasError = true;
+                    }
+                    if (!passwordData.newPassword.trim()) {
+                        nextErrors.newPassword = "Please enter your new password";
+                        hasError = true;
+                    }
+                    if (!passwordData.confirmPassword.trim()) {
+                        nextErrors.confirmPassword = "Please confirm your new password";
+                        hasError = true;
+                    }
+                    if (passwordData.newPassword && passwordData.confirmPassword && passwordData.newPassword !== passwordData.confirmPassword) {
+                        nextErrors.confirmPassword = "New Password and Confirm Password field must match";
+                        hasError = true;
+                    }
+
+                    if (hasError) {
+                        setErrors(nextErrors);
+                        return;
+                    }
+
+                    if(errors.currentPassword || errors.newPassword || errors.confirmPassword) return;
+
+                    const user = auth.currentUser;
+                    if(!user){
+                        console.log("No user is currently signed in.");
+                        return;
+                    }
+
                      try{
-                        await updateDoc(doc(db,"testusers","testUID123"),{
-                           password:passwordData.newPassword
-                        });
+                        const credential = EmailAuthProvider.credential(user.email, passwordData.currentPassword);
+                        await reauthenticateWithCredential(user, credential);
+                        await updatePassword(user, passwordData.newPassword);
                         setShowModal(true);
-                        console.log("Opening modal");
-                        setPasswordData({currentPassword:"", newPassword:"",confirmPassword:""})
-                    }catch(error){console.error("error:"+ error)}
+                        setPasswordData({currentPassword:"",newPassword:"",confirmPassword:""});
+                    }catch(error){
+                        if(error.code==="auth/wrong-password" ||error.code==="auth/invalid-credential"){
+                            setErrors({...errors,currentPassword:"Current password is incorrect"});
+                        }
+                        else console.error("error:" + error);
+                    }
             }               
 
         function verifyCurrentPassword(e){
@@ -48,13 +77,8 @@ function PrivacySettings(){
             setPasswordData({...passwordData, currentPassword: tempPass});
             setErrors({...errors,currentPassword:""});
             
-           
-            if(tempPass.trim().length<=0){
-                setErrors({...errors,currentPassword:"Please enter your current password"});
-            }
-            else if(tempPass!=storedPass){
-                setErrors({...errors,currentPassword:"Password does not match in your database"});
-            }
+            if (tempPass.trim().length <= 0)
+                setErrors({...errors, currentPassword: "Please enter your current password"});
         }
 
         function verifyNewPassword(e){
@@ -72,8 +96,7 @@ function PrivacySettings(){
                 setErrors({...errors, newPassword: "At least 1 uppercase"});
             else if (!tempNewPass.match(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?~`]/))
                 setErrors({...errors, newPassword: "Must have special characters"});
-            else if (tempNewPass === storedPass)
-                setErrors({...errors, newPassword: "New password must be different from current"});
+            
         }
 
         function verifyConfirmPassword(e){
@@ -156,10 +179,11 @@ function PrivacySettings(){
                     </div>
                     <p className="error-text">{errors.confirmPassword}</p>
                 </div>
+                   <button id="update-password-button" onClick={handleUpdatePassword}>
+                    Update Password</button>
         </div>
 
-                    <button id="update-password-button" onClick={handleUpdatePassword}>
-                    Update Password</button>
+                 
 
                     {showModal && (
                         <div className=" modal-overlay">

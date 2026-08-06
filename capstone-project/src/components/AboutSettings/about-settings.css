@@ -1,22 +1,52 @@
-#about-container{
+/* Parent Container */
+#about-settings-page-container {
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    height: auto;
-    min-height: 60%;
-    margin: 70px auto; /* center horizontally and keep top spacing */
+    align-items: start;    
+    width: 100%;
+    min-height: 100vh;        
+    padding: 2rem 4.5rem;       
     box-sizing: border-box;
-    width: 95%;
-    max-width: 1000px;
 }
+
+/* Page Heading */
+#about-settings-page-container h1 {
+    align-self: flex-start;  
+    width: 90%;                  
+    max-width: 1100px;             
+    margin: 0 0 1.5rem 0;        
+    font-size: 25px;
+    font-weight: bold;
+}
+
+/* Main Card Container */
+#about-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; 
+    
+    /* VERTICAL RESPONSIVENESS */
+    min-height: 65vh;        
+    padding: 3rem 2.5rem;     
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    background-color: #ffffff;
+    box-sizing: border-box;
+
+    width: 100%;              
+    max-width: 1100px;
+    margin: 1.5rem auto;
+    overflow-x: hidden;
+}
+
 #about-header{
     display: flex;
+    flex-direction: column;
     align-items: center;
     flex-wrap: wrap;
     gap: 12px;
+    width: 100%;
+    max-width: 100%;
 }
 
 #about-header img {
@@ -31,42 +61,44 @@
     font-weight: bold;
     margin: 0;
     padding: 0;
-    text-align:center;
-    
-}
-
-#about-header {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    text-align: center;
 }
 
 #about-header p {
     font-size: 15px;
     margin: 10px 0 0 0;
+    text-align:center;
     color: #000000;
+    max-width: 100%;
+    word-wrap: break-word;
 }
 
 h1{
-    font-size: 25px;
+    font-size: 24px;             
     font-weight: bold;
-    margin-bottom: 30px;
+    margin: 20px 0 20px 0;      
 }
 
 #about-content{
     display: flex;
     flex-direction: row;
-    margin: 20px;
+    flex-wrap: wrap;
+    margin: 20px 0;
     gap: 10px;
+    width: 100%;
+    max-width: 100%;
 }
+
 .content{
     border: 1px solid #c0c0c0;
     border-radius: 10px;
     padding: 10px 20px;
     margin: 10px;
     background-color: #f5f2f2;
-    flex: auto;
-   
+    flex: 1 1 260px;
+    min-width: 0;
+    max-width: 100%;
+    word-wrap: break-word;
 }
 
 #contact-support h3, #office-hours h3{
@@ -80,4 +112,37 @@ h1{
     font-size: 14px;
     color: #646464;
     margin-top: 20px;
+}
+
+/* ===== RESPONSIVE BREAKPOINTS ===== */
+@media (max-width: 900px) {
+    #about-container {
+        padding: 2rem 1.5rem;
+        min-height: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    #about-settings-page-container {
+        padding: 1rem 0.75rem;
+    }
+
+    #about-container {
+        padding: 1.5rem 1rem;
+        margin: 1rem auto;
+        border-radius: 8px;
+    }
+
+    #about-header img {
+        width: 72px;
+        height: 72px;
+    }
+
+    #about-header h1 {
+        font-size: 18px;
+    }
+
+    h1 {
+        font-size: 20px;
+    }
 }

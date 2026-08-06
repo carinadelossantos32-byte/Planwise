@@ -1,102 +1,127 @@
-#privacy-settings-page-container{
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    width:100%;
-    margin-top:20px;
-
-}
-h1{
-    font-size: 24px;
-    margin:20px 0 20px 0;
-}
-h3{
-    font-size: 20px;
+#privacy-settings-page-container h1 {
+    font-size: 1.5rem;
     font-weight: bold;
-    margin:0;
+    margin-bottom: 0.3rem;
 }
 
-h5{
-    font-size: 15px;
+#privacy-settings-container h3 {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.info-section h5 {
+    font-size: 0.95rem;
     font-weight: bold;
     color: #000000;
-
 }
-#privacy-settings-container{
+
+/* Page Outer Wrapper */
+#privacy-settings-page-container {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 10px 25px 20px 25px;
+    align-items: start;   /* was: start */
+    width: 100%;
+    min-height: 100vh;
+    padding: 2.5rem 4.5rem;
+    box-sizing: border-box;
+}
+
+
+
+.privacy-settings-wrapper {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    padding: 0 1rem;
+    box-sizing: border-box;
+}
+
+/* Privacy Settings Main Card */
+#privacy-settings-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1.25rem;
+    padding: 2rem 2.25rem;
     border: 1px solid #c0c0c0;
     border-radius: 10px;
     background-color: #ffffff;
-    height: auto;
-    margin:20px auto;
-    width:95%;
-    height: auto;
-    max-width:900px;
     box-sizing: border-box;
-    
+
+    width: 100%;
+    max-width: 1100px;
+    min-height: 55vh;
+    margin: 1.5rem auto;   /* auto = centers horizontally at any screen size */
+    overflow-x: hidden;
 }
 
-.info-section{
+/* Password Section Container */
+/* Password Section Container */
+#change-password-section {
+    width: 100%;
+    max-width: 800px;      /* match the input width so everything lines up */
     display: flex;
     flex-direction: column;
-    gap: 5px;
-    margin-top: 15px;
-    padding-left: 10px; 
-    width:100%;
-    }
-#change-password-section{
-    width:100%;
-    display:flex;
-    flex-direction: column;
-    font-size: 18px;
+    align-items: start;   /* centers h3, info-section, and button horizontally */
+    font-size: 1.125rem;
     font-weight: bold;
-    margin:0;
+    padding: 10px 20px;
+    margin: 10px auto;         /* centers this block within the card */
+    box-sizing: border-box;
+}
+/* Info Section Wrapper */
+.info-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-top: 0.9375rem;
+    width: 100%;
 }
 
-#change-password-section input{
+/* Password Input Outer Wrapper */
+#change-password-section .password-input-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+}
+
+/* Password Inputs */
+#change-password-section input,
+#change-password-section .password-input-wrapper input {
     box-sizing: border-box;
     width: 100%;
-    height: 48px;
-    padding: 10px 44px 10px 14px;
+    height: 3rem;
+    padding: 0.6rem 2.75rem 0.6rem 0.875rem;
     border: 1px solid #e6e6e6;
     background: #ffffff;
     border-radius: 10px;
-    font-size: 15px;
+    font-size: 0.9375rem;
     color: #111827;
     transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
-
 
 #change-password-section input:focus {
     border-color: #4F39F6;
     outline: none;
 }
 
-#change-password-section .password-input-wrapper{
-    position: relative;
-    width: 70%; 
-}
 
-#change-password-section .password-input-wrapper input{
-    width: 100%; 
-}
 
-.asterisk{
+/* Required Label Asterisk Container */
+.asterisk {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     margin-bottom: 6px;
 }
 
-.asterisk h5{
+.asterisk h5 {
     margin: 0;
 }
 
-.password-toggle-icon{
+/* Eye Icon */
+.password-toggle-icon {
     position: absolute;
     right: 12px;
     top: 50%;
@@ -107,28 +132,36 @@ h5{
     display: flex;
     align-items: center;
     justify-content: center;
-    color:#6b7280;
+    color: #6b7280;
 }
 
-
-#update-password-button{
-    
-    padding: 10px 20px;
-    background-color: rgb(89, 9, 236);
-    color: white;
+/* Submit/Update Button */
+#update-password-button {
+    padding: 0.6rem 1.25rem;
+    background-color: #091F7A;
+    color: #ffffff;
     border: none;
     border-radius: 10px;
     cursor: pointer;
     align-self: flex-start;
-    font-size: 16px;
+    font-size: 1rem;
     font-weight: bold;
-    height:45px;
-    margin-left: 10px;
+    height: 3rem;
+    margin-top: 20px;
+    margin-left: 0;
+    transition: background-color 0.2s ease, border-color 0.2s ease,
+                box-shadow 0.2s ease, transform 0.12s ease;
 }
 
-#update-password-button:hover{
-    background-color: rgb(70, 0, 200);
-    transition: background-color 0.2s ease;
+#update-password-button:hover {
+    background-color: #041043;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(9, 31, 122, 0.3);
+}
+
+#update-password-button:active {
+    transform: translateY(0) scale(0.97);
+    box-shadow: 0 1px 4px rgba(9, 31, 122, 0.25);
 }
 
 .error-text{
@@ -159,7 +192,6 @@ h5{
     align-items: center;
 }
 .success-icon{
-    
     color: #15803d;
     width: 40px;
     height: 40px;
@@ -194,4 +226,39 @@ h5{
 
 .modal-ok-button:hover{
     background-color: #24035a;
+}
+
+/* ===== RESPONSIVE BREAKPOINTS ===== */
+@media (max-width: 900px) {
+    #privacy-settings-container {
+        padding: 1.75rem 1.5rem;
+        min-height: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    #privacy-settings-page-container {
+        padding: 1.5rem 0.75rem;
+        width: 100%;
+    }
+
+    #privacy-settings-page-container h1 {
+        width: 100%;
+    }
+
+    #privacy-settings-container {
+        width: 100%;
+        padding: 1.5rem 1rem;
+        margin: 1rem auto;
+        border-radius: 8px;
+    }
+
+    #update-password-button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .success-modal-box {
+        width: 90%;
+    }
 }
