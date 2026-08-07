@@ -1,17 +1,21 @@
 .lowstock-shell{
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 2.5rem 4.5rem;
   background-color: #f9f9f9;
   min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
 }
 #notification-container{
     border: 1px solid #c0c0c0;
     background-color: white;
     border-radius: 10px;
-    padding: 20px 25px 20px 25px;
+    padding: 20px 25px;
     max-width: 900px;
-    margin: 40px auto;
-    
-    
+    width: 100%;
+    margin: 1.5rem auto 0 auto;
 }
 .notif-item{
     display:flex;
@@ -120,6 +124,12 @@ input:checked + .slider:before {
   color: #111827;
 }
 
+.lowstock-input-row{
+  display:flex;
+  align-items: start;
+  gap: 20px;
+  width: 100%;
+}
 .lowstock-input{
   padding: 0 20px; 
   width: 400px; 
@@ -129,7 +139,7 @@ input:checked + .slider:before {
   font-weight: 600; 
   color: black; 
   background-color: white; 
-  border: 2px solid #4b5563; 
+  border: 1px solid #e2e8f0; 
   border-radius: 6px; 
   box-sizing: border-box;
   margin-right: 40px;
@@ -137,14 +147,14 @@ input:checked + .slider:before {
 
 .lowstock-input:focus{
   outline: none;
-  border: 2px solid #160597;
+  border: 2px solid #091F7A;
 
  
 }
 
 .lowstock-button{
   height: 48px;
-  background-color: #4F39F6;
+  background-color: #091F7A;
   color: white;
   font-size: 16px;
   font-weight: bold;

@@ -3,7 +3,7 @@ import "./about-settings.css";
 function AboutSettings(){
     return(
         <>
-
+<div id="about-settings-page-container">
             <h1 >About Planwise</h1>
             <div id="about-container">
                 <div id="about-header">
@@ -17,7 +17,7 @@ function AboutSettings(){
                 <div id="about-content">
                     <div id="contact-support" className="content">
                         <h3>Contact Support</h3>
-                        <p>Email: <a href="mailto:support@planwise.gov.ph">support@planwise.gov.ph</a></p>
+                        <p>Email: <a href="mailto:system.planwise@gmail.com">system.planwise@gmail.com</a></p>
                         <p>Phone: (044) 791-1234</p>
                     </div>
 
@@ -33,6 +33,8 @@ function AboutSettings(){
                 <div id="about-footer">
                     <p>© 2026 Malolos City Health Office. All rights reserved.</p>
                 </div>
+            </div>
+
             </div>
             
        

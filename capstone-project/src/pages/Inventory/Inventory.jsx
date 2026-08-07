@@ -15,6 +15,8 @@ function Inventory() {
     const [showAllocateModal, setshowAllocateModal] = useState(false);
     const [showAddStockModal, setshowAddStockModal] = useState(false);
     const [showToast, setShowToast] = useState(false);
+    const [toastTitle, setToastTitle] = useState("");
+    const [toastMessage, setToastMessage] = useState("");
     const [stockValue, setStockValue] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
 
@@ -32,6 +34,8 @@ function Inventory() {
     const [showRHUInfo, setshowRHUInfo] = useState(false);
     const [selectedRHU, setSelectedRHU] = useState(null);
 
+    const [chartRefreshKey, setChartRefreshKey] = useState(0);
+
     async function fetchRHUData() {
         setIsLoading(true);
         const refreshed = await getDocs(collection(db, "rhu"));
@@ -39,6 +43,7 @@ function Inventory() {
         refreshed.forEach((doc) => data.push({ id: doc.id, ...doc.data() }));
         data.sort((a, b) => a.id.localeCompare(b.id));
         setRhuData(data);
+        setChartRefreshKey(prevKey => prevKey + 1);
         setIsLoading(false);
     }
     useEffect(() => {
@@ -58,15 +63,7 @@ function Inventory() {
     function handleAllocateValue(value) {
         const number = Number(value);
 
-        if (number <= 0) {
-            setErrorMessage("Please enter a valid number greater than 0");
-            return false;
-        }
-
-        setErrorMessage("");
-        return true;
-
-
+        return number > 0;
     }
 
     function handleConfirmDeduct() {
@@ -105,6 +102,14 @@ function Inventory() {
             setDeductValue({});
             await fetchRHUData();
             setShowConfirmDeduct(false);
+            setToastTitle("Deduction Successful");
+            setToastMessage("Stock deduction completed and inventory updated.");
+            setShowToast(true);
+            setTimeout(() => {
+                setShowToast(false);
+                setToastTitle("");
+                setToastMessage("");
+            }, 4000);
 
 
 
@@ -148,9 +153,15 @@ function Inventory() {
 
         setShowConfirmAllocate(false);
         setshowAllocateModal(false);
+        setToastTitle("Allocation Successful");
+        setToastMessage(`Allocation successful. ${stockValue} units distributed to all RHUs.`);
         setShowToast(true);
         setStockValue("");
-        setTimeout(() => { setShowToast(false); setShowToast(""); }, 4000);
+        setTimeout(() => {
+            setShowToast(false);
+            setToastTitle("");
+            setToastMessage("");
+        }, 4000);
     }
 
 
@@ -222,6 +233,14 @@ function Inventory() {
             setSelectedRHU(updatedRHU);
             setRhuData((prev) => prev.map((item) => (item.id === updatedRHU.id ? updatedRHU : item)));
             setEditingRHUId(null);
+            setToastTitle("Barangay Changes Saved");
+            setToastMessage("New information have been saved successfully.");
+            setShowToast(true);
+            setTimeout(() => {
+                setShowToast(false);
+                setToastTitle("");
+                setToastMessage("");
+            }, 4000);
         } catch (err) {
             console.error("Failed to update RHU:", err);
             alert("Failed to save changes.");
@@ -297,7 +316,7 @@ function Inventory() {
                     <div id="population-chart-section" className="chart-card">
                         <h3 id="rhu-title">Population per RHU</h3>
                         <ResponsiveContainer width="100%" height={290}>
-                            <BarChart
+                            <BarChart key={`population-${chartRefreshKey}`}
                                 layout="vertical"
                                 data={sortedRHUData.map((item) => ({
                                     name: item.name,
@@ -321,7 +340,10 @@ function Inventory() {
                                     fill="url(#indigoGradient)"
                                     radius={[0, 8, 8, 0]}
                                     maxBarSize={20}
-                                    isAnimationActive={false}
+                                    isAnimationActive={true}
+                                    animationDuration={300}
+                                    animationEasing="ease-out"
+
                                 >
                                     <LabelList
                                         dataKey="population"
@@ -343,7 +365,7 @@ function Inventory() {
                     <div id="stock-chart-section" className="chart-card">
                         <h3 id="rhu-title">Stock per RHU</h3>
                         <ResponsiveContainer width="100%" height={290}>
-                            <BarChart
+                            <BarChart key={`stock-${chartRefreshKey}`}
                                 data={sortedRHUData.map((item) => ({
                                     name: item.name,
                                     stock: Number(item.stock || 0),
@@ -364,7 +386,9 @@ function Inventory() {
                                     dataKey="stock"
                                     radius={[6, 6, 0, 0]}
                                     maxBarSize={28}
-                                    isAnimationActive={false}
+                                    isAnimationActive={true}
+                                    animationDuration={300}
+                                    animationEasing="ease-out"
                                 >
                                     {sortedRHUData.map((item) => (
                                         <Cell
@@ -521,17 +545,27 @@ function Inventory() {
                         </div>
 
                         <div className="allocate-input-section">
-                            <input type="number" value={stockValue}
-                                onChange={(e) => { setStockValue(e.target.value); handleAllocateValue(e.target.value); }}
-                                className="allocate-input" />
+                            <h3>Total Quantity:</h3>
+                            <input
+                                type="number"
+                                min="1"
+                                step="1"
+                                value={stockValue}
+                                placeholder="e.g. 1000"
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    setStockValue(value);
+                                    if (Number(value) > 0) {
+                                        setShowAllocateError(false);
+                                    }
+                                }}
+                                className="allocate-input"
+                            />
 
                             {showAllocateError && (
-                                <div className="error-banner">
-                                    <span>Please enter a number to allocate</span>
-                                </div>
+                                <p className="error-text">Please enter a number</p>
                             )}
                         </div>
-                        {errorMessage && <p className="error-text" style={{ color: '#ef4444' }}>{errorMessage}</p>}
 
                         <div className="modal-table-wrapper">
                             <table className="modal-table">
@@ -663,12 +697,6 @@ function Inventory() {
 
 
                         <div className="modal-footer">
-
-                            {showDeductError && (
-                                <div className="error-banner">
-                                    <span>Please enter at least 1 deduction amount</span>
-                                </div>
-                            )}
                             <button className="btn-cancel"
                                 onClick={() => setShowDeductModal(false)}>
                                 Cancel</button>
@@ -677,6 +705,11 @@ function Inventory() {
                                 onClick={handleConfirmDeduct}>
                                 Confirm Deduct</button>
                         </div>
+                        {showDeductError && (
+                            <div className="error-banner deduct-error-banner">
+                                <span>Please enter at least 1 deduction amount</span>
+                            </div>
+                        )}
 
                     </div>
                 </div>
@@ -720,9 +753,9 @@ function Inventory() {
                     <div id="toast-alert">
                         <CheckCircle size={20} />
                         <div>
-                            <span id="toast-title">Inventory Updated</span>
+                            <span id="toast-title">{toastTitle || "Success"}</span>
                             <span id="toast-message">
-                                Allocation successful. {stockValue} units distributed to all RHUs.
+                                {toastMessage}
                             </span>
                         </div>
                     </div>

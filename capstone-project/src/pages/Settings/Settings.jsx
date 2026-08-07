@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import "./settings.css"
 import { useNavigate } from "react-router"
 import {Info, LockKeyhole, User, Bell, Search } from "lucide-react";
@@ -6,10 +6,31 @@ import Account from "../../components/AccountSettings/Account"
 import PrivacySettings from "../../components/PrivacySettings/PrivacySettings"
 import LowStockSettings from "../../components/LowStockSettings/LowStock"
 import AboutSettings from "../../components/AboutSettings/AboutSettings"
+import { auth, db, doc, getDoc } from "../../firebase-config"
+import { onAuthStateChanged } from "firebase/auth";
 
 function Settings(){
     const navigate = useNavigate();
     const [activePage, setActivePage] = useState("account");
+    const [userRole, setUserRole] = useState(null);
+    const isHealth = userRole === "health";
+ 
+   useEffect(() => {
+       const unsubscribe = onAuthStateChanged(auth, async (user) => {
+           if (!user) {
+               setUserRole(null);
+               return;
+           }
+
+           const userDocRef = doc(db, "users", user.email);
+           const userDocSnap = await getDoc(userDocRef);
+           if (userDocSnap.exists()) {
+               setUserRole(userDocSnap.data().role);
+           }
+       });
+
+       return () => unsubscribe();
+   }, []);
     
     return(
     <>
@@ -36,6 +57,7 @@ function Settings(){
         <h4>Privacy & Security</h4>
         </div>
 
+        {isHealth && (
         <div id="notif-field" 
         onClick={() => setActivePage("notifications")} 
         className={activePage === "notifications" ? "selected" : ""}
@@ -43,6 +65,7 @@ function Settings(){
         <Bell size={16} strokeWidth={1} />
         <h4>Low Stock</h4>
         </div>
+        )}
 
         <div id="about-field" 
         onClick={() => setActivePage("about")} 
@@ -58,7 +81,7 @@ function Settings(){
     <div id="settings-content">
         {activePage === "account" && <Account />}
         {activePage === "privacy" && <PrivacySettings />}
-        {activePage === "notifications" && <LowStockSettings/>}
+        {activePage === "notifications" && isHealth && <LowStockSettings/>}
         {activePage === "about" && <AboutSettings />}
     </div>
 
