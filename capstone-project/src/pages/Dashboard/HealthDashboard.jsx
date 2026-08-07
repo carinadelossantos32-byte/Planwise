@@ -2,44 +2,47 @@ import React, { useState, useEffect } from 'react';
 import './dashboard.css'; 
 import mapPlaceholderImg from '../../assets/map-placeholder.png';
 import { db } from '../../firebase-config';
-import { collection, onSnapshot } from 'firebase/firestore';
-import { RefreshCw } from 'lucide-react';
+import { collection, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { RefreshCw, Download, Upload } from 'lucide-react';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 
 const MALOLOS_BARANGAYS = [
-  "Anilao", "Atlag", "Babatnin", "Bagna", "Bagong Bayan", "Balayong", "Balite", 
-  "Bangkal", "Barihan", "Bulihan", "Bungahan", "Caingin", "Calero", "Caliligawan", 
-  "Canalate", "Caniogan", "Catmon", "Cofradia", "Dakila", "Guinhawa", "Liang", 
-  "Ligas", "Longos", "Look 1st", "Look 2nd", "Lugam", "Mabolo", "Mambog", 
-  "Masile", "Matimbo", "Mojon", "Namayan", "Niugan", "Pamarawan", "Panasahan", 
-  "Pinagbakahan", "San Agustin", "San Gabriel", "San Juan", "San Pablo", 
-  "San Vicente", "Santiago", "Santisima Trinidad", "Santor", "Santo Cristo", 
-  "Santo Niño", "Santo Rosario", "Sumapang Bata", "Sumapang Matanda", "Taal"
+        "Anilao", "Atlag", "Babatnin", "Bagna", "Bagong Bayan", "Balayong", "Balite", 
+        "Bangkal", "Barihan", "Bulihan", "Bungahan", "Caingin", "Calero", "Caliligawan", 
+        "Canalate", "Caniogan", "Catmon", "Cofradia", "Dakila", "Guinhawa", "Liang", 
+        "Ligas", "Longos", "Look 1st", "Look 2nd", "Lugam", "Mabolo", "Mambog", 
+        "Masile", "Matimbo", "Mojon", "Namayan", "Niugan", "Pamarawan", "Panasahan", 
+        "Pinagbakahan", "San Agustin", "San Gabriel", "San Juan", "San Pablo", 
+        "San Vicente", "Santiago", "Santisima Trinidad", "Santor", "Santo Cristo", 
+        "Santo Niño", "Santo Rosario", "Sumapang Bata", "Sumapang Matanda", "Taal"
 ];
 
-const Dashboard = () => {
+const HealthDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const [metricsData, setMetricsData] = useState({
-    totalFamilies: 0,
-    registeredClients: 0,
-    newClients: 0,
-    activeFpUsers: 0,
-    totalDistributed: 0,
-    totalBarangays: 15
+    currentUsersPrevMonth: 0,
+    newAcceptorsPrevMonth: 0,
+    otherAcceptors: 0,
+    dropOuts: 0,
+    currentUsersCurrentMonth: 0,
+    newAcceptorsCurrentMonth: 0,
   });
 
   const [geoChartData, setGeoChartData] = useState([]);
 
   const [methodMix, setMethodMix] = useState([
-    { name: "Injectable (DMPA)", keys: ["Injectable", "Injectable (DMPA)", "DMPA"], count: 0, percentage: "0%", color: "#2F80ED" },
-    { name: "Pills (Combined/POP)", keys: ["Pills", "Pills (Combined/POP)", "POP", "COC", "Pill"], count: 0, percentage: "0%", color: "#9B51E0" },
+    { name: "FSTR/BTL", keys: ["FSTR/BTL", "BTL", "Tubal Ligation"], count: 0, percentage: "0%", color: "#2F80ED" },
+    { name: "MSTR/NSV", keys: ["MSTR/NSV", "NSV", "Vasectomy"], count: 0, percentage: "0%", color: "#9B51E0" },
     { name: "Implant", keys: ["Implant", "Subdermal Implant"], count: 0, percentage: "0%", color: "#27AE60" },
-    { name: "IUD", keys: ["IUD", "IUD-TCu380A"], count: 0, percentage: "0%", color: "#E056FD" },
+    { name: "IUD-INTERVAL", keys: ["IUD-INTERVAL", "IUD", "IUD-TCu380A"], count: 0, percentage: "0%", color: "#E056FD" },
     { name: "Condoms", keys: ["Condom", "Condoms"], count: 0, percentage: "0%", color: "#FF7675" },
-    { name: "BTL/NSV", keys: ["Tubal Ligation", "Vasectomy", "BTL/NSV", "BTL", "NSV"], count: 0, percentage: "0%", color: "#0984E3" }
+    { name: "IUD-POSTPARTUM", keys: ["IUD-POSTPARTUM", "PPIUD"], count: 0, percentage: "0%", color: "#0984E3" }
   ]);
 
+  // 4. Demographics State
   const [demographics, setDemographics] = useState([
     { age: "15-19 years", total: 0, share: "0%", barWidth: "0%", color: "#E056FD" },
     { age: "20-24 years", total: 0, share: "0%", barWidth: "0%", color: "#9B51E0" },
@@ -60,78 +63,70 @@ const Dashboard = () => {
     return age;
   };
 
-  const handleRefresh = () => {
+  const fetchAndProcessData = () => {
     setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 600);
-  };
-
-  useEffect(() => {
-    const rhuRef = collection(db, "rhu");
-    const unsubscribeRHU = onSnapshot(rhuRef, (snapshot) => {
-      let overallStock = 0;
-      snapshot.docs.forEach(docSnap => {
-        const data = docSnap.data();
-        overallStock += Number(data.stock || 0);
-      });
-
-      setMetricsData(prev => ({
-        ...prev,
-        totalDistributed: overallStock
-      }));
-    }, (err) => console.log(err));
-
     let publicDocs = [], privateDocs = [], referredDocs = [];
 
     const processAllClients = () => {
       const allClients = [...publicDocs, ...privateDocs, ...referredDocs];
-      const totalClients = allClients.length;
 
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
 
-      let newClientsCount = 0;
-      let activeFpCount = 0;
+      let prevMonthUserCount = 0;
+      let prevMonthNewCount = 0;
+      let otherCount = 0;
+      let dropOutCount = 0;
+      let currMonthUserCount = 0;
+      let currMonthNewCount = 0;
 
       const rawMethodCounts = {};
       const barangayCounts = {};
       const ageGroups = { "15-19": 0, "20-24": 0, "25-29": 0, "30-34": 0, "35-39": 0, "40-49": 0 };
 
       allClients.forEach(client => {
+        const clientStatus = (client.status || "").toLowerCase();
+        const clientType = (client.type || "").toLowerCase();
+
+        let createdDate = null;
         if (client.created_at) {
-          const createdDate = client.created_at.toDate 
-            ? client.created_at.toDate() 
-            : new Date(client.created_at);
-          if (!isNaN(createdDate.getTime()) && createdDate >= thirtyDaysAgo) {
-            newClientsCount++;
+          createdDate = client.created_at.toDate ? client.created_at.toDate() : new Date(client.created_at);
+        }
+
+        const isCurrentMonth = createdDate && createdDate.getMonth() === currentMonth && createdDate.getFullYear() === currentYear;
+        const isPrevMonth = createdDate && (
+          (currentMonth === 0 ? createdDate.getMonth() === 11 && createdDate.getFullYear() === currentYear - 1 : createdDate.getMonth() === currentMonth - 1 && createdDate.getFullYear() === currentYear)
+        );
+
+        if (clientStatus.includes("drop") || clientStatus.includes("discontinue")) {
+          dropOutCount++;
+        } else if (clientType.includes("other")) {
+          otherCount++;
+        } else {
+          if (isCurrentMonth) {
+            currMonthUserCount++;
+            if (clientType.includes("new")) currMonthNewCount++;
+          } else if (isPrevMonth) {
+            prevMonthUserCount++;
+            if (clientType.includes("new")) prevMonthNewCount++;
+          } else {
+            currMonthUserCount++;
           }
         }
 
         const method = (client.fp_method || client.FP_method || "").trim();
         if (method) {
-          activeFpCount++;
           rawMethodCounts[method] = (rawMethodCounts[method] || 0) + 1;
         }
 
         const rawLocation = (client.barangay || client.address || "").trim();
         if (rawLocation) {
-          const matched = MALOLOS_BARANGAYS.find(b => 
-            rawLocation.toLowerCase().includes(b.toLowerCase())
-          );
-          if (matched) {
-            barangayCounts[matched] = (barangayCounts[matched] || 0) + 1;
-          } else if (client.barangay) {
-            barangayCounts[client.barangay] = (barangayCounts[client.barangay] || 0) + 1;
-          }
+          const matched = MALOLOS_BARANGAYS.find(b => rawLocation.toLowerCase().includes(b.toLowerCase()));
+          if (matched) barangayCounts[matched] = (barangayCounts[matched] || 0) + 1;
         }
 
-        const computedAge = 
-          calculateAge(client.birthdate_female) || 
-          calculateAge(client.birthdate) || 
-          calculateAge(client.birthdate_male) || 
-          (isNaN(Number(client.age)) ? null : Number(client.age));
-
+        const computedAge = calculateAge(client.birthdate_female) || calculateAge(client.birthdate) || (isNaN(Number(client.age)) ? null : Number(client.age));
         if (computedAge) {
           if (computedAge >= 15 && computedAge <= 19) ageGroups["15-19"]++;
           else if (computedAge >= 20 && computedAge <= 24) ageGroups["20-24"]++;
@@ -146,20 +141,18 @@ const Dashboard = () => {
         .map(([name, count]) => ({ name, count }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 11);
-
       setGeoChartData(sortedBrgyList);
 
+      const totalActiveMethods = Object.values(rawMethodCounts).reduce((a, b) => a + b, 0) || 1;
       setMethodMix(prevMethods =>
         prevMethods.map(item => {
           let count = 0;
           item.keys.forEach(k => {
             Object.keys(rawMethodCounts).forEach(rawKey => {
-              if (rawKey.toLowerCase() === k.toLowerCase()) {
-                count += rawMethodCounts[rawKey];
-              }
+              if (rawKey.toLowerCase() === k.toLowerCase()) count += rawMethodCounts[rawKey];
             });
           });
-          const percentage = activeFpCount > 0 ? ((count / activeFpCount) * 100).toFixed(1) + "%" : "0%";
+          const percentage = ((count / totalActiveMethods) * 100).toFixed(1) + "%";
           return { ...item, count: count.toLocaleString(), percentage };
         })
       );
@@ -188,68 +181,134 @@ const Dashboard = () => {
         })
       );
 
-      setMetricsData(prev => ({
-        ...prev,
-        registeredClients: totalClients,
-        newClients: newClientsCount,
-        activeFpUsers: activeFpCount,
-        totalBarangays: Object.keys(barangayCounts).length || 15
-      }));
+      setMetricsData({
+        currentUsersPrevMonth: prevMonthUserCount,
+        newAcceptorsPrevMonth: prevMonthNewCount,
+        otherAcceptors: otherCount,
+        dropOuts: dropOutCount,
+        currentUsersCurrentMonth: currMonthUserCount,
+        newAcceptorsCurrentMonth: currMonthNewCount
+      });
 
       setLoading(false);
+      setRefreshing(false);
     };
 
     const unPublic = onSnapshot(collection(db, "clients_public"), (snap) => {
       publicDocs = snap.docs.map(d => d.data()).filter(d => d.is_archived !== true && d.is_archived !== "true");
       processAllClients();
-    }, (err) => console.error(err));
+    }, (err) => console.error("Health unPublic listener error:", err));
 
     const unPrivate = onSnapshot(collection(db, "clients_private"), (snap) => {
       privateDocs = snap.docs.map(d => d.data()).filter(d => d.is_archived !== true && d.is_archived !== "true");
       processAllClients();
-    }, (err) => console.error(err));
+    }, (err) => console.error("Health unPrivate listener error:", err));
 
     const unReferred = onSnapshot(collection(db, "clients_referred"), (snap) => {
       referredDocs = snap.docs.map(d => d.data()).filter(d => d.is_archived !== true && d.is_archived !== "true");
       processAllClients();
-    }, (err) => console.error(err));
+    }, (err) => console.error("Health unReferred listener error:", err));
 
-    const familiesRef = collection(db, "families");
-    const unsubscribeFamilies = onSnapshot(familiesRef, (snapshot) => {
-      setMetricsData(prev => ({ ...prev, totalFamilies: snapshot.size }));
-    }, (err) => console.log(err));
+    return () => { unPublic(); unPrivate(); unReferred(); };
+  };
 
-    return () => {
-      unsubscribeRHU();
-      unPublic();
-      unPrivate();
-      unReferred();
-      unsubscribeFamilies();
-    };
+  useEffect(() => {
+    const unsub = fetchAndProcessData();
+    return () => unsub();
   }, []);
 
-  const maxGeoValue = Math.max(...geoChartData.map(g => g.count), 1);
+  const handleExportExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Health Overview');
+
+    sheet.columns = [
+      { header: 'Metric Category', key: 'category', width: 30 },
+      { header: 'Total Value', key: 'value', width: 20 }
+    ];
+
+    sheet.addRow({ category: 'Current Users (Previous Month)', value: metricsData.currentUsersPrevMonth });
+    sheet.addRow({ category: 'New Acceptors (Previous Month)', value: metricsData.newAcceptorsPrevMonth });
+    sheet.addRow({ category: 'Other Acceptors', value: metricsData.otherAcceptors });
+    sheet.addRow({ category: 'Drop Outs', value: metricsData.dropOuts });
+    sheet.addRow({ category: 'Current Users (Current Month)', value: metricsData.currentUsersCurrentMonth });
+    sheet.addRow({ category: 'New Acceptors (Current Month)', value: metricsData.newAcceptorsCurrentMonth });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), `Health_Dashboard_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
+  };
+
+  const handleImportExcel = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      const buffer = evt.target.result;
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(buffer);
+      const sheet = workbook.getWorksheet(1);
+
+      sheet.eachRow((row, rowNumber) => {
+        if (rowNumber > 1) {
+          const name = row.getCell(1).value;
+          const fp_method = row.getCell(2).value;
+          const barangay = row.getCell(3).value;
+
+          if (name) {
+            addDoc(collection(db, "clients_public"), {
+              name: typeof name === 'object' ? String(name.result || name.value || name) : String(name),
+              fp_method: fp_method ? String(fp_method) : "",
+              barangay: barangay ? String(barangay) : "",
+              is_archived: false,
+              created_at: serverTimestamp()
+            });
+          }
+        }
+      });
+      alert("Excel records imported successfully!");
+    };
+    reader.readAsArrayBuffer(file);
+  };
 
   const topCards = [
-    { label: "Total Families", value: metricsData.totalFamilies.toLocaleString(), icon: "👥", color: "orange" },
-    { label: "Registered Clients", value: metricsData.registeredClients.toLocaleString(), icon: "💙", color: "blue" },
-    { label: "New Client", value: metricsData.newClients.toLocaleString(), icon: "👤+", color: "yellow" },
-    { label: "Active FP Users", value: metricsData.activeFpUsers.toLocaleString(), icon: "📈", color: "purple" },
-    { label: "Total Contraceptives Distributed", value: metricsData.totalDistributed.toLocaleString(), icon: "💊", color: "teal" },
-    { label: "Total Barangays", value: metricsData.totalBarangays.toLocaleString(), icon: "📍", color: "pink" }
+    { label: "Current Users", subLabel: "(Previous Month)", value: metricsData.currentUsersPrevMonth, icon: "👥", color: "orange" },
+    { label: "New Acceptors", subLabel: "(Previous Month)", value: metricsData.newAcceptorsPrevMonth, icon: "💙", color: "blue" },
+    { label: "Other Acceptors", subLabel: "", value: metricsData.otherAcceptors, icon: "👤+", color: "yellow" },
+    { label: "Drop Outs", subLabel: "", value: metricsData.dropOuts, icon: "📉", color: "purple" },
+    { label: "Current Users", subLabel: "(Current Month)", value: metricsData.currentUsersCurrentMonth, icon: "👥", color: "teal" },
+    { label: "New Acceptors", subLabel: "(Current Month)", value: metricsData.newAcceptorsCurrentMonth, icon: "👤+", color: "pink" }
   ];
+
+  const maxGeoValue = Math.max(...geoChartData.map(g => g.count), 1);
 
   return (
     <div className="dashboard-container">
       <header className="dashboard-header">
         <div className="header-text">
           <h1>Dashboard</h1>
-          <p>{loading ? "Syncing real-time overview..." : "Welcome back to your overview"}</p>
+          <p>{loading ? "Loading overview..." : "Welcome back to your overview"}</p>
         </div>
-        
-        <button className="btn-refresh-data" onClick={handleRefresh}>
-          <RefreshCw size={14} className={refreshing ? "spin-icon" : ""} /> Refresh Data
-        </button>
+
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <button 
+            onClick={fetchAndProcessData}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', border: '1px solid #D1D5DB', backgroundColor: '#FFF', fontWeight: 600, cursor: 'pointer' }}
+          >
+            <RefreshCw size={14} className={refreshing ? "spin-icon" : ""} /> Refresh Data
+          </button>
+
+          <button 
+            onClick={handleExportExcel}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#EF4444', color: '#FFF', fontWeight: 600, cursor: 'pointer' }}
+          >
+            <Download size={14} /> Export as Excel
+          </button>
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#10B981', color: '#FFF', fontWeight: 600, cursor: 'pointer' }}>
+            <Upload size={14} /> Import Excel
+            <input type="file" accept=".xlsx, .xls" onChange={handleImportExcel} style={{ display: 'none' }} />
+          </label>
+        </div>
       </header>
 
       <section className="metrics-grid">
@@ -257,7 +316,8 @@ const Dashboard = () => {
           <div className={`metric-card card-${item.color}`} key={idx}>
             <div className="metric-icon-wrapper">{item.icon}</div>
             <h2>{item.value}</h2>
-            <p>{item.label}</p>
+            <p style={{ fontWeight: 600, marginBottom: '2px' }}>{item.label}</p>
+            {item.subLabel && <span style={{ fontSize: '0.75rem', color: '#6B7280' }}>{item.subLabel}</span>}
           </div>
         ))}
       </section>
@@ -294,7 +354,7 @@ const Dashboard = () => {
 
       <section className="dashboard-breakdown-section">
         <div className="chart-card method-mix-card">
-          <h3>Contraceptive Method Mix</h3>
+          <h3>Contraceptive Methods</h3>
           <p className="chart-sub">Current distribution of family planning methods</p>
           <div className="methods-subgrid">
             {methodMix.map((method, idx) => (
@@ -334,4 +394,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default HealthDashboard;
