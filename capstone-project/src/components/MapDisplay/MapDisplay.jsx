@@ -17,6 +17,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// CUSTOM MARKER ICON CREATOR BASED ON FAMILY'S FP METHOD
 const createFaIcon = (family, zoom) => {
   let iconClass = 'fa-circle';
   let colorClass = 'color-traditional';
@@ -53,11 +54,32 @@ const createFaIcon = (family, zoom) => {
   const clampedSize = Math.max(6, Math.min(13, dynamicSize)); 
 
   return L.divIcon({
-    html: `<i class="fa-solid ${iconClass} ${colorClass}" style="font-size: ${clampedSize}px;"></i>`,
+    html: `<i class="fa-solid ${iconClass} ${colorClass}"  style="font-size: ${clampedSize}px;"></i>`,
     className: 'map-fa-marker',
     iconSize: [clampedSize, clampedSize],
     iconAnchor: [clampedSize / 2, clampedSize / 2], 
     popupAnchor: [0, -clampedSize / 2]
+  });
+};
+
+// CUSTOM CLUSTER ICON CREATOR
+const createCustomClusterIcon = (cluster) => {
+  const count = cluster.getChildCount(); 
+
+  let sizeClass = 'cluster-small';
+  if (count > 20) {
+    sizeClass = 'cluster-medium';
+  }
+  if (count > 50) {
+    sizeClass = 'cluster-large';
+  }
+
+  return L.divIcon({
+    html: `<div class="custom-cluster-inner">
+             <span>${count}</span>
+           </div>`,
+    className: `custom-marker-cluster ${sizeClass}`,
+    iconSize: L.point(40, 40, true),
   });
 };
 
@@ -83,9 +105,9 @@ function ChangeMapView({ center }) {
   useEffect(() => {
     if (center && center.coordinates && center.coordinates.lat && center.coordinates.lng) {
       const { lat, lng } = center.coordinates;
-      map.flyTo([lat, lng], 16, {
+      map.flyTo([lat, lng], 17, {
         animation: true,
-        duration: 1.5,
+        duration: 1.1,
       }); 
     }
   }, [center?.timestamp, map]);
@@ -104,37 +126,40 @@ const TILE_URLS = {
   standard: {
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: '&copy; OpenStreetMap contributors',
+    subdomains: 'abc',
     minZoom: 2,
     maxZoom: 19
   },
   light: {
-    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
     attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+    subdomains: 'abcd',
     minZoom: 2,
     maxZoom: 19
   },
   dark: {
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
     attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+    subdomains: 'abcd',
     minZoom: 2,
     maxZoom: 19
   },
   satellite: {
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     attribution: 'Tiles &copy; Esri',
+    subdomains: 'abc',
     minZoom: 2,
     maxZoom: 18
   }
 };
 
-// 🌟 INAYOS NA BARANGAY FOCUS CONTROLLER (Case-Insensitive & Robust Bounds)
+// BARANGAY FOCUS CONTROLLER
 export function BarangayFocusController({ selectedBarangay, families }) {
   const map = useMap();
 
   useEffect(() => {
     if (!selectedBarangay || selectedBarangay === 'ALL') return;
 
-    // Filter pamilya sa barangay gamit ang case-insensitive string matching
     const bgyFamilies = families.filter(f => {
       const bgy = f.barangay || f.location?.barangay || '';
       return bgy.toString().trim().toLowerCase() === selectedBarangay.toString().trim().toLowerCase();
@@ -150,15 +175,49 @@ export function BarangayFocusController({ selectedBarangay, families }) {
 
     if (coords.length > 0) {
       map.fitBounds(coords, { 
-        padding: [40, 40],
-        maxZoom: 16,
-        animate: false // 🌟 Naka-disable ang animation para instant ang zoom-in at ready agad sa screenshot!
+        padding: [15, 15],
+        maxZoom: 18,
+        animate: false
       });
     }
   }, [selectedBarangay, families, map]);
 
   return null;
 }
+
+const createBarangayMarkerIcon = (isLowStock = false) => {
+    if (isLowStock) {
+        const svgLowStock = `
+            <svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
+                <!-- Glowing Pulsing outer circle -->
+                <circle cx="24" cy="24" r="20" fill="rgba(239, 68, 68, 0.3)" stroke="#EF4444" stroke-width="2">
+                    <animate attributeName="r" values="16;22;16" dur="2s" repeatCount="indefinite"/>
+                    <animate attributeName="opacity" values="0.8;0.2;0.8" dur="2s" repeatCount="indefinite"/>
+                </circle>
+                <!-- Main Red Pin Center -->
+                <circle cx="24" cy="24" r="10" fill="#EF4444" stroke="#FFFFFF" stroke-width="2.5" />
+                <!-- Warning Badge Icon -->
+                <text x="24" y="28" font-size="12" font-weight="bold" fill="#FFFFFF" text-anchor="middle">!</text>
+            </svg>
+        `;
+
+        return L.divIcon({
+            className: 'rhu-low-stock-marker',
+            html: svgLowStock,
+            iconSize: [48, 48],
+            iconAnchor: [24, 24],
+            popupAnchor: [0, -20]
+        });
+    };
+
+    return L.divIcon({
+        className: 'rhu-normal-stock-marker',
+        html: svgNormalStock,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+        popupAnchor: [0, -12]
+    });
+};
 
 export default function MapDisplay({ 
   families = [], 
@@ -170,13 +229,12 @@ export default function MapDisplay({
   mapMode = 'markers', 
   filteredFamilies,
   activeLayer = 'standard',
-  selectedBarangay = 'ALL'
+  selectedBarangay = 'ALL',
+  barangayMarkers = []
 }) {
   const defaultCenter = [14.844782, 120.812683]; 
 
-  const activeFamilies = (Array.isArray(filteredFamilies) && filteredFamilies.length > 0)
-    ? filteredFamilies
-    : (Array.isArray(families) ? families : []);
+  const activeFamilies = Array.isArray(filteredFamilies) ? filteredFamilies : families;
 
   const getCoords = (f) => {
     if (!f) return null;
@@ -191,77 +249,41 @@ export default function MapDisplay({
   const currentTile = TILE_URLS[activeLayer] || TILE_URLS.standard;
   
   return (
-    <MapContainer 
-      center={defaultCenter} 
-      zoom={currentZoom} 
-      zoomControl={false}
-      minZoom={3}
-      maxZoom={18}
-      style={{ height: '100%', width: '100%' }}
-    >
-      <TileLayer
-        key={activeLayer}
-        attribution={currentTile.attribution}
-        url={currentTile.url}
-        crossOrigin={true} // 🌟 KAILANGAN PARA SA HTML2CANVAS MAP EXPORT
-      />
-
-      <BarangayFocusController 
-        selectedBarangay={selectedBarangay} 
-        families={families} 
-      />
-
-      {/* 🌟 TINANGGAL ANG SPACE SA COMPONENT NAME */}
-      {barangayCenter && <ChangeMapView center={barangayCenter} />}
-      <MapController zoomLevel={currentZoom} onZoomChange={onZoomChange} />
-
-      {userLocation && (
-        <Marker position={[userLocation.lat, userLocation.lng]} icon={userLocationIcon}/>
-      )}
-
-      {/* 1. REGULAR MARKERS MODE */}
-      {mapMode === 'markers' && (
-        activeFamilies.map((family, idx) => {
-          const coords = getCoords(family);
-          if (!coords) return null;
-
-          return (
-            <Marker 
-              key={family.id || family.key || `marker-${idx}`} 
-              position={coords}
-              icon={createFaIcon(family, currentZoom)}
-              eventHandlers={{
-                click: () => {
-                  if (onMarkerClick) onMarkerClick(family);
-                }
-              }}
-            />
-          );
-        })
-      )}
-
-      {/* 2. HEATMAP MODE */}
-      {mapMode === 'heatmap' && (
-        <HeatmapLayer 
-          points={activeFamilies
-            .map(f => {
-              const coords = getCoords(f);
-              return coords ? [...coords, 1] : null;
-            })
-            .filter(Boolean)} 
+      <MapContainer 
+        center={defaultCenter} 
+        zoom={currentZoom} 
+        zoomControl={false}
+        minZoom={3}
+        maxZoom={18}
+        style={{ height: '100%', width: '100%' }}
+      >
+        <TileLayer
+          key={activeLayer}
+          attribution={currentTile.attribution}
+          url={currentTile.url}
+          crossOrigin={true}
         />
-      )}
 
-      {/* 3. CLUSTERS MODE */}
-      {mapMode === 'clusters' && (
-        <MarkerClusterGroup>
-          {activeFamilies.map((family, idx) => {
+        <BarangayFocusController 
+          selectedBarangay={selectedBarangay} 
+          families={families} 
+        />
+
+        {barangayCenter && <ChangeMapView center={barangayCenter} />}
+        <MapController zoomLevel={currentZoom} onZoomChange={onZoomChange} />
+
+        {userLocation && (
+          <Marker position={[userLocation.lat, userLocation.lng]} icon={userLocationIcon}/>
+        )}
+
+        {mapMode === 'markers' && (
+          activeFamilies.map((family, idx) => {
             const coords = getCoords(family);
             if (!coords) return null;
 
             return (
               <Marker 
-                key={family.id || family.key || `cluster-marker-${idx}`} 
+                key={family.id || family.key || `marker-${idx}`} 
                 position={coords}
                 icon={createFaIcon(family, currentZoom)}
                 eventHandlers={{
@@ -271,10 +293,85 @@ export default function MapDisplay({
                 }}
               />
             );
-          })}
-        </MarkerClusterGroup>
-      )}
+          })
+        )}
 
-    </MapContainer>
-  );
+        {mapMode === 'heatmap' && (
+          <HeatmapLayer 
+            points={activeFamilies
+              .map(f => {
+                const coords = getCoords(f);
+                return coords ? [...coords, 1] : null;
+              })
+              .filter(Boolean)} 
+          />
+        )}
+
+        {mapMode === 'clusters' && (
+          <MarkerClusterGroup
+            iconCreateFunction={createCustomClusterIcon} 
+            showCoverageOnHover={false}                  
+            maxClusterRadius={50}                        
+            spiderfyOnMaxZoom={true}                    
+            zoomToBoundsOnClick={true}
+          >
+            {activeFamilies.map((family, idx) => {
+              const coords = getCoords(family);
+              if (!coords) return null;
+
+              return (
+                <Marker 
+                  key={family.id || family.key || `cluster-marker-${idx}`} 
+                  position={coords}
+                  icon={createFaIcon(family, currentZoom)}
+                  eventHandlers={{
+                    click: () => {
+                      if (onMarkerClick) onMarkerClick(family);
+                    }
+                  }}
+                />
+              );
+            })}
+          </MarkerClusterGroup>
+        )}
+
+        {barangayMarkers
+          .filter((marker) => marker.isLowStock)
+          .map((marker) => {
+            const icon = createBarangayMarkerIcon(true);
+
+            return (
+              <Marker
+                key={marker.id}
+                position={[marker.lat, marker.lng]}
+                icon={icon}
+                zIndexOffset={-500}
+              >
+                <Popup>
+                  <div style={{ textAlign: 'center', minWidth: '150px', padding: '4px' }}>
+                    <h3 style={{ margin: '0 0 4px 0', fontSize: '15px', color: '#1E293B' }}>
+                      Brgy. {marker.barangay}
+                    </h3>
+                    <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#64748B' }}>
+                      Under: <strong>{marker.rhuName}</strong>
+                    </p>
+
+                    <div style={{
+                      padding: '6px 12px',
+                      borderRadius: '20px',
+                      fontSize: '11px',
+                      fontWeight: 'bold',
+                      color: '#FFFFFF',
+                      backgroundColor: '#EF4444'
+                    }}>
+                      ⚠️ Low Stock Alert ({marker.stock} left)
+                    </div>
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })
+        }
+      </MapContainer>
+    );
 }

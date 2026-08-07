@@ -32,7 +32,7 @@
 
 /* Header, Body, Footer structures */
 .modal-header {
-  padding: 15px 20px;
+  padding: 10px 20px;
   background: #f8f9fa;
   display: flex;
   justify-content: space-between;
@@ -43,7 +43,8 @@
 .modal-header h2 {
   margin: 0;
   font-size: 1.25rem;
-  color: #333;
+  color: #ffffff;
+  padding: 0px 10px;
 }
 
 .close-btn {
@@ -51,20 +52,12 @@
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  color: #999;
+  color: #bebebe;
 }
 
-.close-btn:hover { color: #333; }
+.close-btn:hover { color: #696868; }
 
-.modal-header {
-  padding: 15px 24px;
-  background: #ffffff;
-  display: flex;
-  justify-content: space-between;
-  border-bottom: 1px solid #eef0f2;
-}
 
-/* 📊 SUMMARY TABLE GRID STRUCTURING */
 .summary-table {
   width: 100%;
   border-collapse: collapse;
@@ -72,9 +65,8 @@
   font-size: 14px;
 }
 
-/* Dark blue header block from the reference image */
 .summary-table thead tr {
-  background-color: #0d0082; 
+  background-color: #091F7A; 
   color: #ffffff;
   text-align: left;
 }
@@ -82,14 +74,13 @@
 .summary-table th, 
 .summary-table td {
   padding: 12px 16px;
-  border: 1px solid #e2e8f0; /* Crisp grid borders */
+  border: 1px solid #e2e8f0; 
 }
 
-/* Section Title Headings (e.g., PRIVACY STATEMENT, Address) */
 .summary-table .section-title-row td {
   background-color: #f8f9fa;
   font-weight: bold;
-  color: #1a1a1a;
+  color: #000000;
   text-transform: capitalize;
   font-size: 15px;
   padding-top: 20px;
@@ -100,8 +91,8 @@
 
 /* Styling the dynamic inputs */
 .summary-table td.response-text {
-  font-style: italic; /* Matches the custom text style from the image */
-  color: #2d3748;
+  font-style: italic; 
+  color: #0d1014;
 }
 
 .center-icon {
@@ -110,16 +101,16 @@
   font-size: 16px;
 }
 
-/* Action Bars */
 .modal-body {
+  width: 100%;
   padding: 24px;
   max-height: 70vh;
-  overflow-y: auto; /* Adds scroll support if rows get too long */
+  overflow-y: auto;
 }
 
 #signature {
   text-align: center;
 }
 
-.btn-primary { background: #0d0082; color: #fff; border: none; padding: 8px 16px; cursor: pointer; border-radius: 4px; }
+.btn-primary { background: #091F7A; color: #fff; border: none; padding: 8px 16px; cursor: pointer; border-radius: 4px; }
 .btn-secondary { background: #edf2f7; color: #4a5568; border: none; padding: 8px 16px; cursor: pointer; border-radius: 4px; }   

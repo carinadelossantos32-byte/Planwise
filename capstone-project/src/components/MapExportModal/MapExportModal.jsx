@@ -7,14 +7,13 @@ export default function MapExportModal({
   onClose, 
   families = [], 
   barangayList = [],
-  activeFilterBarangay = '', // 🌟 BAGO: Ipasa rito ang kasalukuyang napiling barangay sa main filter
+  activeFilterBarangay = '', 
   mapRef, 
   onSelectBarangayForExport 
 }) {
   const [selectedBarangay, setSelectedBarangay] = useState('');
   const [isExporting, setIsExporting] = useState(false);
 
-  // 1. Static Master List ng Barangays (hindi nababawasan)
   const masterBarangayList = useMemo(() => {
     if (barangayList && barangayList.length > 0) {
       return barangayList;
@@ -27,20 +26,17 @@ export default function MapExportModal({
     });
     
     return Array.from(set).sort();
-  }, [barangayList.length > 0 ? barangayList : families.length]);
+  }, [barangayList, families]);
 
-  // 2. 🌟 Kuhanin ang active filter sa main screen pagkabukas ng Modal
   useEffect(() => {
     if (isOpen) {
-      // Kung may napili na sa filter sa labas at wala ito sa 'ALL', 'yun ang gagamitin.
-      // Kung wala, gagamitin ang unang barangay sa listahan bilang default.
       if (activeFilterBarangay && activeFilterBarangay !== 'ALL') {
         setSelectedBarangay(activeFilterBarangay);
-      } else if (masterBarangayList.length > 0) {
-        setSelectedBarangay(masterBarangayList[0]);
+      } else {
+        setSelectedBarangay('');
       }
     }
-  }, [isOpen, activeFilterBarangay, masterBarangayList]);
+  }, [isOpen, activeFilterBarangay]);
 
   if (!isOpen) return null;
 
@@ -49,12 +45,13 @@ export default function MapExportModal({
     setSelectedBarangay(newBarangay);
     
     // Automatic zoom sa napiling barangay
-    if (typeof onSelectBarangayForExport === 'function') {
+    if (newBarangay && typeof onSelectBarangayForExport === 'function') {
       onSelectBarangayForExport(newBarangay);
     }
   };
 
   const handleExport = async () => {
+    if (!selectedBarangay) return; 
     setIsExporting(true);
 
     try {
@@ -62,7 +59,6 @@ export default function MapExportModal({
         onSelectBarangayForExport(selectedBarangay);
       }
 
-      // Maghintay ng 1.2s para matapos ang zoom/re-render bago mag-capture
       await new Promise((resolve) => setTimeout(resolve, 1200));
 
       await exportMapAsImage();
@@ -79,7 +75,7 @@ export default function MapExportModal({
     const mapElement = mapRef?.current || document.querySelector('.leaflet-container');
 
     if (!mapElement) {
-      alert("Hindi mahanap ang Map Container.");
+      alert("No map element found.");
       return;
     }
 
@@ -87,7 +83,8 @@ export default function MapExportModal({
       useCORS: true,
       allowTaint: false,
       logging: false,
-      scale: 2,
+      scale: 4,
+      dpi: 300,
       ignoreElements: (element) => {
         return element.classList.contains('leaflet-control-zoom') || 
                element.classList.contains('layer-menu-popup') ||
@@ -96,7 +93,7 @@ export default function MapExportModal({
       }
     });
 
-    const imageUri = canvas.toDataURL('image/png');
+    const imageUri = canvas.toDataURL('image/png', 1.0);
     const link = document.createElement('a');
     const cleanBgyName = selectedBarangay.replace(/[^a-zA-Z0-9]/g, '_');
     const fileName = `Planwise_Map_${cleanBgyName}_${new Date().toISOString().slice(0,10)}.png`;
@@ -124,11 +121,16 @@ export default function MapExportModal({
               onChange={handleBarangayChange}
               className="modal-select"
             >
-              {/* 🌟 Tinanggal na ang "All Barangays" option rito */}
+              {/* 🌟 DISABLED PLACEHOLDER OPTION */}
+              <option value="" disabled hidden>
+                -- Select Barangay --
+              </option>
+
               {masterBarangayList.map((bgy, idx) => (
                 <option key={idx} value={bgy}>{bgy}</option>
               ))}
             </select>
+
             <small style={{ color: '#666', marginTop: '6px', display: 'block' }}>
               Selecting a specific barangay will automatically zoom and center the map before export.
             </small>
@@ -139,7 +141,16 @@ export default function MapExportModal({
           <button className="btn-secondary" onClick={onClose} disabled={isExporting}>
             Cancel
           </button>
-          <button className="btn-primary" onClick={handleExport} disabled={isExporting}>
+          
+          <button 
+            className="btn-primary" 
+            onClick={handleExport} 
+            disabled={isExporting || !selectedBarangay}
+            style={{
+              opacity: (!selectedBarangay || isExporting) ? 0.6 : 1,
+              cursor: (!selectedBarangay || isExporting) ? 'not-allowed' : 'pointer'
+            }}
+          >
             {isExporting ? (
               <><i className="fa-solid fa-spinner fa-spin"></i> Capturing Map...</>
             ) : (

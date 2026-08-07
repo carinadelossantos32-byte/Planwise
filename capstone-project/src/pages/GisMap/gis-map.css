@@ -9,7 +9,7 @@ h1, h2, h3, h4, h5, h6, p, ul {
     justify-content: space-between;
     align-items: center;
     background-color: #fff;
-    padding: 20px;
+    padding: 0px 30px 0px 30px;
     position: relative;
     z-index: 1001;
 }
@@ -20,9 +20,6 @@ h1, h2, h3, h4, h5, h6, p, ul {
     gap: 20px;
 }
 
-/* --- SEARCH BAR & DROPDOWN FIX --- */
-
-/* 1. CONTAINER: Dito natin ila-lock ang lapad (300px) */
 .search-container {
     position: relative !important;
     width: 280px !important;       /* Dito lang ang lapad ng search area! */
@@ -30,14 +27,14 @@ h1, h2, h3, h4, h5, h6, p, ul {
     flex-shrink: 0 !important;     /* Bawal hilahin o patabain ng Flexbox */
 }
 
-/* 2. SEARCH INPUT BOX */
 .search-bar {
     display: flex;
+    height: 40px;
     align-items: center;
     background-color: transparent;
     border: 1px solid #ccc;
     border-radius: 10px;
-    padding: 10px;
+    padding: 0px 10px 0px 15px;
     width: 100% !important;        /* Kakainin lang ang 280px ng container */
     box-sizing: border-box !important;
 }
@@ -50,13 +47,12 @@ h1, h2, h3, h4, h5, h6, p, ul {
     width: 100%;
 }
 
-/* 3. DROPDOWN LIST: Kakapit eksakto sa 280px sa ilalim ng input */
 ul.suggestions-list {
     position: absolute !important;
-    top: calc(100% + 5px) !important; /* Susulpot sa ilalim ng input box */
+    top: calc(100% + 5px) !important; 
     left: 0 !important;
-    width: 100% !important;           /* TATAPAT SA 280px LANG */
-    max-width: 280px !important;      /* GUARANTEED NO OVERFLOW */
+    width: 100% !important;           
+    max-width: 280px !important;     
     box-sizing: border-box !important;
     
     margin: 0 !important;
@@ -107,6 +103,12 @@ ul.suggestions-list {
     border-radius: 10px;
 }
 
+.toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px; /* Control the spacing here (8px or 10px works great) */
+}
+
 .map-overview {
     display: grid;
     grid-template-columns: 33.3% 33.3% 33.3%;
@@ -143,7 +145,7 @@ ul.suggestions-list {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #432DD7;
+    background-color: #091F7A;
     padding: 15px;
     border-radius: 10px 10px 0 0;
 }
@@ -183,7 +185,7 @@ ul.suggestions-list {
 
 #markers, #heatmap, #clusters {
     display: flex;
-    width: 20%;
+    width: 30%;
     flex-direction: column;
     align-items: center;
     gap: 5px;
@@ -193,7 +195,7 @@ ul.suggestions-list {
 }
 
 #markers.selected, #heatmap.selected, #clusters.selected {
-    background-color: #432DD7;
+    background-color: #091F7A;
     color: white;
 }
 
@@ -208,6 +210,10 @@ ul.suggestions-list {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
+}
+
+.barangay-filter option, .fp-method-filter option {
+    font-weight: normal;
 }
 
 .user-type-filter {
@@ -273,7 +279,7 @@ ul.suggestions-list {
     border-radius: 8px;
     border: none;
     background: #ffffff;
-    color: #000000;
+    color: #091F7A;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     cursor: pointer;
     display: flex;
@@ -330,7 +336,7 @@ ul.suggestions-list {
 }
 
 .layer-options .layer-option-btn.selected {
-  background: #432DD7 !important;
+  background: #091F7A !important;
   color: #ffffff !important;
 }
 
@@ -353,7 +359,7 @@ ul.suggestions-list {
 }
 
 .information-container i {
-    color: #432DD7;
+    color: #091F7A;
 }
 
 .information-container button {
@@ -405,4 +411,53 @@ ul.suggestions-list {
     transform: scale(2.2);
     opacity: 0;
   }
+}
+
+/* I-force ang container na sakupin ang buong screen at i-center ang nilalaman */
+.custom-loading-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;     /* Ginagawang centered vertically (taas-baba) */
+  justify-content: center;  /* Ginagawang centered horizontally (kaliwa-kanan) */
+  background-color: rgba(255, 255, 255, 0.8); /* Optional: semi-transparent white backdrop */
+  z-index: 9999;           /* Mas mataas sa Leaflet map para siguradong nasa ibabaw */
+}
+
+/* Ang card sa loob */
+.custom-loading-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e7eb;
+}
+
+/* Ang umiikot na spinner */
+.custom-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #2563eb; /* Kulay ng spinner */
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.custom-loading-text {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #374151;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
