@@ -130,43 +130,47 @@ function ClientAddModalReferred({ onClose, onSuccess }) {
     <>
       <div className="modal-overlay-add">
         <div className="modal">
-          <div className="modal-header">
+          <div className="modal-header-referred">
             <h2>Create New Referral Record</h2>
           </div>
 
           {/* Form wraps modal-body and modal-btn for clean flex height and scrolling */}
           <form onSubmit={handleAdd}>
-            <div className="modal-body">
+            <div className="modal-body-referred">
+              <h3>Please verify that all entries are correct and no fields remain empty for secure processing.</h3>
               <div className="form-grid">
 
-                <div className="form-group">
+                <div className="form-group-referred">
                   <label>Client Name</label>
                   <input
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
+                    placeholder="Client Name"
                     className={errors.name ? "input-error" : ""}
                   />
                   {errors.name && <span className="error-text">{errors.name}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-referred">
                   <label>Address</label>
                   <input
                     name="address"
                     value={formData.address}
                     onChange={handleInputChange}
+                    placeholder="Address"
                     className={errors.address ? "input-error" : ""}
                   />
                   {errors.address && <span className="error-text">{errors.address}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-referred">
                   <label>FP Method</label>
                   <select 
                     name="fp_method" 
                     value={formData.fp_method || ""} 
                     onChange={handleInputChange} 
+                    placeholder="Select FP Method"
                     className={errors.fp_method ? "input-error" : ""}
                   >
                     <option value="">Select</option>
@@ -186,7 +190,7 @@ function ClientAddModalReferred({ onClose, onSuccess }) {
                   {errors.fp_method && <span className="error-text">{errors.fp_method}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-referred">
                   <label>With Intention to Shift</label>
                   <select 
                     name="with_intention_to_shift" 
@@ -212,67 +216,72 @@ function ClientAddModalReferred({ onClose, onSuccess }) {
                   {errors.with_intention_to_shift && <span className="error-text">{errors.with_intention_to_shift}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-referred">
                   <label>Health Service Facility</label>
                   <input
                     name="facility_name"
                     value={formData.facility_name}
                     onChange={handleInputChange}
+                    placeholder="Health Service Facility"
                     className={errors.facility_name ? "input-error" : ""}
                   />
                   {errors.facility_name && <span className="error-text">{errors.facility_name}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-referred">
                   <label>Facility Address</label>
                   <input
                     name="facility_address"
                     value={formData.facility_address}
                     onChange={handleInputChange}
+                    placeholder="Facility Address"
                     className={errors.facility_address ? "input-error" : ""}
                   />
                   {errors.facility_address && <span className="error-text">{errors.facility_address}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-referred">
                   <label>Referred By</label>
                   <input
                     name="referred_by"
                     value={formData.referred_by}
                     onChange={handleInputChange}
+                    placeholder="Referred By"
                     className={errors.referred_by ? "input-error" : ""}
                   />
                   {errors.referred_by && <span className="error-text">{errors.referred_by}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-referred">
                   <label>Volunteer Contact No.</label>
                   <input
                     name="volunteer_contact"
                     value={formData.volunteer_contact}
                     onChange={handleInputChange}
+                    placeholder="Volunteer Contact No."
                     className={errors.volunteer_contact ? "input-error" : ""}
                   />
                   {errors.volunteer_contact && <span className="error-text">{errors.volunteer_contact}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-referred">
                   <label>Date</label>
                   <input
                     type="date"
                     name="date"
                     value={formData.date}
                     onChange={handleInputChange}
+                    placeholder="Select Date"
                     className={errors.date ? "input-error" : ""}
                   />
                   {errors.date && <span className="error-text">{errors.date}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-referred">
                   <label>Referral Slip Picture</label>
                   {!imagePreview ? (
                     <div className={`file-upload-box ${errors.referral_slip_file ? "input-error" : ""}`}>
-                      <input type="file" accept="image/*" onChange={handleFileChange} id="slip-upload" hidden />
+                      <input type="file" accept="image/*" onChange={handleFileChange} placeholder="Upload Referral Slip" id="slip-upload" hidden />
                       <label htmlFor="slip-upload" className="upload-label">
                         <ImageIcon size={20} />
                         <span>Click to upload picture</span>

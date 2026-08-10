@@ -241,17 +241,17 @@ function ClientAddModal({ onClose, onSuccess }) {
     <>
       <div className="modal-overlay-add">
         <div className="modal">
-          <div className="modal-header">
+          <div className="modal-header-create">
             <h2>Create New Public Record</h2>
           </div>
 
           <form onSubmit={handleAdd}>
-            <div className="modal-body">
+            <div className="modal-body-create">
               <h3>Please verify that all entries are correct and no fields remain empty for secure processing.</h3>
 
               <div className="form-grid">
 
-                <div className="form-group">
+                <div className="form-group-create">
                   <label>Male Partner</label>
                   <input
                     name="name"
@@ -263,7 +263,7 @@ function ClientAddModal({ onClose, onSuccess }) {
                   {errors.name && <span className="error-text">{errors.name}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-create">
                   <label>Female Partner</label>
                   <input
                     name="spouse_name"
@@ -275,7 +275,7 @@ function ClientAddModal({ onClose, onSuccess }) {
                   {errors.spouse_name && <span className="error-text">{errors.spouse_name}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-create">
                   <label>Birthdate Male</label>
                   <input
                     type="date"
@@ -287,7 +287,7 @@ function ClientAddModal({ onClose, onSuccess }) {
                   {errors.birthdate_male && <span className="error-text">{errors.birthdate_male}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-create">
                   <label>Birthdate Female</label>
                   <input
                     type="date"
@@ -299,7 +299,7 @@ function ClientAddModal({ onClose, onSuccess }) {
                   {errors.birthdate_female && <span className="error-text">{errors.birthdate_female}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-create">
                   <label>Educational Attainment Male</label>
                   <select
                     name="educational_attainment_male"
@@ -321,7 +321,7 @@ function ClientAddModal({ onClose, onSuccess }) {
                   {errors.educational_attainment_male && <span className="error-text">{errors.educational_attainment_male}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-create">
                   <label>Educational Attainment Female</label>
                   <select
                     name="educational_attainment_female"
@@ -343,7 +343,7 @@ function ClientAddModal({ onClose, onSuccess }) {
                   {errors.educational_attainment_female && <span className="error-text">{errors.educational_attainment_female}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-create">
                   <label>Civil Status Male</label>
                   <select
                     name="civil_status_male"
@@ -361,7 +361,7 @@ function ClientAddModal({ onClose, onSuccess }) {
                   {errors.civil_status_male && <span className="error-text">{errors.civil_status_male}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-create">
                   <label>Civil Status Female</label>
                   <select
                     name="civil_status_female"
@@ -379,7 +379,7 @@ function ClientAddModal({ onClose, onSuccess }) {
                   {errors.civil_status_female && <span className="error-text">{errors.civil_status_female}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-create">
                   <label>Address {isSearching && <span style={{ color: "#3b82f6", fontSize: "12px" }}>(Searching Map...)</span>}</label>
                   <input
                     name="address"
@@ -391,7 +391,7 @@ function ClientAddModal({ onClose, onSuccess }) {
                   {errors.address && <span className="error-text">{errors.address}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-create">
                   <label>Barangay</label>
                   <input
                     name="barangay"
@@ -403,7 +403,7 @@ function ClientAddModal({ onClose, onSuccess }) {
                   {errors.barangay && <span className="error-text">{errors.barangay}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-create">
                   <label>Latitude</label>
                   <input
                     type="number"
@@ -416,7 +416,7 @@ function ClientAddModal({ onClose, onSuccess }) {
                   {errors.latitude && <span className="error-text">{errors.latitude}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-create">
                   <label>Longitude</label>
                   <input
                     type="number"
@@ -430,7 +430,7 @@ function ClientAddModal({ onClose, onSuccess }) {
                 </div>
 
                 {/* Leaflet Visualization Block */}
-                <div className="form-group" style={{ gridColumn: "1 / -1", height: "250px", marginBottom: "15px" }}>
+                <div className="form-group-create" style={{ gridColumn: "1 / -1", height: "250px", marginBottom: "15px" }}>
                   <label style={{ marginBottom: "5px", display: "block" }}>Location Visual Verification</label>
                   <MapContainer
                     center={[formData.latitude || 14.8436, formData.longitude || 120.8114]}
@@ -449,7 +449,7 @@ function ClientAddModal({ onClose, onSuccess }) {
                   </MapContainer>
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-create">
                   <label>No. of Children</label>
                   <input
                     type="number"
@@ -462,7 +462,7 @@ function ClientAddModal({ onClose, onSuccess }) {
                   {errors.no_of_children && <span className="error-text">{errors.no_of_children}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-create">
                   <label>Method Used</label>
                   <select
                     name="fp_method"
@@ -487,7 +487,7 @@ function ClientAddModal({ onClose, onSuccess }) {
                   {errors.fp_method && <span className="error-text">{errors.fp_method}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-create">
                   <label>Intention to Shift</label>
                   <select name="intention_to_shift" value={formData.intention_to_shift} onChange={handleInputChange}>
                     <option value="">Select</option>
@@ -506,7 +506,7 @@ function ClientAddModal({ onClose, onSuccess }) {
                   </select>
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-create">
                   <label>Traditional FP User: Type</label>
                   <select name="type" value={formData.type} onChange={handleInputChange}>
                     <option value="">Select</option>
@@ -519,7 +519,7 @@ function ClientAddModal({ onClose, onSuccess }) {
                   </select>
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-create">
                   <label>Traditional FP User: Status</label>
                   <select name="status" value={formData.status} onChange={handleInputChange}>
                     <option value="">Select</option>
@@ -530,7 +530,7 @@ function ClientAddModal({ onClose, onSuccess }) {
                   </select>
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-create">
                   <label>Reason</label>
                   <select name="reason" value={formData.reason} onChange={handleInputChange}>
                     <option value="">Select</option>
@@ -540,7 +540,7 @@ function ClientAddModal({ onClose, onSuccess }) {
                   </select>
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-create">
                   <label>Classes Held</label>
                   <select
                     name="classes_held"

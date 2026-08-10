@@ -76,19 +76,19 @@ return (
     <>
       <div className="modal-overlay-add">
         <div className="modal">
-          <div className="modal-header">
+          <div className="modal-header-referred">
             <h2>Create New Private Record</h2>
           </div>
 
           <form onSubmit={handleAdd}>
-            <div className="modal-body">
+            <div className="modal-body-referred">
               <h3>
                 Please verify that all entries are correct and no fields remain empty for secure processing.
               </h3>
 
               <div className="form-grid">
 
-                <div className="form-group">
+                <div className="form-group-referred">
                   <label>Client Name</label>
                   <input
                     name="name"
@@ -100,7 +100,7 @@ return (
                   {errors.name && <span className="error-text">{errors.name}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-referred">
                   <label>Age</label>
                   <input
                     type="number"
@@ -114,7 +114,7 @@ return (
                   {errors.age && <span className="error-text">{errors.age}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-referred">
                   <label>Birthdate</label>
                   <input
                     type="date"
@@ -126,7 +126,7 @@ return (
                   {errors.birthdate && <span className="error-text">{errors.birthdate}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-referred">
                   <label>Barangay</label>
                   <input
                     name="barangay"
@@ -138,7 +138,7 @@ return (
                   {errors.barangay && <span className="error-text">{errors.barangay}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-referred">
                   <label>Method Used</label>
                   <select
                     name="fp_method"
@@ -163,7 +163,7 @@ return (
                   {errors.fp_method && <span className="error-text">{errors.fp_method}</span>}
                 </div>
 
-                <div className="form-group">
+                <div className="form-group-referred">
                   <label>FP Issued By</label>
                   <input
                     name="fp_issued_by"

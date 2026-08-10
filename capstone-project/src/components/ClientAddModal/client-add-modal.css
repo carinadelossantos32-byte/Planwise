@@ -23,16 +23,16 @@
 }
 
 /* HEADER */
-.modal-header {
+.modal-header-create {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 17px 24px;
+  padding: 14px 24px;
   border-bottom: 1px solid #e5e7eb;
   background: #14990D;
 }
 
-.modal-header h2 {
+.modal-header-create h2 {
   font-size: 17px;
   font-family: 'Segoe UI', sans-serif;
   font-weight: 600;
@@ -49,18 +49,18 @@
   display: flex;
   flex-direction: column;
   flex: 1;
-  min-height: 0; /* CRITICAL: Allows flex child (.modal-body) to scroll properly */
+  min-height: 0;
 }
 
 /* BODY */
-.modal-body {
-  padding: 25px 26px 34px 34px;
+.modal-body-create {
+  padding: 25px 23px 34px 34px;
   overflow-y: auto;
   flex: 1;
   min-height: 0;
 }
 
-.modal-body h3{
+.modal-body-create h3{
     font-size: 15px;
     font-weight: 400;
     color: #0c722b;
@@ -76,21 +76,21 @@
   gap: 25px;
 }
 
-.form-group {
+.form-group-create {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.form-group label {
+.form-group-create label {
   font-size: 16px;
   font-weight: 400;
   color: #000000;
   font-family: 'Segoe UI', sans-serif;
 }
 
-.form-group input,
-.form-group select {
+.form-group-create input,
+.form-group-create select {
   font-family: 'Segoe UI', sans-serif;
   padding: 12px 10px;
   border: 1px solid #c7c8ca;
@@ -102,8 +102,8 @@
   transition: border-color 0.15s;
 }
 
-.form-group input:focus,
-.form-group select:focus {
+.form-group-create input:focus,
+.form-group-create select:focus {
   border-color: #14990D;
   box-shadow: 0 0 0 3px rgba(19, 160, 54, 0.1);
 }
@@ -111,8 +111,8 @@
 /* BUTTON */
 .modal-btn {
   justify-content: center;
-  padding: 14px 40px;
-  border-top: 1px solid #e5e7eb;
+  padding: 12px 40px;
+  border-top: 1px solid #f0f1f1;
   display: flex;
   background: #ffffff;
   flex-shrink: 0; 

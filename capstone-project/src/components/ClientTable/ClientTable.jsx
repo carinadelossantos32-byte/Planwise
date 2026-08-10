@@ -123,25 +123,25 @@ function ClientTable({ clients, loading, onView, onEdit, onDelete, isArchived, o
                                         <td>{client.barangay}</td>
                                         <td>
                                             <div className="client-educational-attainment">
-                                                <span>{client.educational_attainment_male}</span>
-                                                <span>{client.educational_attainment_female}</span>
+                                                <span>{client.educational_attainment_male || "—"}</span>
+                                                <span>{client.educational_attainment_female || "—"}</span>
                                             </div>
                                         </td>
                                         <td>
-                                            <span className="children-badge">{client.no_of_children}</span>
+                                            <span className="children-badge">{client.no_of_children||"—"}</span>
                                         </td>
                                         <td>
-                                            <span className="method-badge">{client.fp_method}</span>
+                                            <span className="method-badge">{client.fp_method||"—"}</span>
                                         </td>
-                                        <td>{client.intention_to_shift}</td>
+                                        <td>{client.intention_to_shift||"—"}</td>
                                         <td>
-                                            <span className="type-badge">{client.type}</span>
+                                            <span className="type-badge">{client.type ||"—"}</span>
                                         </td>
                                         <td>
-                                            <span>{client.status}</span>
+                                            <span>{client.status||"—"}</span>
                                         </td>
-                                        <td>{client.reason}</td>
-                                        <td>{client.classes_held}</td>
+                                        <td>{client.reason||"—"}</td>
+                                        <td>{client.classes_held||"—"}</td>
                                         <td>
                                             <div className="action-buttons">
 
