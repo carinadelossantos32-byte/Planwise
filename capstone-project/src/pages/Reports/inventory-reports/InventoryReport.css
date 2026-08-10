@@ -1,0 +1,869 @@
+/* =========================================================
+   MFP COLOR VARIABLES
+   ========================================================= */
+
+:root {
+    --mfp-primary: #091F7A;
+    --mfp-primary-light: #091F7A;
+    --mfp-primary-tint: #EEEBFB;
+
+    --mfp-border: #dfe3ee;
+    --mfp-text: #1e293b;
+    --mfp-muted: #64748b;
+    --mfp-white: #ffffff;
+}
+
+
+/* =========================================================
+   EXCEL EXPORT BUTTON
+   ========================================================= */
+
+.excel-export-btn {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--mfp-primary);
+    color: white;
+    transition: 0.2s ease;
+    margin-left: auto;
+}
+
+.excel-export-btn:hover {
+    background: #06165c;
+    transform: translateY(-1px);
+}
+
+.excel-export-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+
+/* =========================================================
+   AGE BRACKET × METHOD TRACKING
+   ========================================================= */
+
+.age-method-panel {
+    margin-bottom: 24px;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.age-method-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    margin-bottom: 20px;
+}
+
+.age-method-header h3 {
+    margin: 0 0 6px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--mfp-primary);
+}
+
+.age-method-header p {
+    margin: 0;
+    color: var(--mfp-muted);
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   FILTERS
+   ========================================================= */
+
+.age-method-filters {
+    display: flex;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.age-method-filters > div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.age-method-filters label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--mfp-muted);
+}
+
+.age-method-filters select {
+    min-width: 125px;
+    height: 38px;
+    padding: 0 12px;
+    border: 1px solid var(--mfp-border);
+    border-radius: 7px;
+    background: #ffffff;
+    font-size: 13px;
+    color: #374151;
+    outline: none;
+    transition: 0.2s ease;
+}
+
+.age-method-filters select:hover {
+    border-color: var(--mfp-primary-light);
+}
+
+.age-method-filters select:focus {
+    border-color: var(--mfp-primary);
+    box-shadow: 0 0 0 3px rgba(9, 31, 122, 0.08);
+}
+
+
+/* =========================================================
+   SUMMARY
+   ========================================================= */
+
+.age-method-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.age-summary-card {
+    border: 1px solid var(--mfp-border);
+    border-radius: 9px;
+    padding: 16px 18px;
+    background: var(--mfp-primary-tint);
+}
+
+.age-summary-card small {
+    display: block;
+    color: var(--mfp-primary);
+    font-size: 12px;
+    margin-bottom: 7px;
+    font-weight: 600;
+}
+
+.age-summary-card strong {
+    display: block;
+    color: var(--mfp-primary);
+    font-size: 21px;
+}
+
+
+/* =========================================================
+   AGE METHOD TABLE WRAPPER
+   ========================================================= */
+
+.age-method-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--mfp-border);
+    border-radius: 8px;
+}
+
+
+/* =========================================================
+   AGE METHOD TABLE
+   ========================================================= */
+
+.age-method-table {
+    width: 100%;
+    min-width: 1000px;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+
+/* TABLE HEADER */
+
+.age-method-table th {
+    padding: 12px 10px;
+    background: var(--mfp-primary);
+    border-bottom: 2px solid var(--mfp-primary);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.age-method-table th:first-child {
+    text-align: left;
+    padding-left: 16px;
+}
+
+
+/* TABLE BODY */
+
+.age-method-table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid #e7e9f0;
+    text-align: center;
+    color: #4b5563;
+    background: #ffffff;
+}
+
+
+/* ROW HOVER */
+
+.age-method-table tbody tr:not(.method-total-row):hover td {
+    background: var(--mfp-primary-tint);
+}
+
+
+/* LAST ROW */
+
+.age-method-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+
+/* =========================================================
+   AGE BRACKET NAME
+   ========================================================= */
+
+.age-bracket-name {
+    text-align: left !important;
+    padding-left: 16px !important;
+    color: var(--mfp-primary) !important;
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   METHOD COUNTS
+   ========================================================= */
+
+.method-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    min-height: 28px;
+    padding: 3px 7px;
+    border-radius: 5px;
+    color: #9ca3af;
+}
+
+.method-count.has-data {
+    background: var(--mfp-primary-tint);
+    color: var(--mfp-primary);
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   AGE TOTAL
+   ========================================================= */
+
+.age-total {
+    background: #f7f8fc !important;
+    color: var(--mfp-primary) !important;
+}
+
+
+/* =========================================================
+   TOTAL ROW
+   ========================================================= */
+
+.method-total-row td {
+    background: var(--mfp-primary-tint) !important;
+    border-top: 2px solid var(--mfp-primary);
+    font-weight: 700;
+    color: var(--mfp-primary);
+}
+
+.method-total-row td:first-child {
+    text-align: left;
+    padding-left: 16px;
+}
+
+
+/* =========================================================
+   LOADING
+   ========================================================= */
+
+.age-method-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+    color: var(--mfp-muted);
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   NOTE
+   ========================================================= */
+
+.age-method-note {
+    margin: 14px 0 0;
+    padding: 10px 12px;
+    border-radius: 6px;
+    background: var(--mfp-primary-tint);
+    color: var(--mfp-primary);
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   INVENTORY REPORT
+   ========================================================= */
+
+.inventory-container {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 24px;
+    overflow-x: hidden;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+
+/* =========================================================
+   LOADING
+   ========================================================= */
+
+.inventory-loading {
+    width: 100%;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: var(--mfp-muted);
+    background: #ffffff;
+}
+
+
+/* =========================================================
+   KPI CARDS
+   ========================================================= */
+
+.inventory-cards {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.inventory-card {
+    min-width: 0;
+    padding: 22px;
+    border-radius: 14px;
+    background: #ffffff;
+    border: 1px solid var(--mfp-border);
+    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.06);
+    position: relative;
+    overflow: hidden;
+}
+
+.inventory-card::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 5px;
+    height: 100%;
+}
+
+.inventory-card small {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--mfp-muted);
+}
+
+.inventory-card h2 {
+    margin: 0;
+    font-size: 30px;
+    line-height: 1.2;
+    font-weight: 700;
+    color: var(--mfp-primary);
+}
+
+
+/* =========================================================
+   CARD COLORS
+   ========================================================= */
+
+.inventory-card.blue::before {
+    background: var(--mfp-primary);
+}
+
+.inventory-card.green::before {
+    background: #27ae60;
+}
+
+.inventory-card.purple::before {
+    background: #6d5bd0;
+}
+
+.inventory-card.orange::before {
+    background: #d99a3d;
+}
+
+.inventory-card.red::before {
+    background: #d64545;
+}
+
+
+/* =========================================================
+   PANELS
+   ========================================================= */
+
+.inventory-panel {
+    width: 100%;
+    min-width: 0;
+    margin-bottom: 24px;
+    padding: 24px;
+    box-sizing: border-box;
+    background: #ffffff;
+    border: 1px solid var(--mfp-border);
+    border-radius: 14px;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.05);
+}
+
+.inventory-panel > h3 {
+    margin: 0 0 20px;
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--mfp-primary);
+}
+
+
+/* =========================================================
+   PANEL HEADER
+   ========================================================= */
+
+.panel-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.panel-header h3 {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--mfp-primary);
+}
+
+.alert-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 12px;
+    border-radius: 20px;
+    background: #fee2e2;
+    color: #b91c1c;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   RHU INVENTORY STATUS TABLE
+   ========================================================= */
+
+.inventory-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--mfp-border);
+    border-radius: 8px;
+}
+
+
+/* =========================================================
+   RHU TABLE
+   ========================================================= */
+
+.inventory-table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: collapse;
+    table-layout: auto;
+}
+
+
+/* =========================================================
+   RHU TABLE HEADER
+   ========================================================= */
+
+.inventory-table thead th {
+    padding: 14px 16px;
+    background: var(--mfp-primary);
+    border-bottom: 2px solid var(--mfp-primary);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: left;
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   RHU TABLE BODY
+   ========================================================= */
+
+.inventory-table tbody td {
+    padding: 15px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    color: #334155;
+    font-size: 13px;
+    white-space: nowrap;
+    vertical-align: middle;
+    background: #ffffff;
+}
+
+
+/* =========================================================
+   RHU ROW HOVER
+   ========================================================= */
+
+.inventory-table tbody tr {
+    transition: background 0.15s ease;
+}
+
+.inventory-table tbody tr:hover td {
+    background: var(--mfp-primary-tint);
+}
+
+
+/* =========================================================
+   RHU LAST ROW
+   ========================================================= */
+
+.inventory-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+
+/* =========================================================
+   RHU NAME
+   ========================================================= */
+
+.inventory-table tbody td:first-child {
+    color: var(--mfp-primary);
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   RHU IMPORTANT VALUES
+   ========================================================= */
+
+.inventory-table tbody td:nth-child(2),
+.inventory-table tbody td:nth-child(3),
+.inventory-table tbody td:nth-child(4),
+.inventory-table tbody td:nth-child(6) {
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   RHU TABLE SCROLLING
+   ========================================================= */
+
+.inventory-panel:has(.inventory-table) {
+    overflow-x: auto;
+}
+
+
+/* =========================================================
+   STATUS BADGES
+   ========================================================= */
+
+.status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 68px;
+    padding: 6px 11px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.status.critical {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.status.warning {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.status.good {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+
+/* =========================================================
+   LOW STOCK ALERTS
+   ========================================================= */
+
+.alert-list {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.inventory-alert-card {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 18px 20px;
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    background: #fffafa;
+}
+
+.alert-left {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.alert-icon {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #fee2e2;
+    color: #dc2626;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.alert-left h4 {
+    margin: 0 0 4px;
+    color: #1e293b;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.alert-left p {
+    margin: 0;
+    color: var(--mfp-muted);
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   ALERT RIGHT SIDE
+   ========================================================= */
+
+.alert-right {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+}
+
+.alert-stat {
+    min-width: 65px;
+    text-align: center;
+}
+
+.alert-stat small {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--mfp-muted);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.alert-stat strong {
+    display: block;
+    color: var(--mfp-primary);
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.critical-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 12px;
+    border-radius: 20px;
+    background: #fee2e2;
+    color: #b91c1c;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   EMPTY ALERTS
+   ========================================================= */
+
+.empty-alerts {
+    padding: 42px 20px;
+    text-align: center;
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+    background: var(--mfp-primary-tint);
+}
+
+.success-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #dcfce7;
+    color: #16a34a;
+    font-size: 25px;
+    font-weight: 700;
+}
+
+.empty-alerts h4 {
+    margin: 0 0 6px;
+    color: var(--mfp-primary);
+    font-size: 16px;
+}
+
+.empty-alerts p {
+    margin: 0;
+    color: var(--mfp-muted);
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1200px) {
+
+    .inventory-cards {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+}
+
+
+@media (max-width: 900px) {
+
+    .age-method-header {
+        flex-direction: column;
+    }
+
+    .age-method-filters {
+        width: 100%;
+    }
+
+    .age-method-filters > div {
+        flex: 1;
+    }
+
+    .age-method-filters select {
+        width: 100%;
+    }
+
+    .age-method-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .inventory-container {
+        padding: 18px;
+    }
+
+    .inventory-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .inventory-alert-card {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .alert-right {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .age-method-filters {
+        flex-direction: column;
+    }
+
+    .age-method-header h3 {
+        font-size: 16px;
+    }
+
+    .inventory-container {
+        padding: 12px;
+    }
+
+    .inventory-cards {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .inventory-card {
+        padding: 18px;
+    }
+
+    .inventory-card h2 {
+        font-size: 26px;
+    }
+
+    .inventory-panel {
+        padding: 16px;
+        border-radius: 10px;
+    }
+
+    .panel-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .inventory-table {
+        min-width: 850px;
+    }
+
+    .inventory-alert-card {
+        padding: 16px;
+    }
+
+    .alert-right {
+        gap: 18px;
+    }
+
+}

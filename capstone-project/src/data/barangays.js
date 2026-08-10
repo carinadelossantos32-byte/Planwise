@@ -1,5 +1,4 @@
 export const barangays = [
-  "All",
   "Anilao",
   "Atlag",
   "Babatnin",
