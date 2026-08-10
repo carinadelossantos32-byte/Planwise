@@ -13,6 +13,7 @@ const NO_SIDEBAR_ROUTES = ["/login"];
 function Layout() {
   const location = useLocation();
   const showSidebar = !NO_SIDEBAR_ROUTES.includes(location.pathname);
+  
 
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>

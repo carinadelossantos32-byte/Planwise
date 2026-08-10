@@ -471,6 +471,7 @@ return (
                   name="classes_held" 
                   value={formData.classes_held || ""} 
                   onChange={handleInputChange} 
+                  className={errors.classes_held ? "input-error" : ""}
                 >
                   <option value="">Select</option>
                   <option value="4Ps">4Ps</option>
@@ -482,6 +483,7 @@ return (
                   <option value="Profiled Only">Profiled Only</option>
                   <option value="Others">Others</option>
                 </select>
+                {errors.classes_held && <span className="error-text">{errors.classes_held}</span>}
               </div>  
 
             </div>
