@@ -1,5 +1,4 @@
 export const familyPlanningMethods = [
-  "All",
   "Condom",
   "IUD",
   "Pills",

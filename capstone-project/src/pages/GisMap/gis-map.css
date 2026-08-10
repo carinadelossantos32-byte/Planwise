@@ -9,7 +9,9 @@ h1, h2, h3, h4, h5, h6, p, ul {
     justify-content: space-between;
     align-items: center;
     background-color: #fff;
-    padding: 20px 20px 20px 20px;
+    padding: 0px 30px 0px 30px;
+    position: relative;
+    z-index: 1001;
 }
 
 .gis-header-right {
@@ -18,13 +20,23 @@ h1, h2, h3, h4, h5, h6, p, ul {
     gap: 20px;
 }
 
+.search-container {
+    position: relative !important;
+    width: 280px !important;       /* Dito lang ang lapad ng search area! */
+    max-width: 280px !important;
+    flex-shrink: 0 !important;     /* Bawal hilahin o patabain ng Flexbox */
+}
+
 .search-bar {
     display: flex;
+    height: 40px;
     align-items: center;
     background-color: transparent;
     border: 1px solid #ccc;
     border-radius: 10px;
-    padding: 10px 10px;
+    padding: 0px 10px 0px 15px;
+    width: 100% !important;        /* Kakainin lang ang 280px ng container */
+    box-sizing: border-box !important;
 }
 
 .search-bar input {
@@ -32,14 +44,69 @@ h1, h2, h3, h4, h5, h6, p, ul {
     outline: none;
     margin-left: 5px;
     background-color: transparent;
+    width: 100%;
 }
+
+ul.suggestions-list {
+    position: absolute !important;
+    top: calc(100% + 5px) !important; 
+    left: 0 !important;
+    width: 100% !important;           
+    max-width: 280px !important;     
+    box-sizing: border-box !important;
+    
+    margin: 0 !important;
+    background-color: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    list-style: none !important;
+    padding: 4px 0 !important;
+    max-height: 200px !important;
+    overflow-y: auto !important;
+    z-index: 9999 !important;        /* Lalabas sa ibabaw ng Leaflet Map */
+}
+
+.suggestion-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    font-size: 14px;
+    color: #333333;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.suggestion-item.focused,
+.suggestion-item:hover {
+    background-color: #f0f7ff;
+    color: #0056b3;
+}
+
+.suggestion-item i {
+    color: #666666;
+    font-size: 12px;
+}
+
+.suggestion-item.focused i {
+    color: #0056b3;
+}
+
+/* --- MAP OVERVIEW & OTHERS --- */
 
 .gis-header-right button {
     background-color: #fff;
     border: 1px solid #ccc;
     cursor: pointer;
-    padding: 10px 10px;
+    padding: 10px;
     border-radius: 10px;
+}
+
+.toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px; /* Control the spacing here (8px or 10px works great) */
 }
 
 .map-overview {
@@ -72,12 +139,13 @@ h1, h2, h3, h4, h5, h6, p, ul {
 .map-filters p, option, label {
     font-size: 14px;
 }
+
 .filters-header {
     color: white;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #432DD7;
+    background-color: #091F7A;
     padding: 15px;
     border-radius: 10px 10px 0 0;
 }
@@ -103,21 +171,21 @@ h1, h2, h3, h4, h5, h6, p, ul {
 .filter-modes {
     padding: 15px;
     transition: height 0.4s ease-in-out, padding 0.4s ease-in-out; 
-    overflow: hidden; /* Hides everything inside as it collapses */
+    overflow: hidden;
     box-sizing: border-box;
 }
 
 .view-mode-options {
     display: flex;
-    flex-wrap:wrap;
+    flex-wrap: wrap;
     justify-content: center;
     gap: 5px;
-    padding: 10px 0px 10px 0px;
+    padding: 10px 0px;
 }
 
 #markers, #heatmap, #clusters {
     display: flex;
-    width:20%;
+    width: 30%;
     flex-direction: column;
     align-items: center;
     gap: 5px;
@@ -127,7 +195,7 @@ h1, h2, h3, h4, h5, h6, p, ul {
 }
 
 #markers.selected, #heatmap.selected, #clusters.selected {
-    background-color: #432DD7;
+    background-color: #091F7A;
     color: white;
 }
 
@@ -135,13 +203,17 @@ h1, h2, h3, h4, h5, h6, p, ul {
     width: 100%;
     padding: 10px;
     padding-right: 30px;
-    margin: 10px 0px 10px 0px;
+    margin: 10px 0px;
     border: 1px solid #ccc;
     border-radius: 10px;
     background-color: #fff;
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
+}
+
+.barangay-filter option, .fp-method-filter option {
+    font-weight: normal;
 }
 
 .user-type-filter {
@@ -200,13 +272,72 @@ h1, h2, h3, h4, h5, h6, p, ul {
 }
 
 .map-controls button {
-    background-color: #fff;
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    min-height: 42px;
+    border-radius: 8px;
     border: none;
+    background: #ffffff;
+    color: #091F7A;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     cursor: pointer;
-    padding: 10px 10px;
-    border-radius: 10px;
-    width: 100%;
-    box-shadow: 5px 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+}
+
+.layer-control-wrapper {
+    position: relative !important; /* Dito mag-a-align ang floating popup */
+    width: 42px;
+    height: 42px;
+}
+
+.layer-menu-popup {
+  position: absolute !important;
+  right: 0; 
+  bottom: 10; 
+  margin-top: 10px;   
+  width: 150px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.layer-options {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Buttons sa LOOB ng popup menu */
+.layer-options .layer-option-btn {
+  width: 100% !important;
+  height: 36px !important;
+  padding: 0 10px !important;
+  justify-content: flex-start !important;
+  gap: 8px;
+  font-size: 13px;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  color: #333 !important;
+}
+
+.layer-options .layer-option-btn:hover {
+  background: #f0f4f8 !important;
+}
+
+.layer-options .layer-option-btn.selected {
+  background: #091F7A !important;
+  color: #ffffff !important;
 }
 
 .information-container {
@@ -222,13 +353,21 @@ h1, h2, h3, h4, h5, h6, p, ul {
     justify-content: center;
     padding: 10px;
     gap: 10px;
-    flex-wrap:wrap;
+    flex-wrap: wrap;
     font-size: 13px;
     text-align: center;
 }
 
 .information-container i {
-    color: #432DD7;
+    color: #091F7A;
+}
+
+.information-container button {
+    border: none;
+    background-color: transparent;
+    color: gray;
+    cursor: pointer;
+    width: 1%;
 }
 
 .map-container {
@@ -246,3 +385,79 @@ h1, h2, h3, h4, h5, h6, p, ul {
 .map-filters, .map-legend, .map-controls, .information-container {
     z-index: 2; 
 }   
+
+.custom-user-location {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pulse-dot {
+  width: 12px;
+  height: 12px;
+  background-color: #2b7fff;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  position: relative;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes mapPulse {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+/* I-force ang container na sakupin ang buong screen at i-center ang nilalaman */
+.custom-loading-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;     /* Ginagawang centered vertically (taas-baba) */
+  justify-content: center;  /* Ginagawang centered horizontally (kaliwa-kanan) */
+  background-color: rgba(255, 255, 255, 0.8); /* Optional: semi-transparent white backdrop */
+  z-index: 9999;           /* Mas mataas sa Leaflet map para siguradong nasa ibabaw */
+}
+
+/* Ang card sa loob */
+.custom-loading-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e7eb;
+}
+
+/* Ang umiikot na spinner */
+.custom-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #2563eb; /* Kulay ng spinner */
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.custom-loading-text {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #374151;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

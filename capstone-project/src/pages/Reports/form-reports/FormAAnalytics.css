@@ -1,0 +1,1169 @@
+/* =========================================================
+   FORM A ANALYTICS
+   ALL STYLES ARE SCOPED TO .form-a-container
+   ========================================================= */
+
+.form-a-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    background: transparent;
+    color: #1B1B2F;
+    box-sizing: border-box;
+}
+
+.form-a-container *,
+.form-a-container *::before,
+.form-a-container *::after {
+    box-sizing: border-box;
+}
+
+
+/* =========================================================
+   FORM A - KPI CARDS CONTAINER
+   ========================================================= */
+
+.form-a-container .form-a-cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    width: 100%;
+    max-width: 100%;
+}
+
+
+/* =========================================================
+   FORM A - KPI CARD
+   Clean inventory-style cards
+   ========================================================= */
+
+.form-a-container .form-a-cards .fa-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    width: 100%;
+    min-width: 0;
+    min-height: 130px;
+
+    padding: 22px 24px;
+
+    background: #FFFFFF !important;
+    background-image: none !important;
+
+    border: 1px solid #E4E3F2;
+    border-radius: 16px;
+
+    box-shadow: 0 1px 2px rgba(20, 8, 109, 0.05);
+
+    color: #1B1B2F !important;
+}
+
+
+/* Small colored indicator on left */
+
+.form-a-container .form-a-cards .fa-card::before {
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+    top: 18px;
+    bottom: 18px;
+
+    width: 4px;
+
+    border-radius: 0 4px 4px 0;
+}
+
+
+/* =========================================================
+   KPI CARD COLORS
+   Only the indicator and number use color.
+   ========================================================= */
+
+.form-a-container .form-a-cards .fa-card.blue::before {
+    background: #091F7A;
+}
+
+.form-a-container .form-a-cards .fa-card.green::before {
+    background: #148D0D;
+}
+
+.form-a-container .form-a-cards .fa-card.purple::before {
+    background: #264BE0;
+}
+
+.form-a-container .form-a-cards .fa-card.orange::before {
+    background: #E0563D;
+}
+
+.form-a-container .form-a-cards .fa-card.pink::before {
+    background: #A84D8A;
+}
+
+
+/* =========================================================
+   KPI CARD TEXT
+   ========================================================= */
+
+.form-a-container .form-a-cards .fa-card small {
+    display: block;
+
+    margin: 0 0 10px;
+
+    color: #5B5B76 !important;
+
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: none;
+}
+
+.form-a-container .form-a-cards .fa-card h2 {
+    margin: 0;
+
+    color: #091F7A !important;
+
+    font-size: 32px;
+    line-height: 1.1;
+    font-weight: 700;
+
+    font-variant-numeric: tabular-nums;
+}
+
+.form-a-container .form-a-cards .fa-card span {
+    display: block;
+
+    margin-top: 8px;
+
+    color: #9494AC !important;
+
+    font-size: 12px;
+    font-weight: 500;
+}
+
+
+/* Individual KPI number colors */
+
+.form-a-container .form-a-cards .fa-card.blue h2 {
+    color: #091F7A !important;
+}
+
+.form-a-container .form-a-cards .fa-card.green h2 {
+    color: #148D0D !important;
+}
+
+.form-a-container .form-a-cards .fa-card.purple h2 {
+    color: #264BE0 !important;
+}
+
+.form-a-container .form-a-cards .fa-card.orange h2 {
+    color: #E0563D !important;
+}
+
+.form-a-container .form-a-cards .fa-card.pink h2 {
+    color: #A84D8A !important;
+}
+
+
+/* =========================================================
+   SUMMARY GRID CONTAINER
+   ========================================================= */
+
+.form-a-container .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+
+/* =========================================================
+   SUMMARY PANEL
+   ========================================================= */
+
+.form-a-container .summary-grid .summary-panel {
+    width: 100%;
+    min-width: 0;
+
+    background: #FFFFFF;
+
+    border: 1px solid #E4E3F2;
+    border-radius: 16px;
+
+    padding: 22px 24px;
+
+    box-shadow: 0 1px 2px rgba(20, 8, 109, 0.05);
+}
+
+
+/* =========================================================
+   SUMMARY PANEL HEADER
+   ========================================================= */
+
+.form-a-container .summary-grid .summary-panel .panel-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    gap: 15px;
+
+    margin-bottom: 24px;
+    padding-bottom: 14px;
+
+    border-bottom: 1px solid #E4E3F2;
+}
+
+.form-a-container .summary-grid .summary-panel .panel-title h3 {
+    margin: 0;
+
+    color: #1B1B2F;
+
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.form-a-container .summary-grid .summary-panel .panel-title strong {
+    color: #091F7A;
+
+    font-size: 20px;
+    font-weight: 700;
+
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* =========================================================
+   PROGRESS ROW
+   ========================================================= */
+
+.form-a-container .summary-grid .progress-row {
+    display: grid;
+    grid-template-columns: 145px minmax(0, 1fr) 45px;
+
+    gap: 14px;
+    align-items: center;
+
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+.form-a-container .summary-grid .progress-row:last-child {
+    margin-bottom: 0;
+}
+
+.form-a-container .summary-grid .progress-row span {
+    min-width: 0;
+
+    color: #5B5B76;
+
+    font-size: 13px;
+    font-weight: 500;
+
+    overflow-wrap: anywhere;
+}
+
+.form-a-container .summary-grid .progress-row strong {
+    color: #1B1B2F;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* =========================================================
+   PROGRESS BAR
+   ========================================================= */
+
+.form-a-container .summary-grid .progress {
+    width: 100%;
+    height: 8px;
+
+    background: #F1F1F8;
+
+    border-radius: 999px;
+
+    overflow: hidden;
+}
+
+.form-a-container .summary-grid .progress .progress-fill {
+    height: 100%;
+
+    background: #264BE0 !important;
+
+    border-radius: 999px;
+}
+
+.form-a-container .summary-grid .progress .progress-fill.green {
+    background: #148D0D !important;
+}
+
+
+/* =========================================================
+   SOLO / COUPLE SUMMARY CONTAINER
+   ========================================================= */
+
+.form-a-container .solo-couple-summary {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    background: #FFFFFF;
+
+    border: 1px solid #E4E3F2;
+    border-radius: 16px;
+
+    padding: 22px 24px;
+
+    box-shadow: 0 1px 2px rgba(20, 8, 109, 0.05);
+}
+
+.form-a-container .solo-couple-summary h3 {
+    margin: 0 0 18px;
+
+    color: #1B1B2F;
+
+    font-size: 16px;
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   ATTENDANCE SUMMARY
+   ========================================================= */
+
+.form-a-container .attendance-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+
+    gap: 12px;
+
+    width: 100%;
+}
+
+.form-a-container .attendance-summary > div {
+    width: 100%;
+    min-width: 0;
+
+    background: #F1F1F8;
+
+    border: 1px solid #E4E3F2;
+    border-radius: 12px;
+
+    padding: 18px;
+
+    text-align: center;
+}
+
+.form-a-container .attendance-summary small {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: #5B5B76;
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.form-a-container .attendance-summary h2 {
+    margin: 0;
+
+    color: #091F7A;
+
+    font-size: 28px;
+    font-weight: 700;
+
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* Different attendance values */
+
+.form-a-container .attendance-summary > div:nth-child(1) h2 {
+    color: #091F7A;
+}
+
+.form-a-container .attendance-summary > div:nth-child(2) h2 {
+    color: #264BE0;
+}
+
+.form-a-container .attendance-summary > div:nth-child(3) h2 {
+    color: #148D0D;
+}
+
+.form-a-container .attendance-summary > div:nth-child(4) h2 {
+    color: #091F7A;
+}
+
+
+/* =========================================================
+   MONTHLY SUMMARY CONTAINER
+   ========================================================= */
+
+.form-a-container .monthly-summary {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    background: #FFFFFF;
+
+    border: 1px solid #E4E3F2;
+    border-radius: 16px;
+
+    padding: 22px 24px;
+
+    box-shadow: 0 1px 2px rgba(20, 8, 109, 0.05);
+
+    overflow: hidden;
+}
+
+.form-a-container .monthly-summary h3 {
+    margin: 0 0 18px;
+
+    color: #1B1B2F;
+
+    font-size: 16px;
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   MONTHLY TABLE
+   ========================================================= */
+
+.form-a-container .monthly-summary table {
+    width: 100%;
+    max-width: 100%;
+
+    border-collapse: collapse;
+    border-spacing: 0;
+
+    table-layout: fixed;
+}
+
+
+/* Header */
+
+.form-a-container .monthly-summary table thead {
+    background: #091F7A !important;
+}
+
+.form-a-container .monthly-summary table thead th {
+    padding: 12px 10px;
+
+    background: #091F7A !important;
+    color: #FFFFFF !important;
+
+    border: 1px solid #264BE0;
+
+    text-align: center;
+
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+
+/* Body */
+
+.form-a-container .monthly-summary table tbody td {
+    padding: 12px 10px;
+
+    color: #5B5B76;
+
+    background: #FFFFFF;
+
+    border-bottom: 1px solid #E4E3F2;
+
+    text-align: center;
+
+    font-size: 13px;
+    font-weight: 500;
+
+    font-variant-numeric: tabular-nums;
+
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+
+/* First column */
+
+.form-a-container .monthly-summary table tbody td:first-child {
+    color: #1B1B2F;
+
+    font-weight: 600;
+
+    text-align: left;
+}
+
+
+/* Alternating rows */
+
+.form-a-container .monthly-summary table tbody tr:nth-child(even) {
+    background: #F8F8FC;
+}
+
+.form-a-container .monthly-summary table tbody tr:nth-child(even) td {
+    background: #F8F8FC;
+}
+
+
+/* Hover */
+
+.form-a-container .monthly-summary table tbody tr:hover td {
+    background: #EEEBFB !important;
+}
+
+
+/* Footer */
+
+.form-a-container .monthly-summary table tfoot {
+    background: #EEEBFB !important;
+}
+
+.form-a-container .monthly-summary table tfoot th,
+.form-a-container .monthly-summary table tfoot td {
+    padding: 12px 10px;
+
+    background: #EEEBFB !important;
+
+    color: #091F7A !important;
+
+    border-top: 2px solid #D3D2E8;
+
+    text-align: center;
+
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   OFFICIAL REPORT CONTAINER
+   ========================================================= */
+
+.form-a-container .official-report {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    background: #FFFFFF;
+
+    border: 1px solid #E4E3F2;
+    border-radius: 20px;
+
+    padding: 24px;
+
+    box-shadow: 0 5px 18px rgba(20, 8, 109, 0.07);
+
+    overflow: hidden;
+}
+
+
+/* =========================================================
+   OFFICIAL REPORT HEADER
+   ========================================================= */
+
+.form-a-container .official-report .official-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    gap: 20px;
+
+    margin-bottom: 22px;
+    padding-bottom: 18px;
+
+    border-bottom: 1px solid #E4E3F2;
+}
+
+.form-a-container .official-report .official-header h2 {
+    margin: 0;
+
+    color: #091F7A;
+
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.form-a-container .official-report .official-header p {
+    margin: 5px 0 0;
+
+    color: #5B5B76;
+
+    font-size: 13px;
+    font-weight: 500;
+}
+
+
+/* =========================================================
+   REPORT BUTTONS
+   Strongly scoped to Form A
+   ========================================================= */
+
+.form-a-container .official-report .report-buttons {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    flex-wrap: wrap;
+}
+
+
+/* Base button */
+
+.form-a-container .official-report .report-buttons button {
+    border: none;
+
+    border-radius: 10px;
+
+    padding: 10px 18px;
+
+    cursor: pointer;
+
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+
+    box-shadow: none !important;
+}
+
+
+/* Refresh */
+
+.form-a-container .official-report .report-buttons .refresh-btn {
+    background: #F1F5F9 !important;
+    color: #334155 !important;
+}
+
+
+/* PDF */
+
+.form-a-container .official-report .report-buttons .pdf-btn {
+    background: #C62828 !important;
+    color: #FFFFFF !important;
+}
+
+
+/* Excel */
+
+.form-a-container .official-report .report-buttons .excel-btn {
+    background: #188038 !important;
+    color: #FFFFFF !important;
+}
+
+
+/* Hover */
+
+.form-a-container .official-report .report-buttons .refresh-btn:hover {
+    background: #E2E8F0 !important;
+    color: #334155 !important;
+}
+
+.form-a-container .official-report .report-buttons .pdf-btn:hover {
+    background: #A91F1F !important;
+    color: #FFFFFF !important;
+}
+
+.form-a-container .official-report .report-buttons .excel-btn:hover {
+    background: #146C2E !important;
+    color: #FFFFFF !important;
+}
+
+
+/* =========================================================
+   OFFICIAL TABLE WRAPPER
+   ========================================================= */
+
+.form-a-container .official-report .official-table-wrapper {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    border: 1px solid #E4E3F2;
+    border-radius: 12px;
+
+    box-sizing: border-box;
+}
+
+
+/* =========================================================
+   OFFICIAL TABLE
+   ========================================================= */
+
+.form-a-container .official-report .official-table {
+    width: 100%;
+    max-width: 100%;
+
+    min-width: 900px;
+
+    table-layout: fixed;
+
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+
+/* =========================================================
+   OFFICIAL TABLE HEADER
+   ========================================================= */
+
+.form-a-container .official-report .official-table thead {
+    background: #091F7A !important;
+}
+
+.form-a-container .official-report .official-table thead tr:first-child th {
+    background: #091F7A !important;
+}
+
+.form-a-container .official-report .official-table thead tr:nth-child(2) th,
+.form-a-container .official-report .official-table thead tr:nth-child(3) th {
+    background: #132B8E !important;
+}
+
+.form-a-container .official-report .official-table th {
+    padding: 8px 5px;
+
+    color: #FFFFFF !important;
+
+    font-size: 10px !important;
+    font-weight: 700;
+
+    line-height: 1.25;
+
+    text-align: center;
+    vertical-align: middle;
+
+    border: 1px solid rgba(255, 255, 255, 0.20);
+
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+
+/* =========================================================
+   OFFICIAL TABLE BODY
+   ========================================================= */
+
+.form-a-container .official-report .official-table tbody td {
+    padding: 7px 5px;
+
+    color: #5B5B76;
+
+    font-size: 11px !important;
+    font-weight: 500;
+
+    line-height: 1.25;
+
+    text-align: center;
+
+    border: 1px solid #E4E3F2;
+
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+
+/* First column */
+
+.form-a-container .official-report .official-table tbody td:first-child {
+    color: #1B1B2F;
+
+    font-weight: 600;
+
+    text-align: left;
+}
+
+
+/* Alternating rows */
+
+.form-a-container
+.official-report
+.official-table
+tbody
+tr:nth-child(even):not(.quarter-subtotal) {
+    background: #FBFBFD;
+}
+
+.form-a-container
+.official-report
+.official-table
+tbody
+tr:nth-child(even):not(.quarter-subtotal) td {
+    background: #FBFBFD;
+}
+
+
+/* Hover */
+
+.form-a-container
+.official-report
+.official-table
+tbody
+tr:hover:not(.quarter-subtotal) td {
+    background: #EEEBFB;
+}
+
+
+/* =========================================================
+   QUARTER SUBTOTAL
+   ========================================================= */
+
+.form-a-container .official-report .official-table .quarter-subtotal th,
+.form-a-container .official-report .official-table .quarter-subtotal td {
+    background: #E5F6EC !important;
+
+    color: #091F7A !important;
+
+    font-weight: 700;
+
+    padding: 9px 5px;
+
+    text-align: center;
+
+    border-top: 2px solid #C7E7D0 !important;
+    border-bottom: 2px solid #C7E7D0 !important;
+
+    border-left: 1px solid #D5EBDD !important;
+    border-right: 1px solid #D5EBDD !important;
+}
+
+
+/* Subtotal label */
+
+.form-a-container
+.official-report
+.official-table
+.quarter-subtotal
+th:first-child,
+.form-a-container
+.official-report
+.official-table
+.quarter-subtotal
+td:first-child {
+    text-align: left !important;
+
+    padding-left: 10px;
+}
+
+
+/* =========================================================
+   GRAND TOTAL
+   IMPORTANT:
+   Keep this very specific so other table CSS cannot hide it.
+   ========================================================= */
+
+.form-a-container
+.official-report
+.official-table
+tfoot {
+    display: table-footer-group !important;
+
+    background: #091F7A !important;
+}
+
+
+/* Every Grand Total cell */
+
+.form-a-container
+.official-report
+.official-table
+tfoot
+th,
+.form-a-container
+.official-report
+.official-table
+tfoot
+td {
+    display: table-cell !important;
+
+    padding: 10px 5px;
+
+    background: #091F7A !important;
+
+    color: #FFFFFF !important;
+
+    font-size: 11px !important;
+    font-weight: 700;
+
+    line-height: 1.25;
+
+    text-align: center;
+
+    border: 1px solid rgba(255, 255, 255, 0.25);
+
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+
+/* Grand Total label */
+
+.form-a-container
+.official-report
+.official-table
+tfoot
+.grand-total-title {
+    background: #091F7A !important;
+
+    color: #FFFFFF !important;
+
+    text-align: left !important;
+
+    padding-left: 10px;
+}
+
+
+/* Fallback in case class is not present */
+
+.form-a-container
+.official-report
+.official-table
+tfoot
+th:first-child {
+    background: #091F7A !important;
+
+    color: #FFFFFF !important;
+
+    text-align: left;
+}
+
+
+/* =========================================================
+   STICKY MONTH COLUMN
+   ========================================================= */
+
+.form-a-container
+.official-report
+.official-table
+thead
+th:first-child,
+.form-a-container
+.official-report
+.official-table
+tbody
+td:first-child,
+.form-a-container
+.official-report
+.official-table
+tfoot
+th:first-child,
+.form-a-container
+.official-report
+.official-table
+tfoot
+td:first-child {
+    position: sticky;
+
+    left: 0;
+
+    z-index: 3;
+}
+
+
+/* Sticky header */
+
+.form-a-container
+.official-report
+.official-table
+thead
+th:first-child {
+    background: #091F7A !important;
+
+    z-index: 5;
+}
+
+
+/* Sticky body */
+
+.form-a-container
+.official-report
+.official-table
+tbody
+td:first-child {
+    background: #FFFFFF;
+
+    z-index: 2;
+}
+
+
+/* Sticky subtotal */
+
+.form-a-container
+.official-report
+.official-table
+tbody
+.quarter-subtotal
+td:first-child,
+.form-a-container
+.official-report
+.official-table
+tbody
+.quarter-subtotal
+th:first-child {
+    background: #E5F6EC !important;
+
+    z-index: 3;
+}
+
+
+/* Sticky Grand Total */
+
+.form-a-container
+.official-report
+.official-table
+tfoot
+th:first-child,
+.form-a-container
+.official-report
+.official-table
+tfoot
+td:first-child {
+    background: #091F7A !important;
+
+    z-index: 4;
+}
+
+
+/* =========================================================
+   LOADING
+   ========================================================= */
+
+.form-a-container .form-a-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    width: 100%;
+    min-height: 350px;
+
+    background: #FFFFFF;
+
+    border: 1px solid #E4E3F2;
+    border-radius: 16px;
+
+    color: #5B5B76;
+
+    font-size: 15px;
+    font-weight: 500;
+}
+
+
+/* =========================================================
+   FOCUS
+   ========================================================= */
+
+.form-a-container button:focus-visible {
+    outline: 2px solid #264BE0;
+    outline-offset: 2px;
+}
+
+
+/* =========================================================
+   RESPONSIVE - 1300px
+   ========================================================= */
+
+@media (max-width: 1300px) {
+
+    .form-a-container .form-a-cards {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .form-a-container .attendance-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVE - 900px
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+    .form-a-container .summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-a-container .form-a-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .form-a-container .official-report {
+        padding: 20px;
+    }
+
+    .form-a-container .official-report .official-header {
+        align-items: flex-start;
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVE - 650px
+   ========================================================= */
+
+@media (max-width: 650px) {
+
+    .form-a-container .form-a-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .form-a-container .attendance-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .form-a-container .official-report .official-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .form-a-container .official-report .report-buttons {
+        width: 100%;
+    }
+
+    .form-a-container .official-report .report-buttons button {
+        flex: 1;
+        min-width: 120px;
+    }
+
+    .form-a-container .summary-grid .summary-panel,
+    .form-a-container .monthly-summary,
+    .form-a-container .solo-couple-summary {
+        padding: 18px;
+    }
+
+    .form-a-container .summary-grid .progress-row {
+        grid-template-columns: 110px minmax(0, 1fr) 40px;
+        gap: 10px;
+    }
+
+    .form-a-container .monthly-summary {
+        overflow-x: auto;
+    }
+
+    .form-a-container .monthly-summary table {
+        min-width: 700px;
+    }
+}
