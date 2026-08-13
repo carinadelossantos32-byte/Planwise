@@ -9,7 +9,7 @@ function ClientEditModalPrivate({ client, onClose, onSuccess }) {
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    
+
     if (errors[e.target.name]) {
       setErrors({ ...errors, [e.target.name]: "" });
     }
@@ -17,7 +17,7 @@ function ClientEditModalPrivate({ client, onClose, onSuccess }) {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
-    
+
     let newErrors = {};
     let isValid = true;
 
@@ -34,19 +34,19 @@ function ClientEditModalPrivate({ client, onClose, onSuccess }) {
 
     if (!isValid) {
       setErrors(newErrors);
-      return; 
+      return;
     }
 
     try {
       const docRef = doc(db, "clients_private", client.id);
-      
+
       const { id, created_at, ...updateData } = formData;
 
       await updateDoc(docRef, {
         ...updateData,
         updated_at: serverTimestamp()
       });
-      
+
       onSuccess();
       onClose();
     } catch (error) {
@@ -54,110 +54,114 @@ function ClientEditModalPrivate({ client, onClose, onSuccess }) {
     }
   };
 
-return (
-    <div className="modal-overlay-edit">
-      <div className="modal">
-        <div className="modal-header-edit">
-          <h2>Edit Private Client</h2>
+  return (
+    <div className="efpr-overlay">
+      <div className="efpr-modal" id="efpr-modal-root" role="dialog" aria-labelledby="efpr-title">
+        <div className="efpr-header">
+          <h2 id="efpr-title" className="efpr-title">Edit Private Client</h2>
+          <p className="efpr-subtitle">Ensure all modified fields are correct and complete to maintain data integrity</p>
         </div>
 
-        {/* Form wraps both the scrollable body and fixed footer */}
-        <form onSubmit={handleUpdate}>
-          <div className="modal-body-edit">
-            <h3>Ensure all modified fields are correct and complete to maintain data integrity</h3>
-            
-            <div className="form-grid-edit">
-              
-              <div className="form-group-edit">
-                <label>Client Name</label>
-                <input 
-                  name="name" 
-                  value={formData.name || ""} 
-                  onChange={handleInputChange} 
-                  className={errors.name ? "input-error" : ""} 
-                />
-                {errors.name && <span className="error-text">{errors.name}</span>}
-              </div>
-              
-              <div className="form-group-edit">
-                <label>Age</label>
-                <input 
-                  type="number" 
-                  name="age" 
-                  value={formData.age !== undefined ? formData.age : ""} 
-                  onChange={handleInputChange} 
-                  min="0" 
-                  className={errors.age ? "input-error" : ""} 
-                />
-                {errors.age && <span className="error-text">{errors.age}</span>}
-              </div>
-              
-              <div className="form-group-edit">
-                <label>Birthdate</label>
-                <input 
-                  type="date" 
-                  name="birthdate" 
-                  value={formData.birthdate || ""} 
-                  onChange={handleInputChange} 
-                  className={errors.birthdate ? "input-error" : ""} 
-                />
-                {errors.birthdate && <span className="error-text">{errors.birthdate}</span>}
-              </div>
-              
-              <div className="form-group-edit">
-                <label>Address</label>
-                <input 
-                  name="address" 
-                  value={formData.address || ""} 
-                  onChange={handleInputChange} 
-                  className={errors.address ? "input-error" : ""} 
-                />
-                {errors.address && <span className="error-text">{errors.address}</span>}
-              </div>
-              
-              <div className="form-group-edit">
-                <label>Method Used</label>
-                <select 
-                  name="fp_method" 
-                  value={formData.fp_method || ""} 
-                  onChange={handleInputChange}
-                  className={errors.fp_method ? "input-error" : ""} 
-                >
-                  <option value="">Select</option>
-                  <option value="Condom">Condom</option>
-                  <option value="IUD">IUD</option>
-                  <option value="Pills">Pills</option>
-                  <option value="Injectable">Injectable</option>
-                  <option value="Vasectomy">Vasectomy</option>
-                  <option value="Tubal Ligation">Tubal Ligation</option>
-                  <option value="Implant">Implant</option>
-                  <option value="CMM/Billings">CMM/Billings</option>
-                  <option value="BBT">BBT</option>
-                  <option value="Symptothermal">Symptothermal</option>
-                  <option value="SDM">SDM</option>
-                  <option value="LAM">LAM</option>
-                </select>
-                {errors.fp_method && <span className="error-text">{errors.fp_method}</span>}
-              </div>
-              
-              <div className="form-group-edit">
-                <label>FP Issued By</label>
-                <input 
-                  name="fp_issued_by" 
-                  value={formData.fp_issued_by || ""} 
-                  onChange={handleInputChange} 
-                  placeholder="Clinic, Hospital, Lying-In" 
-                  className={errors.fp_issued_by ? "input-error" : ""} 
-                />
-                {errors.fp_issued_by && <span className="error-text">{errors.fp_issued_by}</span>}
+        <form onSubmit={handleUpdate} className="efpr-form">
+          <div className="efpr-body">
+
+            <section className="efpr-section">
+              <h3 className="efpr-section-title">Private Client Information</h3>
+
+              <div className="efpr-paired-cols">
+                <div className="efpr-group">
+                  <span className="efpr-paired-label">Client Name</span>
+                  <input
+                    name="name"
+                    value={formData.name || ""}
+                    onChange={handleInputChange}
+                    className={`efpr-input   ${errors.name ? "efpr-input-error" : ""}`}
+                  />
+                  {errors.name && <span className="efpr-error-text">{errors.name}</span>}
+                </div>
+                <div className="efpr-group">
+                  <span className="efpr-paired-label">Age</span>
+                  <input
+                    type="number"
+                    name="age"
+                    value={formData.age !== undefined ? formData.age : ""}
+                    onChange={handleInputChange}
+                    min="0"
+                    className={`efpr-input ${errors.age ? "efpr-input-error" : ""}`}
+                  />
+                  {errors.age && <span className="efpr-error-text">{errors.age}</span>}
+                </div>
               </div>
 
-            </div>
+              <div className="efpr-paired-cols">
+                <div className="efpr-group">
+                  <span className="efpr-paired-label">Birthdate</span>
+                  <input
+                    type="date"
+                    name="birthdate"
+                    value={formData.birthdate || ""}
+                    onChange={handleInputChange}
+                    className={`efpr-input ${errors.birthdate ? "efpr-input-error" : ""}`}
+                  />
+                  {errors.birthdate && <span className="efpr-error-text">{errors.birthdate}</span>}
+                </div>
+                <div className="efpr-group">
+                  <span className="efpr-paired-label">Address</span>
+                  <input
+                    name="address"
+                    value={formData.address || ""}
+                    onChange={handleInputChange}
+                    className={`efpr-input ${errors.address ? "efpr-input-error" : ""}`}
+                  />
+                  {errors.address && <span className="efpr-error-text">{errors.address}</span>}
+                </div>
+              </div>
+
+              <div className="efpr-paired-cols">
+                <div className="efpr-group">
+                  <span className="efpr-paired-label">Method Used</span>
+                  <select
+                    name="fp_method"
+                    value={formData.fp_method || ""}
+                    onChange={handleInputChange}
+                    className={`efpr-select ${errors.fp_method ? "efpr-input-error" : ""}`}
+                  >
+                    <option value="">Select</option>
+                    <option value="Condom">Condom</option>
+                    <option value="IUD">IUD</option>
+                    <option value="Pills">Pills</option>
+                    <option value="Injectable">Injectable</option>
+                    <option value="Vasectomy">Vasectomy</option>
+                    <option value="Tubal Ligation">Tubal Ligation</option>
+                    <option value="Implant">Implant</option>
+                    <option value="CMM/Billings">CMM/Billings</option>
+                    <option value="BBT">BBT</option>
+                    <option value="Symptothermal">Symptothermal</option>
+                    <option value="SDM">SDM</option>
+                    <option value="LAM">LAM</option>
+                  </select>
+                  {errors.fp_method && <span className="efpr-error-text">{errors.fp_method}</span>}
+                </div>
+                <div className="efpr-group">
+                  <span className="efpr-paired-label">FP Issued By</span>
+                  <input
+                    name="fp_issued_by"
+                    value={formData.fp_issued_by || ""}
+                    onChange={handleInputChange}
+                    placeholder="Clinic, Hospital, Lying-In"
+                    className={`efpr-input ${errors.fp_issued_by ? "efpr-input-error" : ""}`}
+                  />
+                  {errors.fp_issued_by && <span className="efpr-error-text">{errors.fp_issued_by}</span>}
+                </div>
+
+              </div>
+            </section>
           </div>
 
-          <div className="modal-btn-edit">
-            <button type="button" className="btn-cancel-cr" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn-edit">Update Record</button>
+
+          <div className="efpr-footer">
+            <button type="button" className="efpr-btn efpr-btn-cancel" onClick={onClose}>Cancel</button>
+            <button type="submit" className="efpr-btn efpr-btn-save">Update Record</button>
           </div>
         </form>
       </div>

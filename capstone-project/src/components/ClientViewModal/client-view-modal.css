@@ -1,128 +1,228 @@
-/* OVERLAY */
-.modal-overlay-view {
+/* ViewRecordModal.css
+   All selectors are prefixed with "vfpr-" (View FP Record) so nothing here
+   leaks into or gets overridden by the create/edit modals or other pages. */
+
+.vfpr-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(27, 27, 27, 0.644);
+  background: rgba(15, 23, 42, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 24px;
 }
 
-/* MODAL BOX */
-.modal-view {
-  background: #fff;
-  border-radius: 10px;
-  width: 90%;
-  max-width: 900px;
-  max-height: 500px;
+.vfpr-modal {
+  width: 100%;
+  max-width: 720px;
+  max-height: 600px;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
   display: flex;
   flex-direction: column;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
   overflow: hidden;
 }
 
-/* HEADER */
-.modal-header-view {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 15px 24px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #e2c209;
+/* ── Header ─────────────────────────────────────────── */
+
+.vfpr-header {
+  padding: 20px 28px 16px;
+  border-bottom: 1px solid #e6e8ec;
+  flex-shrink: 0;
 }
 
-.modal-header-view h2 {
-  font-size: 18px;
-  font-weight: 600;
+.vfpr-title {
   margin: 0;
-  color: #ffffff;
+  font-size: 18px;
+  font-weight: 700;
+  color: #14243e;
 }
 
-/* BODY */
-.modal-body-view {
-  padding: 20px 24px;
-  overflow-y: auto;
+/* ── Scroll body ─────────────────────────────────────── */
+
+.vfpr-body {
   flex: 1;
+  overflow-y: auto;
+  padding: 20px 28px;
 }
 
-/* VIEW GRID */
-.view-grid {
+.vfpr-section {
+  margin-bottom: 28px;
+}
+
+.vfpr-section:last-child {
+  margin-bottom: 4px;
+}
+
+.vfpr-section-title {
+  margin: 0 0 14px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgb(236, 195, 12);
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e6e8ec;
+}
+
+/* ── Paired male/female rows ────────────────────────── */
+
+.vfpr-paired {
+  margin-bottom: 16px;
+}
+
+.vfpr-paired-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.vfpr-paired-cols {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 14px;
 }
 
-.view-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 5px 12px;
-  background: #f9fafb;
-  border-radius: 6px;
-  border: 1px solid #e5e7eb;
+.vfpr-tag {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 5px;
 }
 
-.view-item.full-width {
+.vfpr-tag-male {
+  color: #081ab4;
+}
+
+.vfpr-tag-female {
+  color: #e70b67;
+}
+
+/* ── Generic grid / items ────────────────────────────── */
+
+.vfpr-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 16px;
+  margin-bottom: 4px;
+}
+
+.vfpr-span-2 {
   grid-column: 1 / -1;
 }
 
-.view-label {
-  font-size: 12px;
-  font-weight: 500;
-  color: #6b7280;
-  font-family: 'Segoe UI', sans-serif;
-  
-}
-
-.view-value {
-  font-size: 14px;
-  color: #111827;
-  font-weight: 400;
-    font-family: 'Segoe UI', sans-serif;
-}
-
-/* SIGNATURE */
-.signature-image {
-  margin-top: 6px;
-  max-width: 200px;
-  max-height: 80px;
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  object-fit: contain;
-}
-
-/* FOOTER */
-.modal-btn-view {
+.vfpr-item {
   display: flex;
-  justify-content: center;
-  padding: 16px 24px;
-  border-top: 1px solid #e5e7eb;
+  flex-direction: column;
+  padding: 9px 11px;
+  background: #f9fafb;
+  border: 1px solid #eef0f3;
+  border-radius: 8px;
 }
 
-.btn-back {
-  padding: 9px 48px;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
-  background: #eecc0d;
-  color: #fafafa;
+.vfpr-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #05790f;
+  margin-bottom: 4px;
+}
+
+.vfpr-value {
   font-size: 14px;
+  color: #1f2937;
+  word-break: break-word;
+}
+
+.vfpr-value-warning {
+  color: #dc2626;
+}
+
+/* ── Map block ──────────────────────────────────────── */
+
+.vfpr-map-wrap,
+.vfpr-map-empty {
+  margin-top: 8px;
+}
+
+.vfpr-map-frame {
+  height: 250px;
+  margin-top: 6px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #d1d5db;
+  z-index: 1;
+}
+
+.vfpr-map-empty {
+  padding: 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+}
+
+.vfpr-map-empty .vfpr-label {
+  color: #b91c1c;
+}
+
+/* ── Signature ──────────────────────────────────────── */
+
+.vfpr-signature-wrap {
+  margin-top: 8px;
+}
+
+.vfpr-signature-image {
+  display: block;
+  max-width: 260px;
+  max-height: 120px;
+  margin-top: 8px;
+  border: 1px solid #e6e8ec;
+  border-radius: 6px;
+  background: #ffffff;
+  padding: 8px;
+}
+
+/* ── Footer ─────────────────────────────────────────── */
+
+.vfpr-footer {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 28px;
+  border-top: 1px solid #e6e8ec;
+  background: #fafafa;
+}
+
+.vfpr-btn {
+  padding: 10px 28px;
+  font-size: 13.5px;
+  font-weight: 600;
+  border-radius: 8px;
   cursor: pointer;
+  transition: background 0.15s ease;
 }
 
-.btn-back:hover {
-    background-color: #ffec7de7;
-  color: #e4c309;
-  border:none;
+.vfpr-btn-back {
+  background: rgb(233, 192, 11);
+  color: #ffffff;
 }
 
-/* RESPONSIVE */
+.vfpr-btn-back:hover {
+  background: #d4a50b;
+}
+
+/* ── Responsive ─────────────────────────────────────── */
+
 @media (max-width: 600px) {
-  .view-grid {
+  .vfpr-paired-cols,
+  .vfpr-grid-2 {
     grid-template-columns: 1fr;
-  }
-
-  .modal-view {
-    width: 95%;
   }
 }

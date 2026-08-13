@@ -64,125 +64,128 @@ function ClientAddModalPrivate({ onClose, onSuccess }) {
   };
 
   const comparisonFields = [
-    { label: "Client Name",  key: "name" },
-    { label: "Age",          key: "age" },
-    { label: "Birthdate",    key: "birthdate" },
-    { label: "Barangay",     key: "barangay" },
-    { label: "FP Method",    key: "fp_method" },
+    { label: "Client Name", key: "name" },
+    { label: "Age", key: "age" },
+    { label: "Birthdate", key: "birthdate" },
+    { label: "Barangay", key: "barangay" },
+    { label: "FP Method", key: "fp_method" },
     { label: "FP Issued By", key: "fp_issued_by" },
   ];
 
-return (
+  return (
     <>
-      <div className="modal-overlay-add">
-        <div className="modal">
-          <div className="modal-header-referred">
-            <h2>Create New Private Record</h2>
+      <div className="cfpr-overlay">
+        <div className="cfpr-modal" id="cfpr-modal-root" role="dialog" aria-labelledby="cfpr-title">
+          <div className="cfpr-header">
+            <h2 id="cfpr-title" className="cfpr-title">Create New Private Record</h2>
+            <p className="cfpr-subtitle">Please verify that all entries are correct and no fields remain empty for secure processing. </p>
           </div>
 
           <form onSubmit={handleAdd}>
-            <div className="modal-body-referred">
-              <h3>
-                Please verify that all entries are correct and no fields remain empty for secure processing.
-              </h3>
+            <div className="cfpr-body">
 
-              <div className="form-grid">
 
-                <div className="form-group-referred">
-                  <label>Client Name</label>
-                  <input
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    placeholder="Client Name"
-                    className={errors.name ? "input-error" : ""}
-                  />
-                  {errors.name && <span className="error-text">{errors.name}</span>}
+              <section className="cfpr-section">
+                <h3 className="cfpr-section-title">Private Client Information</h3>
+
+                <div className="cfpr-paired-cols">
+                  <div className="cfpr-group-2">
+                    <label className="cfpr-label">Client Name</label>
+                    <input
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      placeholder="Client Name"
+                      className={`cfpr-input ${errors.name ? "cfpr-input-error" : ""}`}
+                    />
+                    {errors.name && <span className="cfpr-error-text">{errors.name}</span>}
+                  </div>
+                  <div className="cfpr-group-2">
+                    <label className="cfpr-label">Age</label>
+                    <input
+                      type="number"
+                      name="age"
+                      value={formData.age}
+                      onChange={handleInputChange}
+                      placeholder="Age"
+                      min="0"
+                      className={`cfpr-input ${errors.age ? "cfpr-input-error" : ""}`}
+                    />
+                    {errors.age && <span className="cfpr-error-text">{errors.age}</span>}
+                  </div>
                 </div>
 
-                <div className="form-group-referred">
-                  <label>Age</label>
-                  <input
-                    type="number"
-                    name="age"
-                    value={formData.age}
-                    onChange={handleInputChange}
-                    placeholder="Age"
-                    min="0"
-                    className={errors.age ? "input-error" : ""}
-                  />
-                  {errors.age && <span className="error-text">{errors.age}</span>}
+                <div className="cfpr-paired-cols">
+                  <div className="cfpr-group-2">
+                    <label className="cfpr-label">Birthdate</label>
+                    <input
+                      type="date"
+                      name="birthdate"
+                      value={formData.birthdate}
+                      onChange={handleInputChange}
+                      className={`cfpr-input ${errors.birthdate ? "cfpr-input-error" : ""}`}
+                    />
+                    {errors.birthdate && <span className="cfpr-error-text">{errors.birthdate}</span>}
+                  </div>
+                  <div className="cfpr-group-2">
+                    <label className="cfpr-label">Barangay</label>
+                    <input
+                      name="barangay"
+                      value={formData.barangay}
+                      onChange={handleInputChange}
+                      placeholder="Barangay"
+                      className={`cfpr-input ${errors.barangay ? "cfpr-input-error" : ""}`}
+                    />
+                    {errors.barangay && <span className="cfpr-error-text">{errors.barangay}</span>}
+                  </div>
                 </div>
 
-                <div className="form-group-referred">
-                  <label>Birthdate</label>
-                  <input
-                    type="date"
-                    name="birthdate"
-                    value={formData.birthdate}
-                    onChange={handleInputChange}
-                    className={errors.birthdate ? "input-error" : ""}
-                  />
-                  {errors.birthdate && <span className="error-text">{errors.birthdate}</span>}
+                <div className="cfpr-paired-cols">
+                  <div className="cfpr-group-2">
+                    <label className="cfpr-label">Method Used</label>
+                    <select
+                      name="fp_method"
+                      value={formData.fp_method}
+                      onChange={handleInputChange}
+                      className={`cfpr-input ${errors.fp_method ? "cfpr-input-error" : ""}`}
+                    >
+                      <option value="">Select</option>
+                      <option value="Condom">Condom</option>
+                      <option value="IUD">IUD</option>
+                      <option value="Pills">Pills</option>
+                      <option value="Injectable">Injectable</option>
+                      <option value="Vasectomy">Vasectomy</option>
+                      <option value="Tubal Ligation">Tubal Ligation</option>
+                      <option value="Implant">Implant</option>
+                      <option value="CMM/Billings">CMM/Billings</option>
+                      <option value="BBT">BBT</option>
+                      <option value="Symptothermal">Symptothermal</option>
+                      <option value="SDM">SDM</option>
+                      <option value="LAM">LAM</option>
+                    </select>
+                    {errors.fp_method && <span className="cfpr-error-text">{errors.fp_method}</span>}
+                  </div>
+                  <div className="cfpr-group-2">
+                    <label className="cfpr-label">FP Issued By</label>
+                    <input
+                      name="fp_issued_by"
+                      value={formData.fp_issued_by}
+                      onChange={handleInputChange}
+                      placeholder="Clinic, Hospital, Lying-In"
+                      className={`cfpr-input ${errors.fp_issued_by ? "cfpr-input-error" : ""}`}
+                    />
+                    {errors.fp_issued_by && <span className="cfpr-error-text">{errors.fp_issued_by}</span>}
+                  </div>
                 </div>
 
-                <div className="form-group-referred">
-                  <label>Barangay</label>
-                  <input
-                    name="barangay"
-                    value={formData.barangay}
-                    onChange={handleInputChange}
-                    placeholder="Barangay"
-                    className={errors.barangay ? "input-error" : ""}
-                  />
-                  {errors.barangay && <span className="error-text">{errors.barangay}</span>}
-                </div>
-
-                <div className="form-group-referred">
-                  <label>Method Used</label>
-                  <select
-                    name="fp_method"
-                    value={formData.fp_method}
-                    onChange={handleInputChange}
-                    className={errors.fp_method ? "input-error" : ""}
-                  >
-                    <option value="">Select</option>
-                    <option value="Condom">Condom</option>
-                    <option value="IUD">IUD</option>
-                    <option value="Pills">Pills</option>
-                    <option value="Injectable">Injectable</option>
-                    <option value="Vasectomy">Vasectomy</option>
-                    <option value="Tubal Ligation">Tubal Ligation</option>
-                    <option value="Implant">Implant</option>
-                    <option value="CMM/Billings">CMM/Billings</option>
-                    <option value="BBT">BBT</option>
-                    <option value="Symptothermal">Symptothermal</option>
-                    <option value="SDM">SDM</option>
-                    <option value="LAM">LAM</option>
-                  </select>
-                  {errors.fp_method && <span className="error-text">{errors.fp_method}</span>}
-                </div>
-
-                <div className="form-group-referred">
-                  <label>FP Issued By</label>
-                  <input
-                    name="fp_issued_by"
-                    value={formData.fp_issued_by}
-                    onChange={handleInputChange}
-                    placeholder="Clinic, Hospital, Lying-In"
-                    className={errors.fp_issued_by ? "input-error" : ""}
-                  />
-                  {errors.fp_issued_by && <span className="error-text">{errors.fp_issued_by}</span>}
-                </div>
-
-              </div>
+              </section>
             </div>
 
-            <div className="modal-btn">
-              <button type="button" className="btn-cancel-cr" onClick={onClose}>
+            <div className="cfpr-footer">
+              <button type="button" className="cfpr-btn cfpr-btn-cancel" onClick={onClose}>
                 Cancel
               </button>
-              <button type="submit" className="btn-save">
+              <button type="submit" className="cfpr-btn cfpr-btn-save">
                 Create Record
               </button>
             </div>
@@ -211,9 +214,8 @@ return (
                   {comparisonFields.map(({ label, key }) => (
                     <div
                       key={key}
-                      className={`dup-field-row ${
-                        formData[key] !== existingRecord[key] ? "dup-field-row--diff" : ""
-                      }`}
+                      className={`dup-field-row ${formData[key] !== existingRecord[key] ? "dup-field-row--diff" : ""
+                        }`}
                     >
                       <span className="dup-field-label">{label}</span>
                       <span>
@@ -232,9 +234,8 @@ return (
                   {comparisonFields.map(({ label, key }) => (
                     <div
                       key={key}
-                      className={`dup-field-row ${
-                        formData[key] !== existingRecord[key] ? "dup-field-row--diff" : ""
-                      }`}
+                      className={`dup-field-row ${formData[key] !== existingRecord[key] ? "dup-field-row--diff" : ""
+                        }`}
                     >
                       <span className="dup-field-label">{label}</span>
                       <span>
@@ -252,7 +253,7 @@ return (
               <div className="dup-actions">
                 <button
                   type="button"
-                  className="dup-btn-cancel"
+                  className="cfpr-btn cfpr-btn-cancel"
                   onClick={() => {
                     setDupModalOpen(false);
                     setExistingRecord(null);
@@ -262,7 +263,7 @@ return (
                 </button>
                 <button
                   type="button"
-                  className="dup-btn-skip"
+                  className="cfpr-btn cfpr-btn-skip"
                   onClick={() => {
                     setDupModalOpen(false);
                     onClose();
@@ -272,7 +273,7 @@ return (
                 </button>
                 <button
                   type="button"
-                  className="dup-btn-overwrite"
+                  className="cfpr-btn cfpr-btn-overwrite"
                   onClick={() => {
                     setDupModalOpen(false);
                     saveRecord(existingRecord.id);
@@ -282,7 +283,7 @@ return (
                 </button>
                 <button
                   type="button"
-                  className="dup-btn-save"
+                  className="cfpr-btn cfpr-btn-save"
                   onClick={() => {
                     setDupModalOpen(false);
                     saveRecord();
