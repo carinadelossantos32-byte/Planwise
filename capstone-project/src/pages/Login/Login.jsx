@@ -48,6 +48,8 @@ const Login = () => {
         const userData = userDocSnap.data();
         const userRole = userData.role; 
 
+        localStorage.setItem('userRole', userRole);
+
         if (userRole === 'cpd') {
           navigate('/dashboard/cpd', { replace: true }); 
         } else if (userRole === 'health') {

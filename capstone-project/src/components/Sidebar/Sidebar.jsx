@@ -1,5 +1,5 @@
 import "./sidebar.css";
-import { NavLink, useNavigate } from "react-router";
+import { NavLink, useNavigate, useLocation } from "react-router";
 import {
   LayoutDashboard,
   Users,
@@ -20,14 +20,34 @@ const navItems = [
 
 export default function Sidebar() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const savedUserRole = localStorage.getItem("userRole");
+
+  const getOfficeName = () => {
+    if (savedUserRole === "health") return "Health - Office";
+    if (savedUserRole === "cpd") return "CPD - Office";
+
+    const path = location.pathname.toLowerCase();
+
+    if (path.includes("health") || path.includes("chc")) {
+      return "Health - Office";
+    }
+
+    if (path.includes("cpd") || path === "/dashboard") {
+      return "CPD - Office";
+    }
+
+    return "CPD - Office";
+  };
 
   const handleLogout = () => {
+    localStorage.removeItem("userRole");
     navigate("/login");
   };
 
   return (
     <aside className="sidebar">
-      {/* Brand */}
       <div className="brand">
         <div className="logo-wrapper">
           <img
@@ -49,7 +69,6 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Nav Items */}
       <nav className="nav">
         {navItems.map(({ label, icon: Icon, path }) => (
           <NavLink
@@ -68,7 +87,6 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Bottom Section */}
       <div className="bottom">
         <NavLink
           to="/settings"
@@ -83,13 +101,14 @@ export default function Sidebar() {
           )}
         </NavLink>
 
-        {/* User / Logout */}
         <div className="user-row">
           <div className="user-avatar">
-            <span className="user-avatar-text">C</span>
+            <span className="user-avatar-text">
+              {getOfficeName().charAt(0)}
+            </span>
           </div>
           <div className="user-info">
-            <span className="user-name">CPD - Office</span>
+            <span className="user-name">{getOfficeName()}</span>
           </div>
           <button onClick={handleLogout} className="logout-btn" title="Log out">
             <LogOut size={18} className="nav-icon" />
