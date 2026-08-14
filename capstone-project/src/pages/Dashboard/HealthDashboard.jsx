@@ -1,26 +1,58 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router';
 import './dashboard.css'; 
-import mapPlaceholderImg from '../../assets/map-placeholder.png';
 import { db } from '../../firebase-config';
-import { collection, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
-import { RefreshCw, Download, Upload } from 'lucide-react';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { RefreshCw, Download } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
+import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
 
 const MALOLOS_BARANGAYS = [
-        "Anilao", "Atlag", "Babatnin", "Bagna", "Bagong Bayan", "Balayong", "Balite", 
-        "Bangkal", "Barihan", "Bulihan", "Bungahan", "Caingin", "Calero", "Caliligawan", 
-        "Canalate", "Caniogan", "Catmon", "Cofradia", "Dakila", "Guinhawa", "Liang", 
-        "Ligas", "Longos", "Look 1st", "Look 2nd", "Lugam", "Mabolo", "Mambog", 
-        "Masile", "Matimbo", "Mojon", "Namayan", "Niugan", "Pamarawan", "Panasahan", 
-        "Pinagbakahan", "San Agustin", "San Gabriel", "San Juan", "San Pablo", 
-        "San Vicente", "Santiago", "Santisima Trinidad", "Santor", "Santo Cristo", 
-        "Santo Niño", "Santo Rosario", "Sumapang Bata", "Sumapang Matanda", "Taal"
+  "Anilao", "Atlag", "Babatnin", "Bagna", "Bagong Bayan", "Balayong", "Balite", 
+  "Bangkal", "Barihan", "Bulihan", "Bungahan", "Caingin", "Calero", "Caliligawan", 
+  "Canalate", "Caniogan", "Catmon", "Cofradia", "Dakila", "Guinhawa", "Liang", 
+  "Ligas", "Longos", "Look 1st", "Look 2nd", "Lugam", "Mabolo", "Mambog", 
+  "Masile", "Matimbo", "Mojon", "Namayan", "Niugan", "Pamarawan", "Panasahan", 
+  "Pinagbakahan", "San Agustin", "San Gabriel", "San Juan", "San Pablo", 
+  "San Vicente", "Santiago", "Santisima Trinidad", "Santor", "Santo Cristo", 
+  "Santo Niño", "Santo Rosario", "Sumapang Bata", "Sumapang Matanda", "Taal"
 ];
 
+const MALOLOS_CENTER = [14.8527, 120.8160];
+
+const METHOD_ROW_MAP = {
+  "fstr/btl": 5,
+  "btl": 5,
+  "mstr/nsv": 9,
+  "nsv": 9,
+  "condom": 13,
+  "condoms": 13,
+  "iud-interval": 17,
+  "iud": 17,
+  "iud-postpartum": 21,
+  "pills-pop": 25,
+  "pop": 25,
+  "pills-coc": 29,
+  "coc": 29,
+  "pills": 29,
+  "injectables": 33,
+  "dmpa": 33,
+  "implants": 37,
+  "implant": 37,
+  "nfp-ccm": 41,
+  "nfp-bbt": 45,
+  "nfp-stm": 49,
+  "nfp-sdm": 53,
+  "nfp-lam": 57
+};
+
 const HealthDashboard = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [allRawClients, setAllRawClients] = useState([]);
 
   const [metricsData, setMetricsData] = useState({
     currentUsersPrevMonth: 0,
@@ -34,22 +66,21 @@ const HealthDashboard = () => {
   const [geoChartData, setGeoChartData] = useState([]);
 
   const [methodMix, setMethodMix] = useState([
-    { name: "FSTR/BTL", keys: ["FSTR/BTL", "BTL", "Tubal Ligation"], count: 0, percentage: "0%", color: "#2F80ED" },
-    { name: "MSTR/NSV", keys: ["MSTR/NSV", "NSV", "Vasectomy"], count: 0, percentage: "0%", color: "#9B51E0" },
-    { name: "Implant", keys: ["Implant", "Subdermal Implant"], count: 0, percentage: "0%", color: "#27AE60" },
-    { name: "IUD-INTERVAL", keys: ["IUD-INTERVAL", "IUD", "IUD-TCu380A"], count: 0, percentage: "0%", color: "#E056FD" },
-    { name: "Condoms", keys: ["Condom", "Condoms"], count: 0, percentage: "0%", color: "#FF7675" },
-    { name: "IUD-POSTPARTUM", keys: ["IUD-POSTPARTUM", "PPIUD"], count: 0, percentage: "0%", color: "#0984E3" }
+    { name: "FSTR/BTL", keys: ["FSTR/BTL", "BTL", "Tubal Ligation"], count: 0, percentage: "0%", color: "var(--primary)" },
+    { name: "MSTR/NSV", keys: ["MSTR/NSV", "NSV", "Vasectomy"], count: 0, percentage: "0%", color: "#4B3FD1" },
+    { name: "Implant", keys: ["Implant", "Subdermal Implant"], count: 0, percentage: "0%", color: "var(--mint)" },
+    { name: "IUD-INTERVAL", keys: ["IUD-INTERVAL", "IUD", "IUD-TCu380A"], count: 0, percentage: "0%", color: "#8B5CF6" },
+    { name: "Condoms", keys: ["Condom", "Condoms"], count: 0, percentage: "0%", color: "var(--amber)" },
+    { name: "IUD-POSTPARTUM", keys: ["IUD-POSTPARTUM", "PPIUD"], count: 0, percentage: "0%", color: "#2563EB" }
   ]);
 
-  // 4. Demographics State
   const [demographics, setDemographics] = useState([
-    { age: "15-19 years", total: 0, share: "0%", barWidth: "0%", color: "#E056FD" },
-    { age: "20-24 years", total: 0, share: "0%", barWidth: "0%", color: "#9B51E0" },
-    { age: "25-29 years", total: 0, share: "0%", barWidth: "0%", color: "#2F80ED" },
-    { age: "30-34 years", total: 0, share: "0%", barWidth: "0%", color: "#27AE60" },
-    { age: "35-39 years", total: 0, share: "0%", barWidth: "0%", color: "#F2994A" },
-    { age: "40-49 years", total: 0, share: "0%", barWidth: "0%", color: "#FF7675" }
+    { age: "15-19 years", total: 0, share: "0%", barWidth: "0%", color: "var(--primary)" },
+    { age: "20-24 years", total: 0, share: "0%", barWidth: "0%", color: "#4B3FD1" },
+    { age: "25-29 years", total: 0, share: "0%", barWidth: "0%", color: "var(--mint)" },
+    { age: "30-34 years", total: 0, share: "0%", barWidth: "0%", color: "#8B5CF6" },
+    { age: "35-39 years", total: 0, share: "0%", barWidth: "0%", color: "var(--amber)" },
+    { age: "40-49 years", total: 0, share: "0%", barWidth: "0%", color: "#2563EB" }
   ]);
 
   const calculateAge = (birthdateStr) => {
@@ -69,6 +100,7 @@ const HealthDashboard = () => {
 
     const processAllClients = () => {
       const allClients = [...publicDocs, ...privateDocs, ...referredDocs];
+      setAllRawClients(allClients);
 
       const now = new Date();
       const currentMonth = now.getMonth();
@@ -159,12 +191,12 @@ const HealthDashboard = () => {
 
       const totalAgesMapped = Object.values(ageGroups).reduce((a, b) => a + b, 0) || 1;
       const demoConfig = [
-        { key: "15-19", label: "15-19 years", color: "#E056FD" },
-        { key: "20-24", label: "20-24 years", color: "#9B51E0" },
-        { key: "25-29", label: "25-29 years", color: "#2F80ED" },
-        { key: "30-34", label: "30-34 years", color: "#27AE60" },
-        { key: "35-39", label: "35-39 years", color: "#F2994A" },
-        { key: "40-49", label: "40-49 years", color: "#FF7675" }
+        { key: "15-19", label: "15-19 years", color: "var(--primary)" },
+        { key: "20-24", label: "20-24 years", color: "#4B3FD1" },
+        { key: "25-29", label: "25-29 years", color: "var(--mint)" },
+        { key: "30-34", label: "30-34 years", color: "#8B5CF6" },
+        { key: "35-39", label: "35-39 years", color: "var(--amber)" },
+        { key: "40-49", label: "40-49 years", color: "#2563EB" }
       ];
 
       setDemographics(
@@ -218,143 +250,170 @@ const HealthDashboard = () => {
   }, []);
 
   const handleExportExcel = async () => {
-    const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet('Health Overview');
+    try {
+      const response = await fetch('/templates/Health Office Form.xlsx');
+      if (!response.ok) {
+        throw new Error("Template file not found under /public/templates/");
+      }
+      const arrayBuffer = await response.arrayBuffer();
 
-    sheet.columns = [
-      { header: 'Metric Category', key: 'category', width: 30 },
-      { header: 'Total Value', key: 'value', width: 20 }
-    ];
-
-    sheet.addRow({ category: 'Current Users (Previous Month)', value: metricsData.currentUsersPrevMonth });
-    sheet.addRow({ category: 'New Acceptors (Previous Month)', value: metricsData.newAcceptorsPrevMonth });
-    sheet.addRow({ category: 'Other Acceptors', value: metricsData.otherAcceptors });
-    sheet.addRow({ category: 'Drop Outs', value: metricsData.dropOuts });
-    sheet.addRow({ category: 'Current Users (Current Month)', value: metricsData.currentUsersCurrentMonth });
-    sheet.addRow({ category: 'New Acceptors (Current Month)', value: metricsData.newAcceptorsCurrentMonth });
-
-    const buffer = await workbook.xlsx.writeBuffer();
-    saveAs(new Blob([buffer]), `Health_Dashboard_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
-  };
-
-  const handleImportExcel = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      const buffer = evt.target.result;
       const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.load(buffer);
-      const sheet = workbook.getWorksheet(1);
+      await workbook.xlsx.load(arrayBuffer);
 
-      sheet.eachRow((row, rowNumber) => {
-        if (rowNumber > 1) {
-          const name = row.getCell(1).value;
-          const fp_method = row.getCell(2).value;
-          const barangay = row.getCell(3).value;
+      const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      const currentMonthName = months[new Date().getMonth()];
+      const sheet = workbook.getWorksheet(currentMonthName) || workbook.getWorksheet(1);
 
-          if (name) {
-            addDoc(collection(db, "clients_public"), {
-              name: typeof name === 'object' ? String(name.result || name.value || name) : String(name),
-              fp_method: fp_method ? String(fp_method) : "",
-              barangay: barangay ? String(barangay) : "",
-              is_archived: false,
-              created_at: serverTimestamp()
-            });
-          }
-        }
+      allRawClients.forEach(client => {
+        const method = (client.fp_method || client.FP_method || "").toLowerCase().trim();
+        const baseRow = METHOD_ROW_MAP[method];
+        if (!baseRow) return;
+
+        const age = calculateAge(client.birthdate_female) || calculateAge(client.birthdate) || Number(client.age) || 25;
+        let ageOffset = 2;
+        if (age >= 10 && age <= 14) ageOffset = 0;
+        else if (age >= 15 && age <= 19) ageOffset = 1;
+        else if (age >= 20 && age <= 49) ageOffset = 2;
+
+        const targetRow = baseRow + ageOffset;
+        const totalEndingCell = sheet.getRow(targetRow).getCell(49);
+        const currentVal = Number(totalEndingCell.value) || 0;
+        totalEndingCell.value = currentVal + 1;
       });
-      alert("Excel records imported successfully!");
-    };
-    reader.readAsArrayBuffer(file);
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      saveAs(new Blob([buffer]), `DOH_Malolos_Health_Report_${currentMonthName}_${new Date().getFullYear()}.xlsx`);
+    } catch (err) {
+      console.error("Excel export error:", err);
+      alert("Failed to export Excel using the official template. Please ensure 'Health Office Form.xlsx' is in your public/templates folder.");
+    }
   };
 
   const topCards = [
-    { label: "Current Users", subLabel: "(Previous Month)", value: metricsData.currentUsersPrevMonth, icon: "👥", color: "orange" },
-    { label: "New Acceptors", subLabel: "(Previous Month)", value: metricsData.newAcceptorsPrevMonth, icon: "💙", color: "blue" },
-    { label: "Other Acceptors", subLabel: "", value: metricsData.otherAcceptors, icon: "👤+", color: "yellow" },
-    { label: "Drop Outs", subLabel: "", value: metricsData.dropOuts, icon: "📉", color: "purple" },
-    { label: "Current Users", subLabel: "(Current Month)", value: metricsData.currentUsersCurrentMonth, icon: "👥", color: "teal" },
-    { label: "New Acceptors", subLabel: "(Current Month)", value: metricsData.newAcceptorsCurrentMonth, icon: "👤+", color: "pink" }
+    { label: "Current Users", subLabel: "(Previous Month)", value: metricsData.currentUsersPrevMonth, cardId: "overall-stocks-card" },
+    { label: "New Acceptors", subLabel: "(Previous Month)", value: metricsData.newAcceptorsPrevMonth, cardId: "overall-population-card" },
+    { label: "Other Acceptors", subLabel: "Active users", value: metricsData.otherAcceptors, cardId: "overall-rhu-card" },
+    { label: "Drop Outs", subLabel: "Discontinued", value: metricsData.dropOuts, cardId: "low-stock-card" },
+    { label: "Current Users", subLabel: "(Current Month)", value: metricsData.currentUsersCurrentMonth, cardId: "overall-stocks-card" },
+    { label: "New Acceptors", subLabel: "(Current Month)", value: metricsData.newAcceptorsCurrentMonth, cardId: "overall-population-card" }
   ];
 
   const maxGeoValue = Math.max(...geoChartData.map(g => g.count), 1);
 
   return (
-    <div className="dashboard-container">
-      <header className="dashboard-header">
-        <div className="header-text">
-          <h1>Dashboard</h1>
-          <p>{loading ? "Loading overview..." : "Welcome back to your overview"}</p>
+    <div id="inventory-container">
+      <div id="inventory-topbar">
+        <div>
+          <h1>City Health Dashboard</h1>
+          <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--ink-faint)' }}>
+            {loading ? "Loading overview..." : "System live status"}
+          </p>
         </div>
 
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <button 
-            onClick={fetchAndProcessData}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', border: '1px solid #D1D5DB', backgroundColor: '#FFF', fontWeight: 600, cursor: 'pointer' }}
-          >
-            <RefreshCw size={14} className={refreshing ? "spin-icon" : ""} /> Refresh Data
+          <button id="refresh-button" onClick={fetchAndProcessData}>
+            <RefreshCw size={14} className={refreshing ? "spin-icon" : ""} /> 
+            Refresh Data
           </button>
 
           <button 
             onClick={handleExportExcel}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#EF4444', color: '#FFF', fontWeight: 600, cursor: 'pointer' }}
+            id="deduct-button"
+            style={{ height: '36px', padding: '0 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#E0563D', color: '#FFF' }}
           >
-            <Download size={14} /> Export as Excel
+            <Download size={14} /> Export Excel
           </button>
-
-          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#10B981', color: '#FFF', fontWeight: 600, cursor: 'pointer' }}>
-            <Upload size={14} /> Import Excel
-            <input type="file" accept=".xlsx, .xls" onChange={handleImportExcel} style={{ display: 'none' }} />
-          </label>
         </div>
-      </header>
+      </div>
 
-      <section className="metrics-grid">
+      <div id="inventory-report-label">
+        <h3>HEALTH METRICS REPORT</h3>
+      </div>
+
+      <div className="cards-container dashboard-metrics-grid">
         {topCards.map((item, idx) => (
-          <div className={`metric-card card-${item.color}`} key={idx}>
-            <div className="metric-icon-wrapper">{item.icon}</div>
+          <div className="inventory-header-content" id={item.cardId} key={idx}>
+            <h3>{item.label}</h3>
             <h2>{item.value}</h2>
-            <p style={{ fontWeight: 600, marginBottom: '2px' }}>{item.label}</p>
-            {item.subLabel && <span style={{ fontSize: '0.75rem', color: '#6B7280' }}>{item.subLabel}</span>}
+            <p>{item.subLabel}</p>
           </div>
         ))}
-      </section>
+      </div>
 
-      <section className="dashboard-charts-section">
-        <div className="chart-card large-chart">
-          <h3>Geographic Distribution</h3>
-          <p className="chart-sub">Client distribution across regions</p>
+      <div className="dashboard-charts-section">
+        <div className="chart-card">
+          <h3 className="chart-title">Geographic Distribution</h3>
+          <p className="chart-sub">Client density per Barangay</p>
           
-          <div style={{ height: '220px', display: 'flex', alignItems: 'flex-end', gap: '12px', marginTop: '20px', paddingBottom: '10px', borderBottom: '1px solid #E5E7EB' }}>
+          <div className="geo-bar-wrapper">
             {geoChartData.map((item, idx) => {
               const heightPct = (item.count / maxGeoValue) * 100;
               return (
-                <div key={idx} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#4B5563', marginBottom: '4px' }}>{item.count}</span>
-                  <div style={{ width: '100%', height: `${heightPct}%`, backgroundColor: '#2F80ED', borderRadius: '4px 4px 0 0', minHeight: '6px' }}></div>
-                  <span style={{ fontSize: '0.7rem', color: '#6B7280', marginTop: '8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '42px' }}>{item.name}</span>
+                <div key={idx} className="geo-bar-col">
+                  <span className="geo-bar-val">{item.count}</span>
+                  <div className="geo-bar-fill" style={{ height: `${heightPct}%` }}></div>
+                  <span className="geo-bar-lbl">{item.name}</span>
                 </div>
               );
             })}
           </div>
         </div>
 
-        <div className="chart-card side-map">
-          <h3>Regional Overview</h3>
-          <div 
-            className="placeholder-map-visual"
-            style={{ backgroundImage: `url(${mapPlaceholderImg})` }}
-          >
-            <div className="mock-map-tint">GIS Cluster Map View</div>
+        <div className="chart-card">
+          <h3 className="chart-title">Regional Overview</h3>
+          <p className="chart-sub">GIS Cluster Mapping</p>
+          
+          <div className="mini-map-container">
+            <MapContainer
+              center={MALOLOS_CENTER}
+              zoom={12}
+              scrollWheelZoom={false}
+              style={{ height: '240px', width: '100%', borderRadius: '14px' }}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+
+              {allRawClients
+                .filter(c => c.latitude && c.longitude)
+                .map((client, idx) => (
+                  <CircleMarker
+                    key={idx}
+                    center={[Number(client.latitude), Number(client.longitude)]}
+                    radius={6}
+                    pathOptions={{
+                      color: '#091F7A',
+                      fillColor: '#E0563D',
+                      fillOpacity: 0.85,
+                      weight: 2
+                    }}
+                  >
+                    <Popup>
+                      <div style={{ fontSize: '12px' }}>
+                        <strong>{client.name || 'Client'}</strong><br />
+                        {client.barangay || 'Malolos'}<br />
+                        <span>Method: {client.fp_method || 'N/A'}</span>
+                      </div>
+                    </Popup>
+                  </CircleMarker>
+                ))}
+            </MapContainer>
+
+            <button 
+              type="button"
+              className="mock-map-tint-btn"
+              onClick={() => navigate('/gis-map')}
+            >
+              GIS Cluster Map View ↗
+            </button>
           </div>
         </div>
-      </section>
+      </div>
 
-      <section className="dashboard-breakdown-section">
-        <div className="chart-card method-mix-card">
-          <h3>Contraceptive Methods</h3>
+      <div className="dashboard-breakdown-section">
+        <div className="chart-card">
+          <h3 className="chart-title">Contraceptive Methods</h3>
           <p className="chart-sub">Current distribution of family planning methods</p>
           <div className="methods-subgrid">
             {methodMix.map((method, idx) => (
@@ -365,21 +424,21 @@ const HealthDashboard = () => {
                   <span className="method-pct-lbl">{method.percentage}</span>
                 </div>
                 <h4>{method.count}</h4>
-                <p className="active-user-sub">active users</p>
+                <p className="active-user-sub">Active Users</p>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="chart-card demographics-card">
-          <h3>Client Demographics</h3>
+        <div className="chart-card">
+          <h3 className="chart-title">Client Demographics</h3>
           <p className="chart-sub">Age distribution of active FP users</p>
           <div className="demographics-list">
             {demographics.map((demo, idx) => (
               <div className="demo-row-item" key={idx}>
                 <div className="demo-row-text">
-                  <span className="demo-age-span">{demo.age}</span>
-                  <span className="demo-total-span">{demo.total}</span>
+                  <span>{demo.age}</span>
+                  <span style={{ color: 'var(--primary)', fontWeight: 700 }}>{demo.total}</span>
                 </div>
                 <div className="progress-track-bg">
                   <div className="progress-fill-bar" style={{ width: demo.barWidth, backgroundColor: demo.color }}></div>
@@ -389,7 +448,7 @@ const HealthDashboard = () => {
             ))}
           </div>
         </div>
-      </section>
+      </div>
     </div>
   );
 };
