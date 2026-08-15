@@ -142,129 +142,129 @@ function ClientAddModalReferred({ onClose, onSuccess }) {
                 <h3 className="cfpr-section-title">Referred & Served Information</h3>
 
                 <div className="cfpr-paired-cols">
-                <div className="cfpr-group-2">
-                  <label className="cfpr-label">Client Name</label>
-                  <input
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    placeholder="Client Name"
-                    className={`cfpr-input ${errors.name ? "cfpr-input-error" : ""}`}
-                  />
-                  {errors.name && <span className="cfpr-error-text">{errors.name}</span>}
+                  <div className="cfpr-group-2">
+                    <label className="cfpr-label">Client Name</label>
+                    <input
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      placeholder="Client Name"
+                      className={`cfpr-input ${errors.name ? "cfpr-input-error" : ""}`}
+                    />
+                    {errors.name && <span className="cfpr-error-text">{errors.name}</span>}
+                  </div>
+                  <div className="cfpr-group-2">
+                    <label className="cfpr-label">Address</label>
+                    <input
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      placeholder="Address"
+                      className={`cfpr-input ${errors.address ? "cfpr-input-error" : ""}`}
+                    />
+                    {errors.address && <span className="cfpr-error-text">{errors.address}</span>}
+                  </div>
                 </div>
-                <div className="cfpr-group-2">
-                  <label className="cfpr-label">Address</label>
-                  <input
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    placeholder="Address"
-                    className={`cfpr-input ${errors.address ? "cfpr-input-error" : ""}`}
-                  />
-                  {errors.address && <span className="cfpr-error-text">{errors.address}</span>}
-                </div>
-</div>
                 <div className="cfpr-paired-cols">
-                <div className="cfpr-group-2">
-                  <label className="cfpr-label">FP Method</label>
-                  <select 
-                    name="fp_method" 
-                    value={formData.fp_method || ""} 
-                    onChange={handleInputChange} 
-                    placeholder="Select FP Method"
-                    className={`cfpr-input ${errors.fp_method ? "cfpr-input-error" : ""}`}
-                  >
-                    <option value="">Select</option>
-                    <option value="Condom">Condom</option>
-                    <option value="IUD">IUD</option>
-                    <option value="Pills">Pills</option>
-                    <option value="Injectable">Injectable</option>
-                    <option value="Vasectomy">Vasectomy</option>
-                    <option value="Tubal Ligation">Tubal Ligation</option>
-                    <option value="Implant">Implant</option>
-                    <option value="CMM/Billings">CMM/Billings</option>
-                    <option value="BBT">BBT</option>
-                    <option value="Symptothermal">Symptothermal</option>
-                    <option value="SDM">SDM</option>
-                    <option value="LAM">LAM</option>
-                  </select>
-                  {errors.fp_method && <span className="cfpr-error-text">{errors.fp_method}</span>}
+                  <div className="cfpr-group-2">
+                    <label className="cfpr-label">FP Method</label>
+                    <select
+                      name="fp_method"
+                      value={formData.fp_method || ""}
+                      onChange={handleInputChange}
+                      placeholder="Select FP Method"
+                      className={`cfpr-input ${errors.fp_method ? "cfpr-input-error" : ""}`}
+                    >
+                      <option value="">Select</option>
+                      <option value="Condom">Condom</option>
+                      <option value="IUD">IUD</option>
+                      <option value="Pills">Pills</option>
+                      <option value="Injectable">Injectable</option>
+                      <option value="Vasectomy">Vasectomy</option>
+                      <option value="Tubal Ligation">Tubal Ligation</option>
+                      <option value="Implant">Implant</option>
+                      <option value="CMM/Billings">CMM/Billings</option>
+                      <option value="BBT">BBT</option>
+                      <option value="Symptothermal">Symptothermal</option>
+                      <option value="SDM">SDM</option>
+                      <option value="LAM">LAM</option>
+                    </select>
+                    {errors.fp_method && <span className="cfpr-error-text">{errors.fp_method}</span>}
+                  </div>
+                  <div className="cfpr-group-2">
+                    <label className="cfpr-label">With Intention to Shift</label>
+                    <select
+                      name="with_intention_to_shift"
+                      value={formData.with_intention_to_shift}
+                      onChange={handleInputChange}
+                      className={`cfpr-input ${errors.with_intention_to_shift ? "cfpr-input-error" : ""}`}
+                    >
+                      <option value="">Select</option>
+                      <option value="No Intention">No Intention</option>
+                      <option value="Condom">Condom</option>
+                      <option value="IUD">IUD</option>
+                      <option value="Pills">Pills</option>
+                      <option value="Injectable">Injectable</option>
+                      <option value="Vasectomy">Vasectomy</option>
+                      <option value="Tubal Ligation">Tubal Ligation</option>
+                      <option value="Implant">Implant</option>
+                      <option value="CMM/Billings">CMM/Billings</option>
+                      <option value="BBT">BBT</option>
+                      <option value="Symptothermal">Symptothermal</option>
+                      <option value="SDM">SDM</option>
+                      <option value="LAM">LAM</option>
+                    </select>
+                    {errors.with_intention_to_shift && <span className="cfpr-error-text">{errors.with_intention_to_shift}</span>}
+                  </div>
                 </div>
-                <div className="cfpr-group-2">
-                  <label className="cfpr-label">With Intention to Shift</label>
-                  <select 
-                    name="with_intention_to_shift" 
-                    value={formData.with_intention_to_shift} 
-                    onChange={handleInputChange}
-                    className={`cfpr-input ${errors.with_intention_to_shift ? "cfpr-input-error" : ""}`}
-                  >
-                    <option value="">Select</option>
-                    <option value="No Intention">No Intention</option>
-                    <option value="Condom">Condom</option>
-                    <option value="IUD">IUD</option>
-                    <option value="Pills">Pills</option>
-                    <option value="Injectable">Injectable</option>
-                    <option value="Vasectomy">Vasectomy</option>
-                    <option value="Tubal Ligation">Tubal Ligation</option>
-                    <option value="Implant">Implant</option>
-                    <option value="CMM/Billings">CMM/Billings</option>
-                    <option value="BBT">BBT</option>
-                    <option value="Symptothermal">Symptothermal</option>
-                    <option value="SDM">SDM</option>
-                    <option value="LAM">LAM</option>
-                  </select>
-                  {errors.with_intention_to_shift && <span className="cfpr-error-text">{errors.with_intention_to_shift}</span>}
-                </div>
-</div>
                 <div className="cfpr-paired-cols">
-                <div className="cfpr-group-2">
-                  <label className="cfpr-label">Health Service Facility</label>
-                  <input
-                    name="facility_name"
-                    value={formData.facility_name}
-                    onChange={handleInputChange}
-                    placeholder="Health Service Facility"
-                    className={`cfpr-input ${errors.facility_name ? "cfpr-input-error" : ""}`}
-                  />
-                  {errors.facility_name && <span className="cfpr-error-text">{errors.facility_name}</span>}
+                  <div className="cfpr-group-2">
+                    <label className="cfpr-label">Health Service Facility</label>
+                    <input
+                      name="facility_name"
+                      value={formData.facility_name}
+                      onChange={handleInputChange}
+                      placeholder="Health Service Facility"
+                      className={`cfpr-input ${errors.facility_name ? "cfpr-input-error" : ""}`}
+                    />
+                    {errors.facility_name && <span className="cfpr-error-text">{errors.facility_name}</span>}
+                  </div>
+                  <div className="cfpr-group-2">
+                    <label className="cfpr-label">Facility Address</label>
+                    <input
+                      name="facility_address"
+                      value={formData.facility_address}
+                      onChange={handleInputChange}
+                      placeholder="Facility Address"
+                      className={`cfpr-input ${errors.facility_address ? "cfpr-input-error" : ""}`}
+                    />
+                    {errors.facility_address && <span className="cfpr-error-text">{errors.facility_address}</span>}
+                  </div>
                 </div>
-                <div className="cfpr-group-2">
-                  <label className="cfpr-label">Facility Address</label>
-                  <input
-                    name="facility_address"
-                    value={formData.facility_address}
-                    onChange={handleInputChange}
-                    placeholder="Facility Address"
-                    className={`cfpr-input ${errors.facility_address ? "cfpr-input-error" : ""}`}
-                  />
-                  {errors.facility_address && <span className="cfpr-error-text">{errors.facility_address}</span>}
-                </div>
-</div>
                 <div className="cfpr-paired-cols">
-                <div className="cfpr-group-2">
-                  <label className="cfpr-label">Referred By</label>
-                  <input
-                    name="referred_by"
-                    value={formData.referred_by}
-                    onChange={handleInputChange}
-                    placeholder="Referred By"
-                    className={`cfpr-input ${errors.referred_by ? "cfpr-input-error" : ""}`}
-                  />
-                  {errors.referred_by && <span className="cfpr-error-text">{errors.referred_by}</span>}
+                  <div className="cfpr-group-2">
+                    <label className="cfpr-label">Referred By</label>
+                    <input
+                      name="referred_by"
+                      value={formData.referred_by}
+                      onChange={handleInputChange}
+                      placeholder="Referred By"
+                      className={`cfpr-input ${errors.referred_by ? "cfpr-input-error" : ""}`}
+                    />
+                    {errors.referred_by && <span className="cfpr-error-text">{errors.referred_by}</span>}
+                  </div>
+                  <div className="cfpr-group-2">
+                    <label className="cfpr-label">Volunteer Contact No.</label>
+                    <input
+                      name="volunteer_contact"
+                      value={formData.volunteer_contact}
+                      onChange={handleInputChange}
+                      placeholder="Volunteer Contact No."
+                      className={`cfpr-input ${errors.volunteer_contact ? "cfpr-input-error" : ""}`}
+                    />
+                    {errors.volunteer_contact && <span className="cfpr-error-text">{errors.volunteer_contact}</span>}
+                  </div>
                 </div>
-                <div className="cfpr-group-2">
-                  <label className="cfpr-label">Volunteer Contact No.</label>
-                  <input
-                    name="volunteer_contact"
-                    value={formData.volunteer_contact}
-                    onChange={handleInputChange}
-                    placeholder="Volunteer Contact No."
-                    className={`cfpr-input ${errors.volunteer_contact ? "cfpr-input-error" : ""}`}
-                  />
-                  {errors.volunteer_contact && <span className="cfpr-error-text">{errors.volunteer_contact}</span>}
-                </div>
-</div>
 
                 <div className="cfpr-group-2">
                   <label className="cfpr-label">Date</label>
