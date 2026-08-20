@@ -124,6 +124,7 @@ const Login = () => {
           <img src={logoImg} alt="PlanWise Logo" className="login-logo" />
           <h2 className="login-brand-name">Plan<span>Wise</span></h2>
           <h3 className="login-brand-city">MALOLOS</h3>
+          <p className="login-brand-description">Commission on Population Development</p>
         </div>
 
       </div>
