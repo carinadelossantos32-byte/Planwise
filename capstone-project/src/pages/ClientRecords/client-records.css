@@ -36,7 +36,7 @@
   border-radius: 8px;
   padding: 9px 24px;
   background: #f1f2f3;
-  width: 480px;
+  width: 380px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -102,7 +102,7 @@
   gap: 6px;
   padding: 10px 54px;
   border-radius: 8px;
-  background: #091F7A;
+  background: #5fc92e;
   font-size: 14px;
   font-weight: 400;
   color: #ffffff;
@@ -112,8 +112,8 @@
 
 .btn-export:hover,
 .btn-import:hover {
-   background-color: #d7dcf5;
-  color: #091F7A;
+   background-color: #59da5096;
+  color: #086308;
   border: none;
 }
 

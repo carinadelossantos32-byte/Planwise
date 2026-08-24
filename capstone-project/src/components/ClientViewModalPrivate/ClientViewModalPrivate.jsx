@@ -27,6 +27,10 @@ function ClientViewModalPrivate({ client, onClose }) {
               <span className="vfpr-value">{client.address || "—"}</span>
             </div>
             <div className="vfpr-item">
+              <span className="vfpr-label">Barangay</span>
+              <span className="vfpr-value">{client.barangay || "—"}</span>
+            </div>
+            <div className="vfpr-item">
               <span className="vfpr-label">Method Used</span>
               <span className="vfpr-value">{client.fp_method || "—"}</span>
             </div>

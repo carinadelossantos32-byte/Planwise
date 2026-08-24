@@ -413,7 +413,7 @@ button:active {
 }
 
 button {
-  border: none;
+  border:#D3D2E8;
   cursor: pointer;
   font-family: 'Inter', sans-serif;
 }

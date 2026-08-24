@@ -10,6 +10,7 @@ function ClientAddModalReferred({ onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     name: "",
     address: "",
+    barangay: "",
     fp_method: "",
     with_intention_to_shift: "",
     facility_name: "",
@@ -117,6 +118,7 @@ function ClientAddModalReferred({ onClose, onSuccess }) {
   const comparisonFields = [
     { label: "Client Name", key: "name" },
     { label: "Address", key: "address" },
+    { label: "Barangay", key: "barangay" },
     { label: "FP Method", key: "fp_method" },
     { label: "With Intention to Shift", key: "with_intention_to_shift" },
     { label: "Facility Name", key: "facility_name" },
@@ -165,7 +167,19 @@ function ClientAddModalReferred({ onClose, onSuccess }) {
                     {errors.address && <span className="cfpr-error-text">{errors.address}</span>}
                   </div>
                 </div>
+
                 <div className="cfpr-paired-cols">
+                  <div className="cfpr-group-2">
+                    <label className="cfpr-label">Barangay</label>
+                    <input
+                      name="barangay"
+                      value={formData.barangay}
+                      onChange={handleInputChange}
+                      placeholder="Barangay"
+                      className={`cfpr-input ${errors.barangay ? "cfpr-input-error" : ""}`}
+                    />
+                    {errors.barangay && <span className="cfpr-error-text">{errors.barangay}</span>}
+                  </div>
                   <div className="cfpr-group-2">
                     <label className="cfpr-label">FP Method</label>
                     <select
@@ -191,6 +205,9 @@ function ClientAddModalReferred({ onClose, onSuccess }) {
                     </select>
                     {errors.fp_method && <span className="cfpr-error-text">{errors.fp_method}</span>}
                   </div>
+                </div>
+
+                <div className="cfpr-paired-cols">
                   <div className="cfpr-group-2">
                     <label className="cfpr-label">With Intention to Shift</label>
                     <select
@@ -216,8 +233,6 @@ function ClientAddModalReferred({ onClose, onSuccess }) {
                     </select>
                     {errors.with_intention_to_shift && <span className="cfpr-error-text">{errors.with_intention_to_shift}</span>}
                   </div>
-                </div>
-                <div className="cfpr-paired-cols">
                   <div className="cfpr-group-2">
                     <label className="cfpr-label">Health Service Facility</label>
                     <input
@@ -229,6 +244,9 @@ function ClientAddModalReferred({ onClose, onSuccess }) {
                     />
                     {errors.facility_name && <span className="cfpr-error-text">{errors.facility_name}</span>}
                   </div>
+                </div>
+
+                <div className="cfpr-paired-cols">
                   <div className="cfpr-group-2">
                     <label className="cfpr-label">Facility Address</label>
                     <input
@@ -240,8 +258,6 @@ function ClientAddModalReferred({ onClose, onSuccess }) {
                     />
                     {errors.facility_address && <span className="cfpr-error-text">{errors.facility_address}</span>}
                   </div>
-                </div>
-                <div className="cfpr-paired-cols">
                   <div className="cfpr-group-2">
                     <label className="cfpr-label">Referred By</label>
                     <input
@@ -253,6 +269,9 @@ function ClientAddModalReferred({ onClose, onSuccess }) {
                     />
                     {errors.referred_by && <span className="cfpr-error-text">{errors.referred_by}</span>}
                   </div>
+                </div>
+
+                <div className="cfpr-paired-cols">
                   <div className="cfpr-group-2">
                     <label className="cfpr-label">Volunteer Contact No.</label>
                     <input
@@ -264,20 +283,22 @@ function ClientAddModalReferred({ onClose, onSuccess }) {
                     />
                     {errors.volunteer_contact && <span className="cfpr-error-text">{errors.volunteer_contact}</span>}
                   </div>
+
+
+                  <div className="cfpr-group-2">
+                    <label className="cfpr-label">Date</label>
+                    <input
+                      type="date"
+                      name="date"
+                      value={formData.date}
+                      onChange={handleInputChange}
+                      placeholder="Select Date"
+                      className={`cfpr-input ${errors.date ? "cfpr-input-error" : ""}`}
+                    />
+                    {errors.date && <span className="cfpr-error-text">{errors.date}</span>}
+                  </div>
                 </div>
 
-                <div className="cfpr-group-2">
-                  <label className="cfpr-label">Date</label>
-                  <input
-                    type="date"
-                    name="date"
-                    value={formData.date}
-                    onChange={handleInputChange}
-                    placeholder="Select Date"
-                    className={`cfpr-input ${errors.date ? "cfpr-input-error" : ""}`}
-                  />
-                  {errors.date && <span className="cfpr-error-text">{errors.date}</span>}
-                </div>
                 <div className="cfpr-group-2">
                   <label className="cfpr-label">Referral Slip Picture</label>
                   {!imagePreview ? (
@@ -317,63 +338,65 @@ function ClientAddModalReferred({ onClose, onSuccess }) {
               </button>
             </div>
           </form>
-        </div>
-      </div>
+        </div >
+      </div >
 
       {/* DUPLICATE MODAL */}
-      {dupModalOpen && existingRecord && (
-        <div className="modal-overlay-add dup-modal-overlay">
-          <div className="modal dup-modal">
-            <div className="modal-header dup-modal-header">
-              <h2 className="dup-modal-title">⚠ Duplicate Record Found</h2>
-            </div>
-            <div className="modal-body">
-              <p className="dup-modal-subtitle">
-                A record with the same name and address already exists. Review the differences and choose how to proceed.
-              </p>
-              <div className="dup-comparison-grid">
-                <div className="dup-column">
-                  <div className="dup-column-header dup-column-header--new">
-                    ⬆ New Entry (yours)
-                  </div>
-                  {comparisonFields.map(({ label, key }) => (
-                    <div key={key} className={`dup-field-row ${formData[key] !== existingRecord[key] ? "dup-field-row--diff" : ""}`}>
-                      <span className="dup-field-label">{label}</span>
-                      <span>{formData[key] || "—"}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="dup-column">
-                  <div className="dup-column-header dup-column-header--existing">
-                    📁 Existing (in database)
-                  </div>
-                  {comparisonFields.map(({ label, key }) => (
-                    <div key={key} className={`dup-field-row ${formData[key] !== existingRecord[key] ? "dup-field-row--diff" : ""}`}>
-                      <span className="dup-field-label">{label}</span>
-                      <span>{existingRecord[key] || "—"}</span>
-                    </div>
-                  ))}
-                </div>
+      {
+        dupModalOpen && existingRecord && (
+          <div className="modal-overlay-add dup-modal-overlay">
+            <div className="modal dup-modal">
+              <div className="modal-header dup-modal-header">
+                <h2 className="dup-modal-title">⚠ Duplicate Record Found</h2>
               </div>
-              <p className="dup-legend">🟡 Highlighted fields have different values.</p>
-              <div className="dup-actions">
-                <button type="button" className="dup-btn-cancel" onClick={() => { setDupModalOpen(false); setExistingRecord(null); }}>
-                  Cancel (Go back)
-                </button>
-                <button type="button" className="dup-btn-skip" onClick={() => { setDupModalOpen(false); onClose(); }}>
-                  Skip (Don't save)
-                </button>
-                <button type="button" className="dup-btn-overwrite" onClick={() => { setDupModalOpen(false); saveRecord(existingRecord.id); }}>
-                  Overwrite Existing
-                </button>
-                <button type="button" className="dup-btn-save" onClick={() => { setDupModalOpen(false); saveRecord(); }}>
-                  Save as New
-                </button>
+              <div className="modal-body">
+                <p className="dup-modal-subtitle">
+                  A record with the same name and address already exists. Review the differences and choose how to proceed.
+                </p>
+                <div className="dup-comparison-grid">
+                  <div className="dup-column">
+                    <div className="dup-column-header dup-column-header--new">
+                      ⬆ New Entry (yours)
+                    </div>
+                    {comparisonFields.map(({ label, key }) => (
+                      <div key={key} className={`dup-field-row ${formData[key] !== existingRecord[key] ? "dup-field-row--diff" : ""}`}>
+                        <span className="dup-field-label">{label}</span>
+                        <span>{formData[key] || "—"}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="dup-column">
+                    <div className="dup-column-header dup-column-header--existing">
+                      📁 Existing (in database)
+                    </div>
+                    {comparisonFields.map(({ label, key }) => (
+                      <div key={key} className={`dup-field-row ${formData[key] !== existingRecord[key] ? "dup-field-row--diff" : ""}`}>
+                        <span className="dup-field-label">{label}</span>
+                        <span>{existingRecord[key] || "—"}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <p className="dup-legend">🟡 Highlighted fields have different values.</p>
+                <div className="dup-actions">
+                  <button type="button" className="dup-btn-cancel" onClick={() => { setDupModalOpen(false); setExistingRecord(null); }}>
+                    Cancel (Go back)
+                  </button>
+                  <button type="button" className="dup-btn-skip" onClick={() => { setDupModalOpen(false); onClose(); }}>
+                    Skip (Don't save)
+                  </button>
+                  <button type="button" className="dup-btn-overwrite" onClick={() => { setDupModalOpen(false); saveRecord(existingRecord.id); }}>
+                    Overwrite Existing
+                  </button>
+                  <button type="button" className="dup-btn-save" onClick={() => { setDupModalOpen(false); saveRecord(); }}>
+                    Save as New
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
     </>
   );
 }

@@ -9,6 +9,7 @@ function ClientAddModalPrivate({ onClose, onSuccess }) {
     name: "",
     age: "",
     birthdate: "",
+    address: "",
     barangay: "",
     fp_method: "",
     fp_issued_by: ""
@@ -67,6 +68,7 @@ function ClientAddModalPrivate({ onClose, onSuccess }) {
     { label: "Client Name", key: "name" },
     { label: "Age", key: "age" },
     { label: "Birthdate", key: "birthdate" },
+    { label: "Address", key: "address" },
     { label: "Barangay", key: "barangay" },
     { label: "FP Method", key: "fp_method" },
     { label: "FP Issued By", key: "fp_issued_by" },
@@ -127,6 +129,20 @@ function ClientAddModalPrivate({ onClose, onSuccess }) {
                     />
                     {errors.birthdate && <span className="cfpr-error-text">{errors.birthdate}</span>}
                   </div>
+
+                  <div className="cfpr-group-2">
+                    <label className="cfpr-label">Address</label>
+                    <input
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      placeholder="Address"
+                      className={`cfpr-input ${errors.address ? "cfpr-input-error" : ""}`}
+                    />
+                    {errors.address && <span className="cfpr-error-text">{errors.address}</span>}
+                  </div>
+</div>
+<div className="cfpr-paired-cols">
                   <div className="cfpr-group-2">
                     <label className="cfpr-label">Barangay</label>
                     <input
@@ -138,9 +154,9 @@ function ClientAddModalPrivate({ onClose, onSuccess }) {
                     />
                     {errors.barangay && <span className="cfpr-error-text">{errors.barangay}</span>}
                   </div>
-                </div>
+                
 
-                <div className="cfpr-paired-cols">
+                
                   <div className="cfpr-group-2">
                     <label className="cfpr-label">Method Used</label>
                     <select
@@ -165,6 +181,7 @@ function ClientAddModalPrivate({ onClose, onSuccess }) {
                     </select>
                     {errors.fp_method && <span className="cfpr-error-text">{errors.fp_method}</span>}
                   </div>
+                  </div>
                   <div className="cfpr-group-2">
                     <label className="cfpr-label">FP Issued By</label>
                     <input
@@ -176,7 +193,7 @@ function ClientAddModalPrivate({ onClose, onSuccess }) {
                     />
                     {errors.fp_issued_by && <span className="cfpr-error-text">{errors.fp_issued_by}</span>}
                   </div>
-                </div>
+                
 
               </section>
             </div>

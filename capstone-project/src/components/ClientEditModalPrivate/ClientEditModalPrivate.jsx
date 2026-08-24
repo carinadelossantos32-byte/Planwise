@@ -22,7 +22,7 @@ function ClientEditModalPrivate({ client, onClose, onSuccess }) {
     let isValid = true;
 
     const fieldsToValidate = [
-      "name", "age", "birthdate", "address", "fp_method", "fp_issued_by"
+      "name", "age", "birthdate", "address", "barangay", "fp_method", "fp_issued_by"
     ];
 
     fieldsToValidate.forEach((key) => {
@@ -104,7 +104,9 @@ function ClientEditModalPrivate({ client, onClose, onSuccess }) {
                     className={`efpr-input ${errors.birthdate ? "efpr-input-error" : ""}`}
                   />
                   {errors.birthdate && <span className="efpr-error-text">{errors.birthdate}</span>}
+
                 </div>
+
                 <div className="efpr-group">
                   <span className="efpr-paired-label">Address</span>
                   <input
@@ -115,9 +117,21 @@ function ClientEditModalPrivate({ client, onClose, onSuccess }) {
                   />
                   {errors.address && <span className="efpr-error-text">{errors.address}</span>}
                 </div>
-              </div>
+</div>
+<div className="efpr-paired-cols">
+                <div className="efpr-group">
+                  <span className="efpr-paired-label">Barangay</span>
+                  <input
+                    name="barangay"
+                    value={formData.barangay || ""}
+                    onChange={handleInputChange}
+                    className={`efpr-input ${errors.barangay ? "efpr-input-error" : ""}`}
+                  />
+                  {errors.barangay && <span className="efpr-error-text">{errors.barangay}</span>}
+                </div>
+              
 
-              <div className="efpr-paired-cols">
+              
                 <div className="efpr-group">
                   <span className="efpr-paired-label">Method Used</span>
                   <select
@@ -142,6 +156,7 @@ function ClientEditModalPrivate({ client, onClose, onSuccess }) {
                   </select>
                   {errors.fp_method && <span className="efpr-error-text">{errors.fp_method}</span>}
                 </div>
+                </div>
                 <div className="efpr-group">
                   <span className="efpr-paired-label">FP Issued By</span>
                   <input
@@ -154,7 +169,7 @@ function ClientEditModalPrivate({ client, onClose, onSuccess }) {
                   {errors.fp_issued_by && <span className="efpr-error-text">{errors.fp_issued_by}</span>}
                 </div>
 
-              </div>
+              
             </section>
           </div>
 

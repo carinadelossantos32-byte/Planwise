@@ -65,7 +65,7 @@ function ClientEditModalReferred({ client, onClose, onSuccess }) {
     let isValid = true;
 
     const fieldsToValidate = [
-      "name", "address", "fp_method", "facility_name", "facility_address",
+      "name", "address", "barangay", "fp_method", "facility_name", "facility_address",
       "referred_by", "volunteer_contact", "date", "referral_slip_file"
     ];
 
@@ -133,7 +133,18 @@ function ClientEditModalReferred({ client, onClose, onSuccess }) {
                   {errors.address && <span className="error-text">{errors.address}</span>}
                 </div>
               </div>
+              
               <div className="efpr-paired-cols">
+                <div className="efpr-group">
+                  <span className="efpr-paired-label">Barangay</span>
+                  <input
+                    name="barangay"
+                    value={formData.barangay || ""}
+                    onChange={handleInputChange}
+                    className={`efpr-input   ${errors.barangay ? "efpr-input-error" : ""}`}
+                  />
+                  {errors.barangay && <span className="error-text">{errors.barangay}</span>}
+                </div>
                 <div className="efpr-group">
                   <span className="efpr-paired-label">FP Method</span>
                   <select
@@ -157,6 +168,9 @@ function ClientEditModalReferred({ client, onClose, onSuccess }) {
                   </select>
                   {errors.fp_method && <span className="error-text">{errors.fp_method}</span>}
                 </div>
+              </div>
+
+              <div className="efpr-paired-cols">
                 <div className="efpr-group">
                   <span className="efpr-paired-label">With Intention to Shift</span>
                   <select
@@ -181,8 +195,6 @@ function ClientEditModalReferred({ client, onClose, onSuccess }) {
                   </select>
                   {errors.with_intention_to_shift && <span className="error-text">{errors.with_intention_to_shift}</span>}
                 </div>
-              </div>
-              <div className="efpr-paired-cols">
                 <div className="efpr-group">
                   <span className="efpr-paired-label">Health Service Facility</span>
                   <input
@@ -193,6 +205,9 @@ function ClientEditModalReferred({ client, onClose, onSuccess }) {
                   />
                   {errors.facility_name && <span className="efpr-error-text">{errors.facility_name}</span>}
                 </div>
+              </div>
+
+              <div className="efpr-paired-cols">
                 <div className="efpr-group">
                   <span className="efpr-paired-label">Facility Address</span>
                   <input
@@ -203,8 +218,6 @@ function ClientEditModalReferred({ client, onClose, onSuccess }) {
                   />
                   {errors.facility_address && <span className="efpr-error-text">{errors.facility_address}</span>}
                 </div>
-              </div>
-              <div className="efpr-paired-cols">
                 <div className="efpr-group">
                   <span className="efpr-paired-label">Referred By</span>
                   <input
@@ -215,6 +228,9 @@ function ClientEditModalReferred({ client, onClose, onSuccess }) {
                   />
                   {errors.referred_by && <span className="efpr-error-text">{errors.referred_by}</span>}
                 </div>
+              </div>
+
+              <div className="efpr-paired-cols">
                 <div className="efpr-group">
                   <span className="efpr-paired-label">Volunteer Contact No.</span>
                   <input
@@ -225,8 +241,6 @@ function ClientEditModalReferred({ client, onClose, onSuccess }) {
                   />
                   {errors.volunteer_contact && <span className="efpr-error-text">{errors.volunteer_contact}</span>}
                 </div>
-              </div>
-
                 <div className="efpr-group">
                   <span className="efpr-paired-label">Date</span>
                   <input
@@ -238,37 +252,39 @@ function ClientEditModalReferred({ client, onClose, onSuccess }) {
                   />
                   {errors.date && <span className="efpr-error-text">{errors.date}</span>}
                 </div>
-                <div className="efpr-group">
-                  <span className="efpr-paired-label">Referral Slip Picture</span>
-                  {!imagePreview ? (
-                    <div className={`file-upload-box ${errors.referral_slip_file ? "efpr-input-error" : ""}`}>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        id="slip-edit-upload"
-                        hidden
-                      />
-                      <label htmlFor="slip-edit-upload" className="upload-label">
-                        <ImageIcon size={20} />
-                        <span>Upload New Picture</span>
-                      </label>
-                    </div>
-                  ) : (
-                    <div className="image-preview-container">
-                      <img src={imagePreview} alt="Preview" className="slip-preview" />
-                      {uploading && (
-                        <span style={{ fontSize: "12px", color: "#3b82f6", marginTop: "4px" }}>
-                          Uploading...
-                        </span>
-                      )}
-                      <button type="button" className="remove-img-btn" onClick={removeImage} disabled={uploading}>
-                        <X size={14} />
-                      </button>
-                    </div>
-                  )}
-                  {errors.referral_slip_file && <span className="efpr-error-text">{errors.referral_slip_file}</span>}
-                </div>
+              </div>
+
+              <div className="efpr-group">
+                <span className="efpr-paired-label">Referral Slip Picture</span>
+                {!imagePreview ? (
+                  <div className={`file-upload-box ${errors.referral_slip_file ? "efpr-input-error" : ""}`}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      id="slip-edit-upload"
+                      hidden
+                    />
+                    <label htmlFor="slip-edit-upload" className="upload-label">
+                      <ImageIcon size={20} />
+                      <span>Upload New Picture</span>
+                    </label>
+                  </div>
+                ) : (
+                  <div className="image-preview-container">
+                    <img src={imagePreview} alt="Preview" className="slip-preview" />
+                    {uploading && (
+                      <span style={{ fontSize: "12px", color: "#3b82f6", marginTop: "4px" }}>
+                        Uploading...
+                      </span>
+                    )}
+                    <button type="button" className="remove-img-btn" onClick={removeImage} disabled={uploading}>
+                      <X size={14} />
+                    </button>
+                  </div>
+                )}
+                {errors.referral_slip_file && <span className="efpr-error-text">{errors.referral_slip_file}</span>}
+              </div>
 
             </section>
           </div>
