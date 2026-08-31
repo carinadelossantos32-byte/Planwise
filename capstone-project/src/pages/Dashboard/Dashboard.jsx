@@ -20,6 +20,16 @@ const MALOLOS_BARANGAYS = [
 
 const MALOLOS_CENTER = [14.8527, 120.8160];
 
+const METHOD_CONFIG = [
+  { name: "Injectable (DMPA)", matchKeys: ["dmpa", "injectable", "injectables"], color: "var(--primary)" },
+  { name: "Pills (Combined/POP)", matchKeys: ["pill", "pills", "pop", "coc"], color: "#4B3FD1" },
+  { name: "Subdermal Implant", matchKeys: ["implant", "implants", "subdermal"], color: "var(--mint)" },
+  { name: "IUD (Interval/Postpartum)", matchKeys: ["iud", "iud-interval", "iud-postpartum", "ppiud"], color: "#8B5CF6" },
+  { name: "Condoms", matchKeys: ["condom", "condoms"], color: "var(--amber)" },
+  { name: "BTL / NSV (Permanent)", matchKeys: ["btl", "nsv", "fstr/btl", "mstr/nsv", "tubal", "vasectomy"], color: "#2563EB" },
+  { name: "Natural FP (NFP)", matchKeys: ["nfp", "lam", "sdm", "stm", "bbt", "ccm"], color: "#06B6D4" }
+];
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -36,38 +46,9 @@ const Dashboard = () => {
   });
 
   const [geoChartData, setGeoChartData] = useState([]);
-
-  const [methodMix, setMethodMix] = useState([
-    { name: "Injectable (DMPA)", keys: ["DMPA", "Injectable", "DMPA / Injectables"], count: 0, percentage: "0%", color: "var(--primary)" },
-    { name: "Pills (Combined/POP)", keys: ["Pills", "Pill", "POP", "COC"], count: 0, percentage: "0%", color: "#4B3FD1" },
-    { name: "Implant", keys: ["Implant", "Subdermal Implant"], count: 0, percentage: "0%", color: "var(--mint)" },
-    { name: "IUD", keys: ["IUD", "IUD-INTERVAL", "IUD-POSTPARTUM"], count: 0, percentage: "0%", color: "#8B5CF6" },
-    { name: "Condoms", keys: ["Condom", "Condoms"], count: 0, percentage: "0%", color: "var(--amber)" },
-    { name: "BTL/NSV", keys: ["BTL", "NSV", "FSTR/BTL", "MSTR/NSV"], count: 0, percentage: "0%", color: "#2563EB" }
-  ]);
-
-  const [demographics, setDemographics] = useState([
-    { age: "15-19 years", total: 0, share: "0%", barWidth: "0%", color: "var(--primary)" },
-    { age: "20-24 years", total: 0, share: "0%", barWidth: "0%", color: "#4B3FD1" },
-    { age: "25-29 years", total: 0, share: "0%", barWidth: "0%", color: "var(--mint)" },
-    { age: "30-34 years", total: 0, share: "0%", barWidth: "0%", color: "#8B5CF6" },
-    { age: "35-39 years", total: 0, share: "0%", barWidth: "0%", color: "var(--amber)" },
-    { age: "40-49 years", total: 0, share: "0%", barWidth: "0%", color: "#2563EB" }
-  ]);
-
-  const calculateAge = (birthdateStr) => {
-    if (!birthdateStr) return null;
-    const birthDate = new Date(birthdateStr);
-    if (isNaN(birthDate.getTime())) return null;
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
-    return age;
-  };
+  const [methodDistribution, setMethodDistribution] = useState([]);
 
   const fetchAndProcessData = () => {
-    setRefreshing(true);
     let publicDocs = [], privateDocs = [], referredDocs = [];
 
     const processAllClients = () => {
@@ -84,7 +65,6 @@ const Dashboard = () => {
 
       const rawMethodCounts = {};
       const barangayCounts = {};
-      const ageGroups = { "15-19": 0, "20-24": 0, "25-29": 0, "30-34": 0, "35-39": 0, "40-49": 0 };
 
       allClients.forEach(client => {
         const clientStatus = (client.status || "").toLowerCase();
@@ -104,7 +84,7 @@ const Dashboard = () => {
           }
         }
 
-        const method = (client.fp_method || client.FP_method || "").trim();
+        const method = (client.fp_method || client.FP_method || client.method || "").trim();
         if (method) {
           rawMethodCounts[method] = (rawMethodCounts[method] || 0) + 1;
           contraceptiveCount++;
@@ -115,16 +95,6 @@ const Dashboard = () => {
           const matched = MALOLOS_BARANGAYS.find(b => rawLocation.toLowerCase().includes(b.toLowerCase()));
           if (matched) barangayCounts[matched] = (barangayCounts[matched] || 0) + 1;
         }
-
-        const computedAge = calculateAge(client.birthdate_female) || calculateAge(client.birthdate) || (isNaN(Number(client.age)) ? null : Number(client.age));
-        if (computedAge) {
-          if (computedAge >= 15 && computedAge <= 19) ageGroups["15-19"]++;
-          else if (computedAge >= 20 && computedAge <= 24) ageGroups["20-24"]++;
-          else if (computedAge >= 25 && computedAge <= 29) ageGroups["25-29"]++;
-          else if (computedAge >= 30 && computedAge <= 34) ageGroups["30-34"]++;
-          else if (computedAge >= 35 && computedAge <= 39) ageGroups["35-39"]++;
-          else if (computedAge >= 40 && computedAge <= 49) ageGroups["40-49"]++;
-        }
       });
 
       const sortedBrgyList = Object.entries(barangayCounts)
@@ -133,43 +103,44 @@ const Dashboard = () => {
         .slice(0, 6);
       setGeoChartData(sortedBrgyList);
 
-      const totalActiveMethods = Object.values(rawMethodCounts).reduce((a, b) => a + b, 0) || 1;
-      setMethodMix(prevMethods =>
-        prevMethods.map(item => {
-          let count = 0;
-          item.keys.forEach(k => {
-            Object.keys(rawMethodCounts).forEach(rawKey => {
-              if (rawKey.toLowerCase().includes(k.toLowerCase())) count += rawMethodCounts[rawKey];
-            });
-          });
-          const percentage = ((count / totalActiveMethods) * 100).toFixed(1) + "%";
-          return { ...item, count: count.toLocaleString(), percentage };
-        })
-      );
+      let otherMethodsCount = 0;
+      const totalMethodUsers = Object.values(rawMethodCounts).reduce((a, b) => a + b, 0) || 1;
 
-      const totalAgesMapped = Object.values(ageGroups).reduce((a, b) => a + b, 0) || 1;
-      const demoConfig = [
-        { key: "15-19", label: "15-19 years", color: "var(--primary)" },
-        { key: "20-24", label: "20-24 years", color: "#4B3FD1" },
-        { key: "25-29", label: "25-29 years", color: "var(--mint)" },
-        { key: "30-34", label: "30-34 years", color: "#8B5CF6" },
-        { key: "35-39", label: "35-39 years", color: "var(--amber)" },
-        { key: "40-49", label: "40-49 years", color: "#2563EB" }
-      ];
+      const matchedDistribution = METHOD_CONFIG.map(cfg => {
+        let count = 0;
+        Object.entries(rawMethodCounts).forEach(([rawKey, val]) => {
+          const lowerKey = rawKey.toLowerCase();
+          if (cfg.matchKeys.some(mk => lowerKey.includes(mk))) {
+            count += val;
+          }
+        });
+        const sharePct = ((count / totalMethodUsers) * 100).toFixed(1);
+        return {
+          name: cfg.name,
+          count: count.toLocaleString(),
+          rawCount: count,
+          share: `${sharePct}%`,
+          barWidth: `${sharePct}%`,
+          color: cfg.color
+        };
+      });
 
-      setDemographics(
-        demoConfig.map(cfg => {
-          const count = ageGroups[cfg.key] || 0;
-          const sharePct = ((count / totalAgesMapped) * 100).toFixed(1);
-          return {
-            age: cfg.label,
-            total: count.toLocaleString(),
-            share: `${sharePct}%`,
-            barWidth: `${sharePct}%`,
-            color: cfg.color
-          };
-        })
-      );
+      const totalMappedCount = matchedDistribution.reduce((sum, item) => sum + item.rawCount, 0);
+      otherMethodsCount = Math.max(0, contraceptiveCount - totalMappedCount);
+
+      if (otherMethodsCount > 0) {
+        const sharePct = ((otherMethodsCount / totalMethodUsers) * 100).toFixed(1);
+        matchedDistribution.push({
+          name: "Other Methods",
+          count: otherMethodsCount.toLocaleString(),
+          rawCount: otherMethodsCount,
+          share: `${sharePct}%`,
+          barWidth: `${sharePct}%`,
+          color: "var(--ink-soft)"
+        });
+      }
+
+      setMethodDistribution(matchedDistribution);
 
       setMetricsData({
         totalFamilies: Math.round(allClients.length * 0.85),
@@ -181,7 +152,6 @@ const Dashboard = () => {
       });
 
       setLoading(false);
-      setRefreshing(false);
     };
 
     const unPublic = onSnapshot(collection(db, "clients_public"), (snap) => {
@@ -200,6 +170,14 @@ const Dashboard = () => {
     }, (err) => console.error("CPD unReferred listener error:", err));
 
     return () => { unPublic(); unPrivate(); unReferred(); };
+  };
+
+  const handleManualRefresh = () => {
+    setRefreshing(true);
+    fetchAndProcessData();
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 800);
   };
 
   useEffect(() => {
@@ -228,9 +206,14 @@ const Dashboard = () => {
           </p>
         </div>
 
-        <button id="refresh-button" onClick={fetchAndProcessData}>
+        <button 
+          id="refresh-button" 
+          onClick={handleManualRefresh}
+          disabled={refreshing}
+          style={{ cursor: refreshing ? 'wait' : 'pointer' }}
+        >
           <RefreshCw size={14} className={refreshing ? "spin-icon" : ""} />
-          Refresh Data
+          {refreshing ? "Refreshing..." : "Refresh Data"}
         </button>
       </div>
 
@@ -325,39 +308,21 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="dashboard-breakdown-section">
+      <div style={{ margin: '15px 30px 0' }}>
         <div className="chart-card">
-          <h3 className="chart-title">Contraceptive Method Mix</h3>
-          <p className="chart-sub">Current distribution of family planning methods</p>
-          <div className="methods-subgrid">
-            {methodMix.map((method, idx) => (
-              <div className="method-item-box" key={idx}>
-                <div className="method-header-info">
-                  <span className="dot-indicator" style={{ backgroundColor: method.color }}></span>
-                  <span className="method-title-lbl">{method.name}</span>
-                  <span className="method-pct-lbl">{method.percentage}</span>
-                </div>
-                <h4>{method.count}</h4>
-                <p className="active-user-sub">Active Users</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="chart-card">
-          <h3 className="chart-title">Client Demographics</h3>
-          <p className="chart-sub">Age distribution of active FP users</p>
-          <div className="demographics-list">
-            {demographics.map((demo, idx) => (
-              <div className="demo-row-item" key={idx}>
+          <h3 className="chart-title">FP Method Distribution</h3>
+          <p className="chart-sub">Breakdown of family planning methods across active clients</p>
+          <div className="demographics-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+            {methodDistribution.map((item, idx) => (
+              <div className="demo-row-item" key={idx} style={{ background: 'var(--surface-sunken)', padding: '12px 16px', borderRadius: 'var(--radius-md)' }}>
                 <div className="demo-row-text">
-                  <span>{demo.age}</span>
-                  <span style={{ color: 'var(--primary)', fontWeight: 700 }}>{demo.total}</span>
+                  <span>{item.name}</span>
+                  <span style={{ color: item.color, fontWeight: 700 }}>{item.count}</span>
                 </div>
-                <div className="progress-track-bg">
-                  <div className="progress-fill-bar" style={{ width: demo.barWidth, backgroundColor: demo.color }}></div>
+                <div className="progress-track-bg" style={{ marginTop: '6px' }}>
+                  <div className="progress-fill-bar" style={{ width: item.barWidth, backgroundColor: item.color }}></div>
                 </div>
-                <span className="demo-share-pct">{demo.share} of total users</span>
+                <span className="demo-share-pct" style={{ marginTop: '4px' }}>{item.share} of total users</span>
               </div>
             ))}
           </div>

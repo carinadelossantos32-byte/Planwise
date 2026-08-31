@@ -9,12 +9,13 @@ import {
   LogOut,
   FileText,
 } from "lucide-react";
+import { auth, signOut } from "../../firebase-config";
 
-const navItems = [
+const allNavItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
   { label: "Client Records", icon: Users, path: "/client-records" },
   { label: "GIS Map", icon: Map, path: "/gis-map" },
-  { label: "Inventory", icon: FileText, path: "/inventory" },
+  { label: "Inventory", icon: FileText, path: "/inventory", hideForRole: "cpd" },
   { label: "Reports", icon: FileBarChart2, path: "/reports" },
 ];
 
@@ -22,28 +23,35 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const savedUserRole = localStorage.getItem("userRole");
+  const savedUserRole = (localStorage.getItem("userRole") || "").toLowerCase();
 
-  const getOfficeName = () => {
-    if (savedUserRole === "health") return "Health - Office";
-    if (savedUserRole === "cpd") return "CPD - Office";
+  const isCpdUser = () => {
+    if (savedUserRole === "cpd") return true;
+    if (savedUserRole === "health") return false;
 
     const path = location.pathname.toLowerCase();
-
-    if (path.includes("health") || path.includes("chc")) {
-      return "Health - Office";
-    }
-
-    if (path.includes("cpd") || path === "/dashboard") {
-      return "CPD - Office";
-    }
-
-    return "CPD - Office";
+    return !path.includes("health") && !path.includes("chc");
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("userRole");
-    navigate("/login");
+  const getOfficeName = () => {
+    return isCpdUser() ? "CPD - Office" : "Health - Office";
+  };
+
+  const visibleNavItems = allNavItems.filter((item) => {
+    if (item.hideForRole === "cpd" && isCpdUser()) {
+      return false;
+    }
+    return true;
+  });
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      localStorage.removeItem("userRole");
+      navigate("/login", { replace: true });
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   return (
@@ -70,7 +78,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="nav">
-        {navItems.map(({ label, icon: Icon, path }) => (
+        {visibleNavItems.map(({ label, icon: Icon, path }) => (
           <NavLink
             key={path}
             to={path}

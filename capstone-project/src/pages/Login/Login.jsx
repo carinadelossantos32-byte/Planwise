@@ -14,6 +14,7 @@ const Login = () => {
   const [modalMessage, setModalMessage] = useState('');
   const [modalError, setModalError] = useState(false);
   const [isSent, setIsSent] = useState(false); 
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const navigate = useNavigate();
 
@@ -23,6 +24,7 @@ const Login = () => {
     setModalError(false);
     setIsSent(false);
     setResetEmail('');
+    setIsSubmitting(false);
   };
 
   const handleCloseModal = () => {
@@ -31,14 +33,17 @@ const Login = () => {
     setModalError(false);
     setIsSent(false);
     setResetEmail('');
+    setIsSubmitting(false);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault(); 
     setErrorMessage(''); 
 
+    const cleanEmail = email.trim().toLowerCase();
+
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, cleanEmail, password);
       const user = userCredential.user;
 
       const userDocRef = doc(db, "users", user.email);
@@ -69,6 +74,10 @@ const Login = () => {
         error.code === 'auth/wrong-password'
       ) {
         setErrorMessage("Incorrect email address or password. Please try again.");
+      } else if (error.code === 'auth/invalid-email') {
+        setErrorMessage("Please enter a valid email address format.");
+      } else if (error.code === 'auth/too-many-requests') {
+        setErrorMessage("Too many failed attempts. Please try again later.");
       } else {
         setErrorMessage("An unexpected network error occurred.");
       }
@@ -80,20 +89,48 @@ const Login = () => {
     setModalMessage('');
     setModalError(false);
 
+    const cleanResetEmail = resetEmail.trim().toLowerCase();
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanResetEmail)) {
+      setModalError(true);
+      setModalMessage("Please enter a valid email address format.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
-      await sendPasswordResetEmail(auth, resetEmail);
+      const userDocRef = doc(db, "users", cleanResetEmail);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (!userDocSnap.exists()) {
+        setModalError(true);
+        setIsSent(false);
+        setModalMessage("This email address is not registered in our system.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      await sendPasswordResetEmail(auth, cleanResetEmail);
       setModalError(false);
       setIsSent(true); 
-      setModalMessage(`Instructions have been sent to ${resetEmail}. Please check your inbox or spam folder!`);
+      setModalMessage(`Instructions have been sent to ${cleanResetEmail}. Please check your inbox or spam folder.`);
     } catch (error) {
       console.error("Reset error:", error.code);
       setModalError(true);
       setIsSent(false);
       if (error.code === 'auth/user-not-found') {
         setModalMessage("This email address is not registered in our system.");
+      } else if (error.code === 'auth/invalid-email') {
+        setModalMessage("Invalid email address format.");
+      } else if (error.code === 'auth/too-many-requests') {
+        setModalMessage("Too many requests sent. Please try again later.");
       } else {
         setModalMessage("Could not send reset link. Please try again later.");
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -130,65 +167,181 @@ const Login = () => {
       </div>
 
       {showModal && (
-        <div className="modal-overlay">
-          <div className="modal-card" style={{ position: 'relative' }}>
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(3, 10, 66, 0.65)',
+            backdropFilter: 'blur(5px)',
+            WebkitBackdropFilter: 'blur(5px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 99999,
+            padding: '20px',
+            boxSizing: 'border-box'
+          }}
+        >
+          <div 
+            style={{
+              position: 'relative',
+              backgroundColor: '#FFFFFF',
+              color: '#1E293B',
+              width: '100%',
+              maxWidth: '440px',
+              padding: '34px 28px',
+              borderRadius: '24px',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #E2E8F0',
+              boxSizing: 'border-box'
+            }}
+          >
             <button 
               type="button" 
-              className="modal-close-x" 
               onClick={handleCloseModal}
               aria-label="Close modal"
               style={{
                 position: 'absolute',
-                top: '16px',
-                right: '20px',
-                background: 'transparent',
+                top: '18px',
+                right: '18px',
+                background: '#F1F5F9',
                 border: 'none',
-                color: '#A0AEC0',
-                fontSize: '22px',
+                color: '#64748B',
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 cursor: 'pointer',
-                fontWeight: 'bold',
-                lineHeight: '1'
+                padding: 0
               }}
             >
-              ✕
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 1L13 13M1 13L13 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
             </button>
 
-            <h2 className="modal-title">Reset Password</h2>
-            <p className="modal-subtitle">
+            <h2 style={{ color: '#091F7A', fontSize: '22px', fontWeight: 700, margin: '0 0 6px 0', textAlign: 'left', fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+              Reset Password
+            </h2>
+            <p style={{ color: '#64748B', fontSize: '13.5px', lineHeight: 1.5, margin: '0 0 22px 0', textAlign: 'left', fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
               {isSent 
                 ? "Check your email for the password reset instructions." 
                 : "Enter your registered email address below, and we'll send you instructions to reset your password."}
             </p>
             
-            <form onSubmit={handleForgotPasswordSubmit}>
+            <form onSubmit={handleForgotPasswordSubmit} noValidate>
               {!isSent && (
-                <div className="login-form-group">
+                <div style={{ marginBottom: '14px' }}>
                   <input 
                     type="email" 
-                    className="login-input modal-input" 
                     placeholder="Registered Email Address" 
                     value={resetEmail} 
-                    onChange={(e) => setResetEmail(e.target.value)} 
+                    onChange={(e) => {
+                      setResetEmail(e.target.value);
+                      setModalMessage('');
+                      setModalError(false);
+                    }} 
                     required 
+                    disabled={isSubmitting}
+                    style={{
+                      width: '100%',
+                      padding: '14px 20px',
+                      background: modalError ? '#FEF2F2' : '#F8FAFC',
+                      border: modalError ? '1.5px solid #EF4444' : '1.5px solid #CBD5E1',
+                      borderRadius: '50px',
+                      color: '#0F172A',
+                      fontSize: '14px',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      fontFamily: "'Segoe UI', system-ui, sans-serif"
+                    }}
                   />
                 </div>
               )}
 
               {modalMessage && (
-                <div className={`modal-status-msg ${modalError ? 'status-error' : 'status-success'}`}>
+                <div 
+                  style={{
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    padding: '12px 16px',
+                    borderRadius: '12px',
+                    marginTop: '14px',
+                    textAlign: 'left',
+                    lineHeight: 1.45,
+                    backgroundColor: modalError ? '#FEF2F2' : '#F0FDF4',
+                    color: modalError ? '#991B1B' : '#166534',
+                    border: modalError ? '1px solid #FCA5A5' : '1px solid #86EFAC',
+                    fontFamily: "'Segoe UI', system-ui, sans-serif"
+                  }}
+                >
                   {modalMessage}
                 </div>
               )}
 
-              <div className="modal-actions" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '24px' }}>
                 {isSent ? (
-                  <button type="button" className="modal-submit-btn" onClick={handleCloseModal} style={{ width: '100%' }}>
+                  <button 
+                    type="button" 
+                    onClick={handleCloseModal}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      backgroundColor: '#F7B500',
+                      border: 'none',
+                      borderRadius: '50px',
+                      color: '#030A42',
+                      fontSize: '14px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      fontFamily: "'Segoe UI', system-ui, sans-serif"
+                    }}
+                  >
                     Got It
                   </button>
                 ) : (
                   <>
-                    <button type="button" className="modal-cancel-btn" onClick={handleCloseModal}>Cancel</button>
-                    <button type="submit" className="modal-submit-btn">Send Link</button>
+                    <button 
+                      type="button" 
+                      onClick={handleCloseModal}
+                      disabled={isSubmitting}
+                      style={{
+                        padding: '11px 22px',
+                        background: '#FFFFFF',
+                        border: '1.5px solid #CBD5E1',
+                        borderRadius: '50px',
+                        color: '#475569',
+                        fontSize: '13.5px',
+                        fontWeight: 600,
+                        cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                        fontFamily: "'Segoe UI', system-ui, sans-serif"
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit" 
+                      disabled={isSubmitting}
+                      style={{
+                        padding: '11px 26px',
+                        backgroundColor: '#F7B500',
+                        border: 'none',
+                        borderRadius: '50px',
+                        color: '#030A42',
+                        fontSize: '13.5px',
+                        fontWeight: 700,
+                        cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                        opacity: isSubmitting ? 0.7 : 1,
+                        fontFamily: "'Segoe UI', system-ui, sans-serif"
+                      }}
+                    >
+                      {isSubmitting ? "Checking..." : "Send Link"}
+                    </button>
                   </>
                 )}
               </div>

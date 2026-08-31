@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import './dashboard.css'; 
 import { db } from '../../firebase-config';
 import { collection, onSnapshot } from 'firebase/firestore';
-import { RefreshCw, Download } from 'lucide-react';
+import { RefreshCw, FileSpreadsheet } from 'lucide-react';
 import ExcelJS from 'exceljs';
-import { saveAs } from 'file-saver';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -22,37 +21,14 @@ const MALOLOS_BARANGAYS = [
 
 const MALOLOS_CENTER = [14.8527, 120.8160];
 
-const METHOD_ROW_MAP = {
-  "fstr/btl": 5,
-  "btl": 5,
-  "mstr/nsv": 9,
-  "nsv": 9,
-  "condom": 13,
-  "condoms": 13,
-  "iud-interval": 17,
-  "iud": 17,
-  "iud-postpartum": 21,
-  "pills-pop": 25,
-  "pop": 25,
-  "pills-coc": 29,
-  "coc": 29,
-  "pills": 29,
-  "injectables": 33,
-  "dmpa": 33,
-  "implants": 37,
-  "implant": 37,
-  "nfp-ccm": 41,
-  "nfp-bbt": 45,
-  "nfp-stm": 49,
-  "nfp-sdm": 53,
-  "nfp-lam": 57
-};
-
 const HealthDashboard = () => {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [allRawClients, setAllRawClients] = useState([]);
+  const [activeDataSource, setActiveDataSource] = useState("Live Database");
 
   const [metricsData, setMetricsData] = useState({
     currentUsersPrevMonth: 0,
@@ -68,19 +44,18 @@ const HealthDashboard = () => {
   const [methodMix, setMethodMix] = useState([
     { name: "FSTR/BTL", keys: ["FSTR/BTL", "BTL", "Tubal Ligation"], count: 0, percentage: "0%", color: "var(--primary)" },
     { name: "MSTR/NSV", keys: ["MSTR/NSV", "NSV", "Vasectomy"], count: 0, percentage: "0%", color: "#4B3FD1" },
-    { name: "Implant", keys: ["Implant", "Subdermal Implant"], count: 0, percentage: "0%", color: "var(--mint)" },
+    { name: "Implant", keys: ["Implant", "Implants", "Subdermal Implant"], count: 0, percentage: "0%", color: "var(--mint)" },
     { name: "IUD-INTERVAL", keys: ["IUD-INTERVAL", "IUD", "IUD-TCu380A"], count: 0, percentage: "0%", color: "#8B5CF6" },
     { name: "Condoms", keys: ["Condom", "Condoms"], count: 0, percentage: "0%", color: "var(--amber)" },
-    { name: "IUD-POSTPARTUM", keys: ["IUD-POSTPARTUM", "PPIUD"], count: 0, percentage: "0%", color: "#2563EB" }
+    { name: "IUD-POSTPARTUM", keys: ["IUD-POSTPARTUM", "PPIUD"], count: 0, percentage: "0%", color: "#2563EB" },
+    { name: "Pills (POP/COC)", keys: ["PILLS-POP", "PILLS-COC", "Pills"], count: 0, percentage: "0%", color: "#06B6D4" },
+    { name: "Injectables", keys: ["INJECTABLES", "DMPA"], count: 0, percentage: "0%", color: "#F59E0B" }
   ]);
 
   const [demographics, setDemographics] = useState([
+    { age: "10-14 years", total: 0, share: "0%", barWidth: "0%", color: "#6366F1" },
     { age: "15-19 years", total: 0, share: "0%", barWidth: "0%", color: "var(--primary)" },
-    { age: "20-24 years", total: 0, share: "0%", barWidth: "0%", color: "#4B3FD1" },
-    { age: "25-29 years", total: 0, share: "0%", barWidth: "0%", color: "var(--mint)" },
-    { age: "30-34 years", total: 0, share: "0%", barWidth: "0%", color: "#8B5CF6" },
-    { age: "35-39 years", total: 0, share: "0%", barWidth: "0%", color: "var(--amber)" },
-    { age: "40-49 years", total: 0, share: "0%", barWidth: "0%", color: "#2563EB" }
+    { age: "20-49 years", total: 0, share: "0%", barWidth: "0%", color: "#2563EB" }
   ]);
 
   const calculateAge = (birthdateStr) => {
@@ -95,7 +70,6 @@ const HealthDashboard = () => {
   };
 
   const fetchAndProcessData = () => {
-    setRefreshing(true);
     let publicDocs = [], privateDocs = [], referredDocs = [];
 
     const processAllClients = () => {
@@ -115,7 +89,7 @@ const HealthDashboard = () => {
 
       const rawMethodCounts = {};
       const barangayCounts = {};
-      const ageGroups = { "15-19": 0, "20-24": 0, "25-29": 0, "30-34": 0, "35-39": 0, "40-49": 0 };
+      const ageGroups = { "10-14": 0, "15-19": 0, "20-49": 0 };
 
       allClients.forEach(client => {
         const clientStatus = (client.status || "").toLowerCase();
@@ -160,12 +134,9 @@ const HealthDashboard = () => {
 
         const computedAge = calculateAge(client.birthdate_female) || calculateAge(client.birthdate) || (isNaN(Number(client.age)) ? null : Number(client.age));
         if (computedAge) {
-          if (computedAge >= 15 && computedAge <= 19) ageGroups["15-19"]++;
-          else if (computedAge >= 20 && computedAge <= 24) ageGroups["20-24"]++;
-          else if (computedAge >= 25 && computedAge <= 29) ageGroups["25-29"]++;
-          else if (computedAge >= 30 && computedAge <= 34) ageGroups["30-34"]++;
-          else if (computedAge >= 35 && computedAge <= 39) ageGroups["35-39"]++;
-          else if (computedAge >= 40 && computedAge <= 49) ageGroups["40-49"]++;
+          if (computedAge >= 10 && computedAge <= 14) ageGroups["10-14"]++;
+          else if (computedAge >= 15 && computedAge <= 19) ageGroups["15-19"]++;
+          else if (computedAge >= 20 && computedAge <= 49) ageGroups["20-49"]++;
         }
       });
 
@@ -191,12 +162,9 @@ const HealthDashboard = () => {
 
       const totalAgesMapped = Object.values(ageGroups).reduce((a, b) => a + b, 0) || 1;
       const demoConfig = [
+        { key: "10-14", label: "10-14 years", color: "#6366F1" },
         { key: "15-19", label: "15-19 years", color: "var(--primary)" },
-        { key: "20-24", label: "20-24 years", color: "#4B3FD1" },
-        { key: "25-29", label: "25-29 years", color: "var(--mint)" },
-        { key: "30-34", label: "30-34 years", color: "#8B5CF6" },
-        { key: "35-39", label: "35-39 years", color: "var(--amber)" },
-        { key: "40-49", label: "40-49 years", color: "#2563EB" }
+        { key: "20-49", label: "20-49 years", color: "#2563EB" }
       ];
 
       setDemographics(
@@ -223,7 +191,6 @@ const HealthDashboard = () => {
       });
 
       setLoading(false);
-      setRefreshing(false);
     };
 
     const unPublic = onSnapshot(collection(db, "clients_public"), (snap) => {
@@ -244,58 +211,135 @@ const HealthDashboard = () => {
     return () => { unPublic(); unPrivate(); unReferred(); };
   };
 
+  const handleManualRefresh = () => {
+    setRefreshing(true);
+    setActiveDataSource("Live Database");
+    fetchAndProcessData();
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 800);
+  };
+
   useEffect(() => {
     const unsub = fetchAndProcessData();
     return () => unsub();
   }, []);
 
-  const handleExportExcel = async () => {
-    try {
-      const response = await fetch('/templates/Health Office Form.xlsx');
-      if (!response.ok) {
-        throw new Error("Template file not found under /public/templates/");
-      }
-      const arrayBuffer = await response.arrayBuffer();
+  const getCellNum = (cell) => {
+    if (!cell || cell.value === null || cell.value === undefined) return 0;
+    if (typeof cell.value === 'object' && cell.value.result !== undefined) {
+      return Number(cell.value.result) || 0;
+    }
+    return Number(cell.value) || 0;
+  };
 
+  const handleImportExcel = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    try {
+      const buffer = await file.arrayBuffer();
       const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.load(arrayBuffer);
+      await workbook.xlsx.load(buffer);
 
       const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
       const currentMonthName = months[new Date().getMonth()];
-      const sheet = workbook.getWorksheet(currentMonthName) || workbook.getWorksheet(1);
+      const sheet = workbook.getWorksheet(currentMonthName) || workbook.worksheets[0];
 
-      allRawClients.forEach(client => {
-        const method = (client.fp_method || client.FP_method || "").toLowerCase().trim();
-        const baseRow = METHOD_ROW_MAP[method];
-        if (!baseRow) return;
+      if (!sheet) {
+        throw new Error("Could not find a valid sheet in the imported workbook.");
+      }
 
-        const age = calculateAge(client.birthdate_female) || calculateAge(client.birthdate) || Number(client.age) || 25;
-        let ageOffset = 2;
-        if (age >= 10 && age <= 14) ageOffset = 0;
-        else if (age >= 15 && age <= 19) ageOffset = 1;
-        else if (age >= 20 && age <= 49) ageOffset = 2;
+      const prevBeginning = getCellNum(sheet.getRow(61).getCell(45));
+      const prevNew = getCellNum(sheet.getRow(61).getCell(46));
+      const otherAcc = getCellNum(sheet.getRow(61).getCell(47));
+      const dropOuts = getCellNum(sheet.getRow(61).getCell(48));
+      const currEnding = getCellNum(sheet.getRow(61).getCell(49));
+      const currNew = getCellNum(sheet.getRow(61).getCell(50));
 
-        const targetRow = baseRow + ageOffset;
-        const totalEndingCell = sheet.getRow(targetRow).getCell(49);
-        const currentVal = Number(totalEndingCell.value) || 0;
-        totalEndingCell.value = currentVal + 1;
+      setMetricsData({
+        currentUsersPrevMonth: prevBeginning,
+        newAcceptorsPrevMonth: prevNew,
+        otherAcceptors: otherAcc,
+        dropOuts: dropOuts,
+        currentUsersCurrentMonth: currEnding,
+        newAcceptorsCurrentMonth: currNew
       });
 
-      const buffer = await workbook.xlsx.writeBuffer();
-      saveAs(new Blob([buffer]), `DOH_Malolos_Health_Report_${currentMonthName}_${new Date().getFullYear()}.xlsx`);
+      const parsedMethods = [
+        { name: "FSTR/BTL", count: getCellNum(sheet.getRow(8).getCell(49)), color: "var(--primary)" },
+        { name: "MSTR/NSV", count: getCellNum(sheet.getRow(12).getCell(49)), color: "#4B3FD1" },
+        { name: "Condoms", count: getCellNum(sheet.getRow(16).getCell(49)), color: "var(--amber)" },
+        { name: "IUD-INTERVAL", count: getCellNum(sheet.getRow(20).getCell(49)), color: "#8B5CF6" },
+        { name: "IUD-POSTPARTUM", count: getCellNum(sheet.getRow(24).getCell(49)), color: "#2563EB" },
+        { name: "Pills (POP/COC)", count: getCellNum(sheet.getRow(28).getCell(49)) + getCellNum(sheet.getRow(32).getCell(49)), color: "#06B6D4" },
+        { name: "Injectables", count: getCellNum(sheet.getRow(36).getCell(49)), color: "#F59E0B" },
+        { name: "Implant", count: getCellNum(sheet.getRow(40).getCell(49)), color: "var(--mint)" }
+      ];
+
+      const totalMethodUsers = parsedMethods.reduce((sum, m) => sum + m.count, 0) || 1;
+      setMethodMix(
+        parsedMethods.map(m => ({
+          ...m,
+          keys: [m.name],
+          percentage: `${((m.count / totalMethodUsers) * 100).toFixed(1)}%`,
+          count: m.count.toLocaleString()
+        }))
+      );
+
+      const rows10_14 = [5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45, 49, 53, 57];
+      const rows15_19 = [6, 10, 14, 18, 22, 26, 30, 34, 38, 42, 46, 50, 54, 58];
+      const rows20_49 = [7, 11, 15, 19, 23, 27, 31, 35, 39, 43, 47, 51, 55, 59];
+
+      const sumAgeGroup = (rows) => rows.reduce((total, r) => total + getCellNum(sheet.getRow(r).getCell(49)), 0);
+
+      const age10_14 = sumAgeGroup(rows10_14);
+      const age15_19 = sumAgeGroup(rows15_19);
+      const age20_49 = sumAgeGroup(rows20_49);
+      const totalDemo = (age10_14 + age15_19 + age20_49) || 1;
+
+      setDemographics([
+        {
+          age: "10-14 years",
+          total: age10_14.toLocaleString(),
+          share: `${((age10_14 / totalDemo) * 100).toFixed(1)}%`,
+          barWidth: `${((age10_14 / totalDemo) * 100).toFixed(1)}%`,
+          color: "#6366F1"
+        },
+        {
+          age: "15-19 years",
+          total: age15_19.toLocaleString(),
+          share: `${((age15_19 / totalDemo) * 100).toFixed(1)}%`,
+          barWidth: `${((age15_19 / totalDemo) * 100).toFixed(1)}%`,
+          color: "var(--primary)"
+        },
+        {
+          age: "20-49 years",
+          total: age20_49.toLocaleString(),
+          share: `${((age20_49 / totalDemo) * 100).toFixed(1)}%`,
+          barWidth: `${((age20_49 / totalDemo) * 100).toFixed(1)}%`,
+          color: "#2563EB"
+        }
+      ]);
+
+      setActiveDataSource(`Imported: ${file.name} (${sheet.name})`);
     } catch (err) {
-      console.error("Excel export error:", err);
-      alert("Failed to export Excel using the official template. Please ensure 'Health Office Form.xlsx' is in your public/templates folder.");
+      console.error("Excel import error:", err);
+      alert("Failed to parse the Excel file. Please ensure it follows the official RPFP / Health Office Form format.");
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
   const topCards = [
-    { label: "Current Users", subLabel: "(Previous Month)", value: metricsData.currentUsersPrevMonth, cardId: "overall-stocks-card" },
-    { label: "New Acceptors", subLabel: "(Previous Month)", value: metricsData.newAcceptorsPrevMonth, cardId: "overall-population-card" },
-    { label: "Other Acceptors", subLabel: "Active users", value: metricsData.otherAcceptors, cardId: "overall-rhu-card" },
-    { label: "Drop Outs", subLabel: "Discontinued", value: metricsData.dropOuts, cardId: "low-stock-card" },
-    { label: "Current Users", subLabel: "(Current Month)", value: metricsData.currentUsersCurrentMonth, cardId: "overall-stocks-card" },
-    { label: "New Acceptors", subLabel: "(Current Month)", value: metricsData.newAcceptorsCurrentMonth, cardId: "overall-population-card" }
+    { label: "Current Users", subLabel: "(Previous Month)", value: metricsData.currentUsersPrevMonth.toLocaleString(), cardId: "overall-stocks-card" },
+    { label: "New Acceptors", subLabel: "(Previous Month)", value: metricsData.newAcceptorsPrevMonth.toLocaleString(), cardId: "overall-population-card" },
+    { label: "Other Acceptors", subLabel: "Active users", value: metricsData.otherAcceptors.toLocaleString(), cardId: "overall-rhu-card" },
+    { label: "Drop Outs", subLabel: "Discontinued", value: metricsData.dropOuts.toLocaleString(), cardId: "low-stock-card" },
+    { label: "Current Users", subLabel: "(Current Month)", value: metricsData.currentUsersCurrentMonth.toLocaleString(), cardId: "overall-stocks-card" },
+    { label: "New Acceptors", subLabel: "(Current Month)", value: metricsData.newAcceptorsCurrentMonth.toLocaleString(), cardId: "overall-population-card" }
   ];
 
   const maxGeoValue = Math.max(...geoChartData.map(g => g.count), 1);
@@ -306,22 +350,53 @@ const HealthDashboard = () => {
         <div>
           <h1>City Health Dashboard</h1>
           <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--ink-faint)' }}>
-            {loading ? "Loading overview..." : "System live status"}
+            {loading ? "Loading overview..." : `Source: ${activeDataSource}`}
           </p>
         </div>
 
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <button id="refresh-button" onClick={fetchAndProcessData}>
+          <button 
+            id="refresh-button" 
+            onClick={handleManualRefresh}
+            disabled={refreshing}
+            style={{ cursor: refreshing ? 'wait' : 'pointer' }}
+          >
             <RefreshCw size={14} className={refreshing ? "spin-icon" : ""} /> 
-            Refresh Data
+            {refreshing ? "Refreshing..." : "Refresh Data"}
           </button>
 
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImportExcel}
+            accept=".xlsx, .xls"
+            style={{ display: 'none' }}
+          />
+
           <button 
-            onClick={handleExportExcel}
+            onClick={() => fileInputRef.current?.click()}
             id="deduct-button"
-            style={{ height: '36px', padding: '0 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#E0563D', color: '#FFF' }}
+            disabled={importing}
+            style={{ 
+              height: '36px', 
+              padding: '0 16px', 
+              fontSize: '13px', 
+              fontWeight: 600,
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px', 
+              backgroundColor: '#107C41',
+              color: '#FFFFFF',
+              border: 'none',
+              borderRadius: 'var(--radius-sm)',
+              boxShadow: 'var(--shadow-sm)',
+              cursor: importing ? 'wait' : 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0B5C30'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#107C41'}
           >
-            <Download size={14} /> Export Excel
+            <FileSpreadsheet size={15} /> {importing ? "Importing..." : "Import Excel"}
           </button>
         </div>
       </div>

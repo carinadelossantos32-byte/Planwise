@@ -142,13 +142,15 @@ html, body, #root {
 }
 
 .login-error {
-  color: #ff5252;
-  background: rgba(255, 82, 82, 0.12);
-  border: 1px solid rgba(255, 82, 82, 0.3);
+  color: #ff4d4d;
+  background-color: rgba(255, 77, 77, 0.1);
+  border: 1px solid rgba(255, 77, 77, 0.3);
   font-size: 13px;
-  padding: 12px 18px;
-  border-radius: 30px;
+  font-weight: 500;
+  padding: 10px 16px;
+  border-radius: 20px;
   margin-bottom: 16px;
+  text-align: left;
 }
 
 /* ── Right Panel ── */
@@ -190,18 +192,6 @@ html, body, #root {
   letter-spacing: 1px;
 }
 
-.login-error {
-  color: #ff4d4d;
-  background-color: rgba(255, 77, 77, 0.1);
-  border: 1px solid rgba(255, 77, 77, 0.3);
-  font-size: 13px;
-  font-weight: 500;
-  padding: 10px 16px;
-  border-radius: 20px;
-  margin-bottom: 16px;
-  text-align: left;
-}
-
 .login-brand-description {
   font-size: 15px;
   font-weight: 600;
@@ -211,115 +201,339 @@ html, body, #root {
   margin: 0;
 }
 
-/* ── Forgot Password Modal Overlay ── */
+/* ── Forgot Password Modal Overlay (Clean White Card) ── */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.55);
+  background-color: rgba(3, 10, 66, 0.65);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
+  padding: 20px;
 }
 
 .modal-card {
-  background-color: #00017A;
+  position: relative !important;
+  background-color: #ffffff !important;
+  color: #1e293b !important;
   width: 100%;
   max-width: 440px;
-  padding: 36px 32px;
-  border-radius: 24px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  padding: 34px 28px;
+  border-radius: 20px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.28);
+  border: 1px solid #e2e8f0;
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .modal-title {
-  color: #ffffff;
+  color: #091F7A !important;
   font-family: 'Segoe UI', system-ui, sans-serif;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   margin-bottom: 8px;
+  text-align: left;
 }
 
 .modal-subtitle {
-  color: rgba(255, 255, 255, 0.65);
+  color: #64748b !important;
   font-family: 'Segoe UI', system-ui, sans-serif;
-  font-size: 13px;
+  font-size: 13.5px;
   line-height: 1.5;
-  margin-bottom: 24px;
+  margin-bottom: 22px;
+  text-align: left;
+}
+
+.modal-close-x {
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  font-weight: bold;
+  transition: color 0.15s ease;
+}
+
+.modal-close-x:hover {
+  color: #1e293b;
 }
 
 .modal-input {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-.modal-cancel-btn {
-  padding: 11px 22px;
-  background: transparent;
-  border: 1.5px solid rgba(255, 255, 255, 0.25);
-  border-radius: 30px;
-  color: #ffffff;
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  width: 100%;
+  padding: 14px 20px !important;
+  background: #f8fafc !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 50px !important;
+  color: #0f172a !important;
   font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
 }
 
-.modal-cancel-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.45);
+.modal-input::placeholder {
+  color: #94a3b8 !important;
 }
 
-.modal-submit-btn {
-  padding: 11px 24px;
-  background-color: #f5b800;
-  border: none;
-  border-radius: 30px;
-  color: #1e2a6e;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.15s ease, transform 0.1s ease;
+.modal-input:focus {
+  background: #ffffff !important;
+  border-color: #091F7A !important;
+  box-shadow: 0 0 0 3px rgba(9, 31, 122, 0.12) !important;
 }
 
-.modal-submit-btn:hover {
-  background-color: #ffc107;
-}
-
-.modal-submit-btn:active {
-  transform: scale(0.97);
+.input-error-border {
+  border-color: #ef4444 !important;
+  background-color: #fef2f2 !important;
 }
 
 .modal-status-msg {
   font-size: 13px;
   font-weight: 500;
-  padding: 10px 14px;
-  border-radius: 14px;
+  padding: 12px 16px;
+  border-radius: 12px;
   margin-top: 14px;
   text-align: left;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .status-success {
-  color: #2ed573;
-  background-color: rgba(46, 213, 115, 0.12);
-  border: 1px solid rgba(46, 213, 115, 0.25);
+  color: #166534 !important;
+  background-color: #f0fdf4 !important;
+  border: 1px solid #86efac !important;
 }
 
 .status-error {
-  color: #ff4d4d;
-  background-color: rgba(255, 77, 77, 0.12);
-  border: 1px solid rgba(255, 77, 77, 0.25);
+  color: #991b1b !important;
+  background-color: #fef2f2 !important;
+  border: 1px solid #fca5a5 !important;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.modal-cancel-btn {
+  padding: 12px 22px;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 50px;
+  color: #475569;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.modal-cancel-btn:hover:not(:disabled) {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.modal-submit-btn {
+  padding: 12px 26px;
+  background-color: #f7b500;
+  border: none;
+  border-radius: 50px;
+  color: #030a42;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.modal-submit-btn:hover:not(:disabled) {
+  background-color: #ffc425;
+}
+
+.modal-submit-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.modal-submit-btn:disabled,
+.modal-cancel-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.full-btn {
+  width: 100%;
+}
+
+/* ── Guaranteed Scoped Modal Classes ── */
+.modal-card-white {
+  position: relative !important;
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+  width: 100% !important;
+  max-width: 440px !important;
+  padding: 32px 28px !important;
+  border-radius: 20px !important;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.35) !important;
+  border: 1px solid #e2e8f0 !important;
+  box-sizing: border-box !important;
+}
+
+.modal-close-btn {
+  position: absolute !important;
+  top: 16px !important;
+  right: 18px !important;
+  background: #f1f5f9 !important;
+  border: none !important;
+  color: #64748b !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.modal-close-btn:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+.modal-title-clean {
+  color: #091F7A !important;
+  font-family: 'Segoe UI', system-ui, sans-serif !important;
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  margin: 0 0 6px 0 !important;
+  text-align: left !important;
+}
+
+.modal-subtitle-clean {
+  color: #64748b !important;
+  font-family: 'Segoe UI', system-ui, sans-serif !important;
+  font-size: 13.5px !important;
+  line-height: 1.5 !important;
+  margin: 0 0 20px 0 !important;
+  text-align: left !important;
+}
+
+.modal-input-clean {
+  width: 100% !important;
+  padding: 13px 20px !important;
+  background: #f8fafc !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 50px !important;
+  color: #0f172a !important;
+  font-size: 14px !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+  transition: all 0.2s ease !important;
+}
+
+.modal-input-clean:focus {
+  background: #ffffff !important;
+  border-color: #091F7A !important;
+  box-shadow: 0 0 0 3px rgba(9, 31, 122, 0.12) !important;
+}
+
+.input-error-clean {
+  border-color: #ef4444 !important;
+  background-color: #fef2f2 !important;
+}
+
+.modal-msg-clean {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  padding: 12px 16px !important;
+  border-radius: 12px !important;
+  margin-top: 14px !important;
+  text-align: left !important;
+  line-height: 1.45 !important;
+}
+
+.msg-success {
+  color: #166534 !important;
+  background-color: #f0fdf4 !important;
+  border: 1px solid #86efac !important;
+}
+
+.msg-error {
+  color: #991b1b !important;
+  background-color: #fef2f2 !important;
+  border: 1px solid #fca5a5 !important;
+}
+
+.modal-actions-clean {
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  margin-top: 22px !important;
+}
+
+.modal-btn-cancel {
+  padding: 11px 22px !important;
+  background: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 50px !important;
+  color: #475569 !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.modal-btn-cancel:hover:not(:disabled) {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+.modal-btn-gold {
+  padding: 11px 26px !important;
+  background-color: #f7b500 !important;
+  border: none !important;
+  border-radius: 50px !important;
+  color: #030a42 !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: background 0.15s ease, transform 0.1s ease !important;
+}
+
+.modal-btn-gold:hover:not(:disabled) {
+  background-color: #ffc425 !important;
+}
+
+.modal-btn-gold:active:not(:disabled) {
+  transform: scale(0.98) !important;
+}
+
+.modal-btn-gold:disabled,
+.modal-btn-cancel:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+}
+
+.full-width {
+  width: 100% !important;
 }
