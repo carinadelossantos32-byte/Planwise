@@ -405,7 +405,7 @@ const HealthDashboard = () => {
         <h3>HEALTH METRICS REPORT</h3>
       </div>
 
-      <div className="cards-container dashboard-metrics-grid">
+      <div className="cards-container-dashboard dashboard-metrics-grid">
         {topCards.map((item, idx) => (
           <div className="inventory-header-content" id={item.cardId} key={idx}>
             <h3>{item.label}</h3>
