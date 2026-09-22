@@ -16,18 +16,10 @@ const NO_SIDEBAR_ROUTES = ["/login"];
 function ProtectedRoute({ allowedRole, children }) {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
-  const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setCurrentUser(user);
-        setUserRole(localStorage.getItem("userRole"));
-      } else {
-        setCurrentUser(null);
-        setUserRole(null);
-        localStorage.removeItem("userRole");
-      }
+      setCurrentUser(user);
       setCheckingAuth(false);
     });
 
@@ -42,10 +34,11 @@ function ProtectedRoute({ allowedRole, children }) {
     );
   }
 
-  if (!currentUser || !userRole) {
+  if (!currentUser) {
     return <Navigate to="/login" replace />;
   }
 
+  const userRole = localStorage.getItem("userRole");
   if (allowedRole && userRole !== allowedRole) {
     const fallback = userRole === "health" ? "/dashboard/health" : "/dashboard/cpd";
     return <Navigate to={fallback} replace />;
@@ -89,14 +82,6 @@ function Layout() {
             } 
           />
 
-          <Route 
-            path="/dashboard" 
-            element={
-              <ProtectedRoute>
-                <DynamicDashboard />
-              </ProtectedRoute>
-            } 
-          />
           <Route 
             path="/client-records" 
             element={

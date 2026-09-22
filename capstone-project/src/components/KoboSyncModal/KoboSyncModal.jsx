@@ -5,6 +5,26 @@ import { AlertCircle, CheckCircle } from "lucide-react";
 import { findDuplicate } from "../../utils/checkDuplicates";
 import "../ImportModal/import-modal.css";
 
+async function getAddressFromCoordinates(lat, lon) {
+    if (!lat || !lon) return "No coordinates provided";
+    try {
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`,
+            {
+                headers: {
+                    // Nominatim requires a custom User-Agent identifying your application
+                    "User-Agent": "PlanWiseApp/1.0"
+                }
+            }
+        );
+        const data = await response.json();
+        return data && data.display_name ? data.display_name : `${lat}, ${lon}`;
+    } catch (error) {
+        console.error("Error fetching address:", error);
+        return `${lat}, ${lon}`; // Fallback to coordinates if API fails
+    }
+}
+
 function KoboSyncModal({ onClose, onSuccess, config }) {
     const [step, setStep] = useState("fetching");
     const [parsedClients, setParsedClients] = useState([]);
@@ -42,8 +62,20 @@ function KoboSyncModal({ onClose, onSuccess, config }) {
                     return;
                 }
 
-                // 3. Map only the new, unsynced submissions
-                const records = newSubmissions.map(config.mapFields);
+                // 3. Map and enrich the new, unsynced submissions sequentially
+                const records = [];
+                for (const sub of newSubmissions) {
+                    const client = config.mapFields(sub);
+
+                    // If address is missing, generate it from latitude & longitude
+                    if ((!client.address || client.address.includes(",")) && client.latitude && client.longitude) {
+                        client.address = await getAddressFromCoordinates(client.latitude, client.longitude);
+                        // Optional: Add a brief 200ms delay to respect OpenStreetMap's usage policy
+                        await new Promise((resolve) => setTimeout(resolve, 200));
+                    }
+
+                    records.push(client);
+                }
 
                 // 4. Run secondary duplicate check (name & demographical match) on remaining items
                 const dupResults = [];
@@ -258,9 +290,9 @@ function KoboSyncModal({ onClose, onSuccess, config }) {
                         <p style={{ color: "#6b7280", fontSize: "14px", marginTop: "4px" }}>
                             All KoboToolBox entries have already been synchronized to PlanWise.
                         </p>
-                        <button 
-                            className="btn-confirm-import" 
-                            onClick={onClose} 
+                        <button
+                            className="btn-confirm-import"
+                            onClick={onClose}
                             style={{ marginTop: "20px", padding: "8px 24px" }}
                         >
                             Got it
