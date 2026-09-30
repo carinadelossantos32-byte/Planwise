@@ -33,7 +33,7 @@
 /* Header, Body, Footer structures */
 .modal-header {
   padding: 10px 20px;
-  background: #f8f9fa;
+  background: #091F7A;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -106,6 +106,10 @@
   padding: 24px;
   max-height: 70vh;
   overflow-y: auto;
+}
+
+.response-text {
+  text-transform: capitalize;
 }
 
 #signature {

@@ -11,13 +11,14 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
 delete L.Icon.Default.prototype._getIconUrl;
+
 L.Icon.Default.mergeOptions({
   iconUrl: markerIcon,
   iconRetinaUrl: markerIcon2x,
   shadowUrl: markerShadow,
 });
 
-// CUSTOM MARKER ICON CREATOR BASED ON FAMILY'S FP METHOD
+//custom function to create a FontAwesome icon for the map markers based on family planning method
 const createFaIcon = (family, zoom) => {
   let iconClass = 'fa-circle';
   let colorClass = 'color-traditional';
@@ -36,16 +37,19 @@ const createFaIcon = (family, zoom) => {
     rawMethod = family.fpMethod;
   }
 
+  // determine the color class based on the family planning method
   const safeMethod = rawMethod ? rawMethod.toString().trim().toLowerCase() : "no method";
 
   if (['pills', 'condom', 'injectable', 'short-acting'].includes(safeMethod)) {
     colorClass = 'color-short-modern'; 
-  } else if (['implant', 'iud', 'vasectomy', 'tubal ligation', 'btl', 'long-acting'].includes(safeMethod)) {
-    colorClass = 'color-long-modern'; 
-  } else if (['cmm/billings', 'billings', 'bbt', 'sympto-thermal', 'sdm', 'lam', 'natural'].includes(safeMethod)) {
-    colorClass = 'color-natural-modern'; 
+  } else if (['implant', 'iud', 'long-acting'].includes(safeMethod)) {
+    colorClass = 'color-long-acting'; 
+  } else if (['vasectomy', 'tubal ligation', 'btl', 'modern'].includes(safeMethod)) {
+    colorClass = 'color-permanent-modern';
   } else if (['withdrawal', 'rhythm', 'calendar', 'abstinence', 'herbal', 'traditional'].includes(safeMethod)) {
     colorClass = 'color-traditional'; 
+  } else if (['cmm/billings', 'billings', 'bbt', 'sympto-thermal', 'sdm', 'lam', 'natural'].includes(safeMethod)) {
+    colorClass = 'color-natural-modern'; 
   } else {
     colorClass = 'color-no-method'; 
   }
@@ -118,8 +122,8 @@ function ChangeMapView({ center }) {
 const userLocationIcon = L.divIcon({
   className: 'custom-user-location',
   html: `<div class="pulse-dot"></div>`,
-  iconSize: [20, 20],
-  iconAnchor: [10, 10]
+  iconSize: [40, 40],
+  iconAnchor: [20, 20]
 });
 
 const TILE_URLS = {
@@ -127,20 +131,6 @@ const TILE_URLS = {
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: '&copy; OpenStreetMap contributors',
     subdomains: 'abc',
-    minZoom: 2,
-    maxZoom: 19
-  },
-  light: {
-    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
-    subdomains: 'abcd',
-    minZoom: 2,
-    maxZoom: 19
-  },
-  dark: {
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
-    subdomains: 'abcd',
     minZoom: 2,
     maxZoom: 19
   },
@@ -269,9 +259,11 @@ export default function MapDisplay({
           families={families} 
         />
 
+        // Change map view to the selected barangay center
         {barangayCenter && <ChangeMapView center={barangayCenter} />}
         <MapController zoomLevel={currentZoom} onZoomChange={onZoomChange} />
 
+        // Display user location marker if available
         {userLocation && (
           <Marker position={[userLocation.lat, userLocation.lng]} icon={userLocationIcon}/>
         )}

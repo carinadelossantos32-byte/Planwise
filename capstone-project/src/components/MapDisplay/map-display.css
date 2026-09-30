@@ -17,11 +17,12 @@
           drop-shadow(-1px 1px 0px #ffffff);
 }
 
-.color-short-modern { color: #FB2C36; }    
-.color-long-modern { color: #2B7FFF; }   
-.color-natural-modern { color: #00BC7D; }    
-.color-traditional { color: #6d2d00; }   
-.color-no-method { color: #696969; } 
+.color-short-modern { color: #EF4444; }    
+.color-long-acting { color: #8B5CF6; }   
+.color-permanent-modern { color: #2563EB; }
+.color-natural-modern { color: #10B981; }    
+.color-traditional { color: #D97706; }   
+.color-no-method { color: #64748B; } 
 
 .view-mode-options .option-item {
   cursor: pointer;

@@ -242,14 +242,65 @@ ul.suggestions-list {
 .legend-title {
     display: flex;
     justify-content: space-between;
-    align-items: center;
     padding: 15px 15px 0px 15px;
 }
 
-.legend-title button {
-    border: none;
-    background-color: transparent;
-    color: gray;
+.legend-title i {
+    margin-top: 7px;
+    color: #091F7A;
+    font-size: 14px;
+}
+
+/* Wrapper for relative positioning */
+.legend-info-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    color: #64748B;
+    transition: color 0.2s ease;
+}
+
+/* Hidden popup card by default */
+.legend-tooltip-popover {
+    display: none;
+    position: absolute;
+    top: -80%;       /* Iniaangat sa ibabaw ng icon */
+    left: 200%;
+    width: 260px;
+    background: #ffffff;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    z-index: 9999;
+    pointer-events: none;
+    text-align: left;
+}
+
+/* Show the popup on hover */
+.legend-info-wrapper:hover .legend-tooltip-popover {
+    display: block;
+}
+
+/* Popover Content Styling */
+.legend-tooltip-popover ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.legend-tooltip-popover li {
+    font-size: 12px;
+    line-height: 1.2;
+    color: #475569;
+}
+
+.legend-tooltip-popover li strong {
+    color: #091F7A;
 }
 
 .map-legend ul {
