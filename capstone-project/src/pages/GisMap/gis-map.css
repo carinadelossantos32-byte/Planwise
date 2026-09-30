@@ -22,9 +22,9 @@ h1, h2, h3, h4, h5, h6, p, ul {
 
 .search-container {
     position: relative !important;
-    width: 280px !important;       /* Dito lang ang lapad ng search area! */
+    width: 280px !important;     
     max-width: 280px !important;
-    flex-shrink: 0 !important;     /* Bawal hilahin o patabain ng Flexbox */
+    flex-shrink: 0 !important;     
 }
 
 .search-bar {
@@ -35,7 +35,7 @@ h1, h2, h3, h4, h5, h6, p, ul {
     border: 1px solid #ccc;
     border-radius: 10px;
     padding: 0px 10px 0px 15px;
-    width: 100% !important;        /* Kakainin lang ang 280px ng container */
+    width: 100% !important;        
     box-sizing: border-box !important;
 }
 
@@ -64,7 +64,7 @@ ul.suggestions-list {
     padding: 4px 0 !important;
     max-height: 200px !important;
     overflow-y: auto !important;
-    z-index: 9999 !important;        /* Lalabas sa ibabaw ng Leaflet Map */
+    z-index: 9999 !important;        
 }
 
 .suggestion-item {
@@ -106,7 +106,7 @@ ul.suggestions-list {
 .toolbar-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px; /* Control the spacing here (8px or 10px works great) */
+  gap: 8px; 
 }
 
 .map-overview {
@@ -251,7 +251,6 @@ ul.suggestions-list {
     font-size: 14px;
 }
 
-/* Wrapper for relative positioning */
 .legend-info-wrapper {
     position: relative;
     display: inline-flex;
@@ -265,7 +264,7 @@ ul.suggestions-list {
 .legend-tooltip-popover {
     display: none;
     position: absolute;
-    top: -80%;       /* Iniaangat sa ibabaw ng icon */
+    top: -80%;       
     left: 200%;
     width: 260px;
     background: #ffffff;
@@ -340,7 +339,7 @@ ul.suggestions-list {
 }
 
 .layer-control-wrapper {
-    position: relative !important; /* Dito mag-a-align ang floating popup */
+    position: relative !important; 
     width: 42px;
     height: 42px;
 }
@@ -368,7 +367,6 @@ ul.suggestions-list {
   gap: 4px;
 }
 
-/* Buttons sa LOOB ng popup menu */
 .layer-options .layer-option-btn {
   width: 100% !important;
   height: 36px !important;
@@ -464,7 +462,6 @@ ul.suggestions-list {
   }
 }
 
-/* I-force ang container na sakupin ang buong screen at i-center ang nilalaman */
 .custom-loading-container {
   position: fixed;
   top: 0;
@@ -472,13 +469,12 @@ ul.suggestions-list {
   width: 100vw;
   height: 100vh;
   display: flex;
-  align-items: center;     /* Ginagawang centered vertically (taas-baba) */
-  justify-content: center;  /* Ginagawang centered horizontally (kaliwa-kanan) */
-  background-color: rgba(255, 255, 255, 0.8); /* Optional: semi-transparent white backdrop */
-  z-index: 9999;           /* Mas mataas sa Leaflet map para siguradong nasa ibabaw */
+  align-items: center;     
+  justify-content: center;  
+  background-color: rgba(255, 255, 255, 0.8); 
+  z-index: 9999;         
 }
 
-/* Ang card sa loob */
 .custom-loading-card {
   display: flex;
   align-items: center;
@@ -490,12 +486,11 @@ ul.suggestions-list {
   border: 1px solid #e5e7eb;
 }
 
-/* Ang umiikot na spinner */
 .custom-spinner {
   width: 28px;
   height: 28px;
   border: 3px solid #e5e7eb;
-  border-top-color: #2563eb; /* Kulay ng spinner */
+  border-top-color: #2563eb; 
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }

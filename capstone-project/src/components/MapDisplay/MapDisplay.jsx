@@ -87,6 +87,37 @@ const createCustomClusterIcon = (cluster) => {
   });
 };
 
+// RHU WARNING ICON CREATOR
+const createRhuWarningIcon = () => {
+  return L.divIcon({
+    className: 'custom-rhu-warning-marker',
+    html: `
+      <div style="
+        background-color: #EF4444;
+        width: 32px;
+        height: 32px;
+        border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #FFFFFF;
+        box-shadow: 0 4px 10px rgba(239, 68, 68, 0.45);
+      ">
+        <i class="fa-solid fa-triangle-exclamation" style="
+          transform: rotate(45deg);
+          color: #FFFFFF;
+          font-size: 14px;
+        "></i>
+      </div>
+    `,
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -30]
+  });
+};
+
+// MAP CONTROLLERS
 function MapController({ zoomLevel, onZoomChange }) {
   const map = useMapEvents({
     zoomend() {
@@ -103,22 +134,7 @@ function MapController({ zoomLevel, onZoomChange }) {
   return null; 
 }
 
-function ChangeMapView({ center }) {
-  const map = useMap();
-  
-  useEffect(() => {
-    if (center && center.coordinates && center.coordinates.lat && center.coordinates.lng) {
-      const { lat, lng } = center.coordinates;
-      map.flyTo([lat, lng], 17, {
-        animation: true,
-        duration: 1.1,
-      }); 
-    }
-  }, [center?.timestamp, map]);
-
-  return null;
-} 
-
+// USER LOCATION ICON
 const userLocationIcon = L.divIcon({
   className: 'custom-user-location',
   html: `<div class="pulse-dot"></div>`,
@@ -126,6 +142,7 @@ const userLocationIcon = L.divIcon({
   iconAnchor: [20, 20]
 });
 
+// TILE LAYER URLS
 const TILE_URLS = {
   standard: {
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -142,6 +159,23 @@ const TILE_URLS = {
     maxZoom: 18
   }
 };
+
+// Change map view to the selected barangay center
+function ChangeMapView({ center }) {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (center && center.coordinates && center.coordinates.lat && center.coordinates.lng) {
+      const { lat, lng } = center.coordinates;
+      map.flyTo([lat, lng], 17, {
+        animation: true,
+        duration: 1.1,
+      }); 
+    }
+  }, [center?.timestamp, map]);
+
+  return null;
+} 
 
 // BARANGAY FOCUS CONTROLLER
 export function BarangayFocusController({ selectedBarangay, families }) {
@@ -175,40 +209,6 @@ export function BarangayFocusController({ selectedBarangay, families }) {
   return null;
 }
 
-const createBarangayMarkerIcon = (isLowStock = false) => {
-    if (isLowStock) {
-        const svgLowStock = `
-            <svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
-                <!-- Glowing Pulsing outer circle -->
-                <circle cx="24" cy="24" r="20" fill="rgba(239, 68, 68, 0.3)" stroke="#EF4444" stroke-width="2">
-                    <animate attributeName="r" values="16;22;16" dur="2s" repeatCount="indefinite"/>
-                    <animate attributeName="opacity" values="0.8;0.2;0.8" dur="2s" repeatCount="indefinite"/>
-                </circle>
-                <!-- Main Red Pin Center -->
-                <circle cx="24" cy="24" r="10" fill="#EF4444" stroke="#FFFFFF" stroke-width="2.5" />
-                <!-- Warning Badge Icon -->
-                <text x="24" y="28" font-size="12" font-weight="bold" fill="#FFFFFF" text-anchor="middle">!</text>
-            </svg>
-        `;
-
-        return L.divIcon({
-            className: 'rhu-low-stock-marker',
-            html: svgLowStock,
-            iconSize: [48, 48],
-            iconAnchor: [24, 24],
-            popupAnchor: [0, -20]
-        });
-    };
-
-    return L.divIcon({
-        className: 'rhu-normal-stock-marker',
-        html: svgNormalStock,
-        iconSize: [32, 32],
-        iconAnchor: [16, 16],
-        popupAnchor: [0, -12]
-    });
-};
-
 export default function MapDisplay({ 
   families = [], 
   currentZoom = 13, 
@@ -220,7 +220,7 @@ export default function MapDisplay({
   filteredFamilies,
   activeLayer = 'standard',
   selectedBarangay = 'ALL',
-  barangayMarkers = []
+  rhuWarningMarkers = []
 }) {
   const defaultCenter = [14.844782, 120.812683]; 
 
@@ -259,11 +259,11 @@ export default function MapDisplay({
           families={families} 
         />
 
-        // Change map view to the selected barangay center
+          {/* Change map view to the selected barangay center */}
         {barangayCenter && <ChangeMapView center={barangayCenter} />}
         <MapController zoomLevel={currentZoom} onZoomChange={onZoomChange} />
 
-        // Display user location marker if available
+        {/*Display user location marker if available */}
         {userLocation && (
           <Marker position={[userLocation.lat, userLocation.lng]} icon={userLocationIcon}/>
         )}
@@ -327,43 +327,82 @@ export default function MapDisplay({
           </MarkerClusterGroup>
         )}
 
-        {barangayMarkers
-          .filter((marker) => marker.isLowStock)
-          .map((marker) => {
-            const icon = createBarangayMarkerIcon(true);
+        {/* RHU BUILDING LOW STOCK WARNING MARKERS */}
+        {rhuWarningMarkers.map((rhuMarker) => (
+          <Marker
+            key={rhuMarker.id}
+            position={[rhuMarker.lat, rhuMarker.lng]}
+            icon={createRhuWarningIcon()}
+            zIndexOffset={600}
+          >
+            <Popup>
+              <div style={{ minWidth: '220px', padding: '6px' }}>
+                <div style={{ borderBottom: '1px solid #E2E8F0', paddingBottom: '6px', marginBottom: '8px' }}>
+                  <h3 style={{ margin: '0 0 2px 0', fontSize: '14px', color: '#0F172A', fontWeight: '700' }}>
+                    {rhuMarker.rhuName}
+                  </h3>
+                  {rhuMarker.address && (
+                    <span style={{ fontSize: '11px', color: '#64748B' }}>
+                      📍 {rhuMarker.address}
+                    </span>
+                  )}
+                </div>
 
-            return (
-              <Marker
-                key={marker.id}
-                position={[marker.lat, marker.lng]}
-                icon={icon}
-                zIndexOffset={-500}
-              >
-                <Popup>
-                  <div style={{ textAlign: 'center', minWidth: '150px', padding: '4px' }}>
-                    <h3 style={{ margin: '0 0 4px 0', fontSize: '15px', color: '#1E293B' }}>
-                      Brgy. {marker.barangay}
-                    </h3>
-                    <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#64748B' }}>
-                      Under: <strong>{marker.rhuName}</strong>
-                    </p>
+                {/* Warning Badge Header */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '5px 8px',
+                  borderRadius: '4px',
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  color: '#991B1B',
+                  backgroundColor: '#FEE2E2',
+                  marginBottom: '10px'
+                }}>
+                  <i className="fa-solid fa-triangle-exclamation"></i>
+                  <span>Low Stock Alert</span>
+                </div>
 
-                    <div style={{
-                      padding: '6px 12px',
-                      borderRadius: '20px',
-                      fontSize: '11px',
-                      fontWeight: 'bold',
-                      color: '#FFFFFF',
-                      backgroundColor: '#EF4444'
-                    }}>
-                      ⚠️ Low Stock Alert ({marker.stock} left)
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {rhuMarker.lowStockMethods && rhuMarker.lowStockMethods.map((item, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '4px 0',
+                        borderBottom: '1px dashed #F1F5F9',
+                        fontSize: '12px'
+                      }}
+                    >
+                      <div>
+                        <span style={{ fontWeight: '600', color: '#334155' }}>
+                          {item.method}
+                        </span>
+                        <span style={{ fontSize: '10px', color: '#94A3B8', marginLeft: '4px' }}>
+                          (limit: {item.limit})
+                        </span>
+                      </div>
+                      <span style={{
+                        fontWeight: '700',
+                        color: item.count === 0 ? '#DC2626' : '#C2410C',
+                        backgroundColor: item.count === 0 ? '#FEF2F2' : '#FFEDD5',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        fontSize: '11px'
+                      }}>
+                        {item.count} left
+                      </span>
                     </div>
-                  </div>
-                </Popup>
-              </Marker>
-            );
-          })
-        }
+                  ))}
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
       </MapContainer>
     );
 }

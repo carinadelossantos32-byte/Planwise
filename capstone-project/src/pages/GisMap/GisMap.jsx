@@ -113,15 +113,38 @@ function GisMap({ getCollection }){
     
     // low stock
     const [rhu, setRhu] = useState([]);
-    const [lowStockConfig, setLowStockConfig] = useState({
-        isEnabled: true
-    });
+    const [isLowStockEnabled, setIsLowStockEnabled] = useState(true);
+    const [methodLimits, setMethodLimits] = useState({});
+    const [defaultThreshold, setDefaultThreshold] = useState(10);
 
-    //rhu coordinates
-    // const geo = rhuDoc.coordinates || rhuDoc.location;
+    // Fetch the low stock threshold from Firestore on component mount
+    const fetchThreshold = useCallback(async () => {
+        try {
+            const docRef = doc(db, "lowStock", "lowStockLimit");
+            const docSnap = await getDoc(docRef);
 
-    // const rhuLat = Number(geo?.latitude ?? rhuDoc.lat ?? rhuDoc.latitude);
-    // const rhuLng = Number(geo?.longitude ?? rhuDoc.lng ?? rhuDoc.longitude);
+            let configData = null;
+
+            if (docSnap.exists()) {
+                configData = docSnap.data();
+            } else {
+                const querySnap = await getDocs(collection(db, "lowStock"));
+                if (!querySnap.empty) {
+                    configData = querySnap.docs[0].data();
+                }
+            }
+
+            if (configData) {
+                const isAlertActive = configData.enabled ?? configData.isEnabled ?? true;
+    
+                setIsLowStockEnabled(Boolean(isAlertActive));
+                setMethodLimits(configData.limitsByMethod || {});
+                setDefaultThreshold(Number(configData.lowStockLimit ?? 10));
+            }
+        } catch (err) {
+            console.error("Error fetching lowStock threshold:", err);
+        }
+    }, []);
 
     // Fetch RHU Data
     const fetchRHU = useCallback(async () => {
@@ -137,41 +160,77 @@ function GisMap({ getCollection }){
         }
     }, []);
 
-    const fetchLowStockConfig = useCallback(async () => {
-        try {
-            const docRef = doc(db, "lowStock", "lowStockLimit");
-            const docSnap = await getDoc(docRef);
+    // Compute RHU Warning Markers
+    const rhuWarningMarkers = useMemo(() => {
+        if (!isLowStockEnabled || !rhu || !rhu.length) return [];
 
-            if (docSnap.exists()) {
-                const data = docSnap.data();
+        const markers = [];
+        const normalizeKey = (k) => k.toLowerCase().replace(/[\/\s-]/g, '_');
 
-                setLowStockConfig({
-                    isEnabled: data.isEnabled ?? true,
-                    limit: Number(data.lowStockLimit ?? data.limit ?? 0)
+        rhu.forEach((rhuDoc) => {
+            const stockMap = rhuDoc.stockByMethod;
+            const depletedMethods = [];
+
+            if (!stockMap || typeof stockMap !== 'object' || Object.keys(stockMap).length === 0) {
+                depletedMethods.push({
+                    method: "NO INVENTORY RECORDED",
+                    count: 0,
+                    limit: "N/A",
+                    isUninitialized: true
                 });
             } else {
-                console.warn("⚠️ No 'lowStockLimit' doc found. Attempting fallback retrieval from 'lowStock' collection.");
-                
-                const snap = await getDocs(collection(db, "lowStock"));
-                if (!snap.empty) {
-                    const firstDocData = snap.docs[0].data();
-                    console.log("⚙️ Found fallback config doc:", firstDocData);
-                    setLowStockConfig({
-                        isEnabled: firstDocData.isEnabled ?? true,
-                        limit: Number(firstDocData.lowStockLimit ?? firstDocData.limit ?? 0)
-                    });
-                }
-            }
-        } catch (error) {
-            console.error("❌ Error loading dynamic low stock config:", error);
-        }
-    }, []);
+                Object.entries(stockMap).forEach(([methodName, qty]) => {
+                    const count = Number(qty);
+                    if (isNaN(count)) return;
 
+                    const normName = normalizeKey(methodName);
+                    let limitForThisMethod = defaultThreshold;
+
+                    if (methodLimits && typeof methodLimits === 'object') {
+                        if (methodLimits[methodName] !== undefined) {
+                            limitForThisMethod = Number(methodLimits[methodName]);
+                        } else if (methodLimits[normName] !== undefined) {
+                            limitForThisMethod = Number(methodLimits[normName]);
+                        }
+                    }
+
+                    if (count <= limitForThisMethod) {
+                        depletedMethods.push({
+                            method: methodName.toUpperCase().replace(/_/g, ' '),
+                            count: count,
+                            limit: limitForThisMethod,
+                            isUninitialized: false
+                        });
+                    }
+                });
+            }
+
+            if (depletedMethods.length === 0) return;
+
+            const geo = rhuDoc.coordinates || rhuDoc.location;
+            const rhuLat = Number(geo?.latitude ?? rhuDoc.lat ?? rhuDoc.latitude);
+            const rhuLng = Number(geo?.longitude ?? rhuDoc.lng ?? rhuDoc.longitude);
+
+            if (!isNaN(rhuLat) && !isNaN(rhuLng) && rhuLat !== 0 && rhuLng !== 0) {
+                markers.push({
+                    id: `${rhuDoc.id}-rhu-warning`,
+                    rhuName: rhuDoc.name || rhuDoc.rhuName || rhuDoc.id,
+                    address: rhuDoc.address || "",
+                    lowStockMethods: depletedMethods,
+                    lat: rhuLat,
+                    lng: rhuLng
+                });
+            }
+        });
+
+        return markers;
+    }, [rhu, methodLimits, defaultThreshold, isLowStockEnabled]); 
+
+    // Fetch Families Data
     const fetchMapClients = useCallback(async () => {
             setLoading(true);
             try {
                 const collectionName = typeof getCollection === 'function' ? getCollection() : 'clients_public'; 
-                console.log(collectionName);
 
                 const querySnapshot = await getDocs(collection(db, collectionName));
 
@@ -293,12 +352,12 @@ function GisMap({ getCollection }){
             await Promise.all([
                 fetchMapClients(), 
                 fetchRHU(), 
-                fetchLowStockConfig()
+                fetchThreshold()
             ]);
             setLoading(false);
         };
         loadAllData();
-    }, [fetchMapClients, fetchRHU, fetchLowStockConfig]);
+    }, [fetchMapClients, fetchRHU, fetchThreshold]);
 
     //zooming in on selected barangay
     useEffect(() => { 
@@ -414,54 +473,6 @@ function GisMap({ getCollection }){
         }
     };
 
-    // Low Stock Markers Memoization
-    const barangayMarkers = useMemo(() => {
-        if (!rhu || !rhu.length) return [];
-
-        const markers = [];
-        const { isEnabled, limit } = lowStockConfig;
-
-        if (!isEnabled) return [];
-
-        rhu.forEach((rhuDoc) => {
-            const currentStock = Number(rhuDoc.stock ?? rhuDoc.stockCount ?? rhuDoc.quantity ?? 0);
-            const isLowStock = Boolean(rhuDoc.lowStockNotified) || (currentStock <= limit);
-
-            if (!isLowStock) return;
-
-            const barangayList = Array.isArray(rhuDoc.barangays) ? rhuDoc.barangays : [];
-
-            barangayList.forEach((bgy) => {
-                const rawBarangayName = typeof bgy === 'string' ? bgy : (bgy?.name || '');
-                const cleanBarangayName = rawBarangayName.trim();
-
-                if (!cleanBarangayName) return;
-
-                const coordsKey = Object.keys(BARANGAY_COORDINATES).find(
-                    (key) => key.toLowerCase() === cleanBarangayName.toLowerCase()
-                );
-
-                const coords = coordsKey ? BARANGAY_COORDINATES[coordsKey] : null;
-
-                if (coords) {
-                    markers.push({
-                        id: `${rhuDoc.id}-${cleanBarangayName}`,
-                        barangay: cleanBarangayName,
-                        rhuName: rhuDoc.name || rhuDoc.rhuName || rhuDoc.id,
-                        stock: currentStock,
-                        thresholdUsed: limit,
-                        isLowStock: true,
-                        lat: coords.lat,
-                        lng: coords.lng
-                    });
-                }
-            });
-        });
-
-        return markers;
-    }, [rhu, lowStockConfig]);
-
-    // Render Logic
     if (loading) {
         return (
             <div className="custom-loading-container">
@@ -473,6 +484,7 @@ function GisMap({ getCollection }){
         );
     }
 
+    // Render the main GIS Map component
     return (
         <>
             <div className="pop-up">
@@ -495,7 +507,7 @@ function GisMap({ getCollection }){
                                 placeholder="Search Barangay..." 
                                 value={searchQuery}
                                 onChange={handleSearchChange}
-                                onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit(e)} // 🌟 OPTIMIZATION 2: Enter key support
+                                onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit(e)} 
                                 style={{ outline: 'none', boxShadow: 'none' }}
                             />
                         </div>
@@ -723,7 +735,7 @@ function GisMap({ getCollection }){
                         families={families}
                         filteredFamilies={filteredFamilies}
                         selectedBarangay={selectedBarangay}
-                        barangayMarkers={barangayMarkers}
+                        rhuWarningMarkers={rhuWarningMarkers}
                         mapMode={mapMode}
                         currentZoom={zoom} 
                         onZoomChange={setZoom}
