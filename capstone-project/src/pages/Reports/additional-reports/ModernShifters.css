@@ -1,0 +1,833 @@
+.modern-shifters {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin-top: 20px;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.modern-shifters *,
+.modern-shifters *::before,
+.modern-shifters *::after {
+    box-sizing: border-box;
+}
+
+
+/* KPI CARDS */
+
+.modern-shifters .analytics-cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    width: 100%;
+    max-width: 100%;
+}
+
+.modern-shifters .analytics-card {
+    position: relative;
+    min-width: 0;
+    overflow: hidden;
+
+    background: #FFFFFF;
+    border: 1px solid #E4E3F2;
+    border-radius: 16px;
+
+    padding: 22px 24px;
+
+    color: #1B1B2F;
+
+    box-shadow: 0 1px 2px rgba(20, 8, 109, 0.06);
+
+    transition: none;
+}
+
+.modern-shifters .analytics-card::before {
+    content: "";
+
+    position: absolute;
+    top: 18px;
+    bottom: 18px;
+    left: 0;
+
+    width: 4px;
+
+    border-radius: 0 4px 4px 0;
+    background: #091F7A;
+}
+
+.modern-shifters .analytics-card.orange::before {
+    background: #E0563D;
+}
+
+.modern-shifters .analytics-card.purple::before {
+    background: #264BE0;
+}
+
+.modern-shifters .analytics-card.green::before {
+    background: #148D0D;
+}
+
+.modern-shifters .analytics-card:hover {
+    transform: none;
+    box-shadow: 0 1px 2px rgba(20, 8, 109, 0.06);
+}
+
+.modern-shifters .analytics-card h4 {
+    margin: 0 0 10px;
+
+    color: #5B5B76;
+
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.modern-shifters .analytics-card span {
+    display: block;
+
+    margin: 0;
+
+    color: #091F7A;
+
+    font-size: 32px;
+    line-height: 1.1;
+    font-weight: 700;
+
+    font-variant-numeric: tabular-nums;
+}
+
+.modern-shifters .analytics-card.orange span {
+    color: #E0563D;
+}
+
+.modern-shifters .analytics-card.purple span {
+    color: #264BE0;
+}
+
+.modern-shifters .analytics-card.green span {
+    color: #148D0D;
+}
+
+
+/* ANALYTICS PANEL */
+
+.modern-shifters .analytics-panel {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    background: #FFFFFF;
+
+    border: 1px solid #E4E3F2;
+    border-radius: 16px;
+
+    padding: 22px 24px;
+
+    box-shadow: 0 1px 2px rgba(20, 8, 109, 0.06);
+}
+
+.modern-shifters .analytics-panel h3 {
+    margin: 0 0 20px;
+
+    color: #1B1B2F;
+
+    font-size: 17px;
+    font-weight: 700;
+}
+
+
+/* METHODS GRID */
+
+.modern-shifters .methods-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+
+    width: 100%;
+    max-width: 100%;
+}
+
+.modern-shifters .methods-grid > div {
+    min-width: 0;
+    overflow: hidden;
+
+    background: #F1F1F8;
+
+    border: 1px solid #E4E3F2;
+    border-radius: 14px;
+
+    padding: 18px;
+}
+
+.modern-shifters .methods-grid h4 {
+    margin: 0 0 18px;
+
+    color: #091F7A;
+
+    font-size: 15px;
+    font-weight: 700;
+}
+
+
+/* METHOD ROWS */
+
+.modern-shifters .methods-grid .method-row {
+    display: grid;
+
+    grid-template-columns: minmax(70px, 90px) minmax(0, 1fr) 45px;
+
+    align-items: center;
+
+    gap: 10px;
+
+    margin-bottom: 14px;
+
+    min-width: 0;
+}
+
+.modern-shifters .methods-grid .method-row:last-child {
+    margin-bottom: 0;
+}
+
+.modern-shifters .methods-grid .method-row span {
+    min-width: 0;
+
+    color: #5B5B76;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    overflow-wrap: anywhere;
+}
+
+.modern-shifters .methods-grid .method-row strong {
+    min-width: 0;
+
+    text-align: right;
+
+    color: #1B1B2F;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* METHOD PROGRESS */
+
+.modern-shifters .methods-grid .progress {
+    width: 100%;
+    min-width: 0;
+
+    height: 8px;
+
+    background: #E4E3F2;
+
+    border-radius: 999px;
+
+    overflow: hidden;
+}
+
+.modern-shifters .methods-grid .progress-fill {
+    height: 100%;
+
+    min-width: 0;
+
+    background: #264BE0;
+
+    border-radius: 999px;
+
+    transition: none;
+}
+
+
+/* MONTHLY SUMMARY */
+
+.modern-shifters .form-c-monthly-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    overflow: hidden;
+
+    background: #FFFFFF;
+
+    border: 1px solid #E4E3F2;
+    border-radius: 16px;
+
+    padding: 22px 24px;
+
+    box-shadow: 0 1px 2px rgba(20, 8, 109, 0.06);
+}
+
+.modern-shifters .form-c-monthly-card h3 {
+    margin: 0 0 18px;
+
+    color: #1B1B2F;
+
+    font-size: 17px;
+    font-weight: 700;
+}
+
+
+/* MONTHLY TABLE */
+
+.modern-shifters .form-c-monthly-card .monthly-summary-table {
+    width: 100%;
+    max-width: 100%;
+    min-width: 650px;
+
+    border-collapse: separate;
+    border-spacing: 0;
+
+    border: 1px solid #E4E3F2;
+    border-radius: 12px;
+
+    overflow: hidden;
+
+    background: #FFFFFF;
+}
+
+.modern-shifters .form-c-monthly-card .monthly-summary-table thead {
+    background: #091F7A;
+    color: #FFFFFF;
+}
+
+.modern-shifters .form-c-monthly-card .monthly-summary-table th {
+    padding: 12px 10px;
+
+    background: #091F7A;
+    color: #FFFFFF;
+
+    text-align: center;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+
+    white-space: normal;
+    word-break: break-word;
+}
+
+.modern-shifters .form-c-monthly-card .monthly-summary-table td {
+    padding: 12px 10px;
+
+    color: #5B5B76;
+
+    text-align: center;
+
+    font-size: 13px;
+    font-weight: 500;
+
+    border-bottom: 1px solid #E4E3F2;
+
+    white-space: normal;
+    word-break: break-word;
+}
+
+.modern-shifters .form-c-monthly-card .monthly-summary-table tbody tr:nth-child(even) {
+    background: #FBFBFD;
+}
+
+.modern-shifters .form-c-monthly-card .monthly-summary-table tbody tr:hover {
+    background: #EEEBFB;
+}
+
+.modern-shifters .form-c-monthly-card .monthly-summary-table tbody td:first-child {
+    color: #1B1B2F;
+    font-weight: 600;
+    text-align: left;
+}
+
+.modern-shifters .form-c-monthly-card .monthly-summary-table .highlight-method {
+    color: #264BE0;
+    font-weight: 700;
+}
+
+.modern-shifters .form-c-monthly-card .monthly-summary-table tfoot {
+    background: #EEEBFB;
+}
+
+.modern-shifters .form-c-monthly-card .monthly-summary-table tfoot th {
+    background: #EEEBFB;
+    color: #091F7A;
+
+    padding: 12px 10px;
+
+    font-weight: 700;
+
+    border-top: 2px solid #D3D2E8;
+    border-bottom: none;
+}
+
+.modern-shifters .form-c-monthly-card .monthly-summary-table tfoot th:first-child {
+    text-align: left;
+}
+
+
+/* OFFICIAL REPORT CARD */
+
+.modern-shifters .official-report-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    background: #FFFFFF;
+
+    border: 1px solid #E4E3F2;
+    border-radius: 18px;
+
+    padding: 24px;
+
+    box-shadow: 0 5px 18px rgba(20, 8, 109, 0.07);
+
+    overflow: hidden;
+}
+
+
+/* OFFICIAL REPORT HEADER */
+
+.modern-shifters .official-report-card .official-report-header {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    gap: 20px;
+
+    width: 100%;
+    min-width: 0;
+
+    margin-bottom: 20px;
+
+    padding-bottom: 18px;
+
+    border-bottom: 1px solid #E4E3F2;
+}
+
+.modern-shifters .official-report-card .official-report-header > div:first-child {
+    min-width: 0;
+}
+
+.modern-shifters .official-report-card .official-report-header h3 {
+    margin: 0;
+
+    color: #091F7A;
+
+    font-size: 20px;
+    font-weight: 700;
+
+    line-height: 1.3;
+}
+
+.modern-shifters .official-report-card .official-report-header p {
+    margin: 5px 0 0;
+
+    color: #5B5B76;
+
+    font-size: 13px;
+    font-weight: 500;
+
+    line-height: 1.5;
+}
+
+
+/* REPORT BUTTONS */
+
+.modern-shifters .official-report-card .report-buttons {
+    display: flex;
+
+    align-items: center;
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    flex-wrap: wrap;
+
+    flex-shrink: 0;
+}
+
+.modern-shifters .official-report-card .report-buttons button {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 40px;
+
+    padding: 0 16px;
+
+    border: none;
+    border-radius: 9px;
+
+    font-family: inherit;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    box-shadow: none;
+
+    transition: none;
+}
+
+
+/* REFRESH */
+
+.modern-shifters .official-report-card .report-buttons .refresh-btn {
+    background: #F1F1F8 !important;
+    color: #5B5B76 !important;
+
+    border: 1px solid #D3D2E8 !important;
+}
+
+.modern-shifters .official-report-card .report-buttons .refresh-btn:hover {
+    background: #E4E3F2 !important;
+    color: #1B1B2F !important;
+}
+
+
+/* PDF */
+
+.modern-shifters .official-report-card .report-buttons .pdf-btn {
+    background: #DC2626 !important;
+    color: #FFFFFF !important;
+}
+
+.modern-shifters .official-report-card .report-buttons .pdf-btn:hover {
+    background: #B91C1C !important;
+    color: #FFFFFF !important;
+}
+
+
+/* EXCEL */
+
+.modern-shifters .official-report-card .report-buttons .excel-btn {
+    background: #15803D !important;
+    color: #FFFFFF !important;
+}
+
+.modern-shifters .official-report-card .report-buttons .excel-btn:hover {
+    background: #166534 !important;
+    color: #FFFFFF !important;
+}
+
+
+/* OFFICIAL REPORT TABLE WRAPPER */
+
+.modern-shifters .official-report-card .report-table-wrapper {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    border: 1px solid #E4E3F2;
+    border-radius: 12px;
+
+    background: #FFFFFF;
+}
+
+
+/* OFFICIAL REPORT TABLE */
+
+.modern-shifters .official-report-card .official-report-table {
+    width: 100%;
+
+    min-width: 1100px;
+
+    margin: 0;
+
+    table-layout: fixed;
+
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+
+/* TABLE HEADER */
+
+.modern-shifters .official-report-card .official-report-table thead {
+    background: #091F7A;
+}
+
+.modern-shifters .official-report-card .official-report-table thead th {
+    padding: 9px 5px;
+
+    background: #091F7A;
+    color: #FFFFFF;
+
+    border: 1px solid rgba(255, 255, 255, 0.20);
+
+    text-align: center;
+    vertical-align: middle;
+
+    font-size: 10px;
+    font-weight: 700;
+
+    line-height: 1.2;
+
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+
+/* BODY */
+
+.modern-shifters .official-report-card .official-report-table tbody td {
+    padding: 9px 5px;
+
+    background: #FFFFFF;
+
+    color: #5B5B76;
+
+    border: 1px solid #E4E3F2;
+
+    text-align: center;
+    vertical-align: middle;
+
+    font-size: 11px;
+    font-weight: 500;
+
+    line-height: 1.25;
+
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.modern-shifters .official-report-card .official-report-table tbody tr:nth-child(even) {
+    background: #FBFBFD;
+}
+
+.modern-shifters .official-report-card .official-report-table tbody tr:nth-child(even) td {
+    background: #FBFBFD;
+}
+
+.modern-shifters .official-report-card .official-report-table tbody tr:hover {
+    background: #EEEBFB;
+}
+
+.modern-shifters .official-report-card .official-report-table tbody tr:hover td {
+    background: #EEEBFB;
+}
+
+.modern-shifters .official-report-card .official-report-table tbody td:first-child {
+    color: #1B1B2F;
+
+    font-weight: 700;
+
+    text-align: left;
+}
+
+
+/* GRAND TOTAL */
+
+.modern-shifters .official-report-card .official-report-table tfoot {
+    background: #091F7A;
+}
+
+.modern-shifters .official-report-card .official-report-table tfoot th,
+.modern-shifters .official-report-card .official-report-table tfoot td {
+    padding: 10px 5px;
+
+    background: #091F7A !important;
+    color: #FFFFFF !important;
+
+    border: 1px solid rgba(255, 255, 255, 0.25);
+
+    text-align: center;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    line-height: 1.25;
+
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.modern-shifters .official-report-card .official-report-table tfoot .grand-total-title {
+    background: #091F7A !important;
+    color: #FFFFFF !important;
+
+    text-align: left;
+
+    padding-left: 10px;
+}
+
+
+/* STICKY FIRST COLUMN */
+
+.modern-shifters .official-report-card .official-report-table th:first-child,
+.modern-shifters .official-report-card .official-report-table td:first-child {
+    position: sticky;
+
+    left: 0;
+
+    width: 125px;
+
+    z-index: 2;
+}
+
+
+/* Sticky body first column */
+
+.modern-shifters .official-report-card .official-report-table tbody td:first-child {
+    background: #FFFFFF;
+
+    color: #1B1B2F;
+}
+
+.modern-shifters .official-report-card .official-report-table tbody tr:nth-child(even) td:first-child {
+    background: #FBFBFD;
+}
+
+.modern-shifters .official-report-card .official-report-table tbody tr:hover td:first-child {
+    background: #EEEBFB;
+}
+
+
+/* Sticky header first column */
+
+.modern-shifters .official-report-card .official-report-table thead th:first-child {
+    background: #091F7A;
+
+    color: #FFFFFF;
+
+    z-index: 4;
+}
+
+
+/* Sticky footer first column */
+
+.modern-shifters .official-report-card .official-report-table tfoot th:first-child,
+.modern-shifters .official-report-card .official-report-table tfoot td:first-child {
+    background: #091F7A !important;
+
+    color: #FFFFFF !important;
+
+    z-index: 4;
+}
+
+
+/* SCROLLBAR */
+
+.modern-shifters .official-report-card .report-table-wrapper::-webkit-scrollbar {
+    height: 7px;
+}
+
+.modern-shifters .official-report-card .report-table-wrapper::-webkit-scrollbar-track {
+    background: #F1F1F8;
+
+    border-radius: 10px;
+}
+
+.modern-shifters .official-report-card .report-table-wrapper::-webkit-scrollbar-thumb {
+    background: #D3D2E8;
+
+    border-radius: 10px;
+}
+
+.modern-shifters .official-report-card .report-table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #B8B7CF;
+}
+
+
+/* FOCUS */
+
+.modern-shifters button:focus-visible {
+    outline: 2px solid #264BE0;
+    outline-offset: 2px;
+}
+
+
+/* RESPONSIVE */
+
+@media (max-width: 1100px) {
+
+    .modern-shifters .analytics-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .modern-shifters .methods-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modern-shifters .official-report-card .official-report-header {
+        align-items: flex-start;
+    }
+
+}
+
+@media (max-width: 800px) {
+
+    .modern-shifters .analytics-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .modern-shifters .official-report-card .official-report-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .modern-shifters .official-report-card .report-buttons {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+}
+
+@media (max-width: 600px) {
+
+    .modern-shifters {
+        gap: 18px;
+    }
+
+    .modern-shifters .analytics-card {
+        padding: 20px;
+    }
+
+    .modern-shifters .analytics-card span {
+        font-size: 28px;
+    }
+
+    .modern-shifters .analytics-panel,
+    .modern-shifters .form-c-monthly-card,
+    .modern-shifters .official-report-card {
+        padding: 18px;
+    }
+
+    .modern-shifters .methods-grid .method-row {
+        grid-template-columns: 80px minmax(0, 1fr) 40px;
+        gap: 8px;
+    }
+
+    .modern-shifters .official-report-card .report-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .modern-shifters .official-report-card .report-buttons button {
+        width: 100%;
+    }
+
+    .modern-shifters .official-report-card .official-report-table {
+        min-width: 1100px;
+    }
+
+}

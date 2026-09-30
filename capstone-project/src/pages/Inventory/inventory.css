@@ -95,9 +95,9 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 40px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  margin: 0 !important;
+  padding: 25px 40px !important;
+  background: #ffffff;
 }
 
 #inventory-topbar h1 {
@@ -106,6 +106,7 @@ body {
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--primary);
+  margin: 0;
 }
 
 #refresh-button {
@@ -412,7 +413,7 @@ button:active {
 }
 
 button {
-  border: none;
+  border:#D3D2E8;
   cursor: pointer;
   font-family: 'Inter', sans-serif;
 }
@@ -499,7 +500,7 @@ button:hover {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(20, 8, 109, 0.35);
+  background: rgba(15, 23, 42, 0.55);
   backdrop-filter: blur(3px);
   display: flex;
   align-items: center;
@@ -536,7 +537,7 @@ button:hover {
 .rhu-info-box {
   max-width: 700px;
   width: 100%;
-  max-height: 80vh;
+  max-height: 510px;
   overflow-y: auto;
   text-align: left;
   padding: 0;
@@ -544,7 +545,7 @@ button:hover {
 
 .rhu-info-header {
   background-color: var(--primary);
-  padding: 24px 32px;
+  padding: 14px 22px;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -561,10 +562,11 @@ button:hover {
 
 #inventory-container  .rhu-detail-name {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 30px;
+  font-size: 27px;
   font-weight: 700;
+  padding: 5px;
   color: #091F7A;
-  margin: 0;
+  margin-top: 5px;
   text-align: center;
 }
 
@@ -573,10 +575,10 @@ button:hover {
 .rhu-detail-header {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
   width: 100%;
   margin: 0;
-  padding: 24px 32px 0;
+  padding: 5px 22px 0;
   box-sizing: border-box;
   
 }
@@ -585,7 +587,7 @@ button:hover {
 .rhu-stat-card {
   background-color: var(--primary);
   border-radius: 14px;
-  padding: 18px 22px;
+  padding: 10px 22px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -636,7 +638,7 @@ input.rhu-stat:focus {
 .barangay-section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 5px;
   background-color: var(--surface-sunken);
   border-radius: 14px;
   padding: 20px;
@@ -762,23 +764,23 @@ input.rhu-stat:focus {
   background-color: var(--primary-tint);
 }
 
-.modal-header {
+.modal-header-inventory {
   display: flex;
   flex-direction: column;
-  gap: 4px;
   margin-bottom: 0;
   background-color: var(--primary);
   width: 100%;
-  padding: 22px 28px;
-  box-sizing: border-box;
+  padding-left:20px;
 }
 
-.modal-header h3 {
+.modal-header-inventory h3 {
   color: white;
   font-family: 'Space Grotesk', sans-serif;
   font-size: 19px;
   font-weight: 700;
   text-align: left;
+  padding-left:  20px;
+  margin-top: 20px;
 }
 
 .modal-title-centered {
@@ -797,15 +799,13 @@ input.rhu-stat:focus {
   color: var(--ink);
 }
 
-.modal-subtext {
+.modal-subtext-inventory {
   font-size: 15px;
   font-weight: 500;
   color: var(--surface);
-  text-align: left;
-  padding: 0;
   border-radius: 0;
 }
-.modal-header .modal-subtext {
+.modal-header-inventory .modal-subtext-inventory {
   color: var(--surface);
 }
 
@@ -815,7 +815,8 @@ input.rhu-stat:focus {
   align-items: center;
   gap: 12px;
   margin-top: 0;
-  padding: 15px;
+  padding: 10px;
+  background-color: #fff;
 }
 
 .allocate-box, .deduct-box {
@@ -827,19 +828,18 @@ input.rhu-stat:focus {
   text-align: left;
 }
 
-.allocate-box > *:not(.modal-header),
-.deduct-box > *:not(.modal-header) {
+.allocate-box > *:not(.modal-header-inventory),
+.deduct-box > *:not(.modal-header-inventory) {
   padding-left: 28px;
   padding-right: 28px;
 }
 
 .allocate-input-section {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   gap: 8px;
-  margin-top: 20px;
-  margin-bottom: 4px;
+  margin-top: 10px;
 }
 
 .allocate-input-section h3{
@@ -1270,8 +1270,6 @@ input.rhu-stat:focus {
 /* ---------- Accessibility ---------- */
 
 button:focus-visible,
-input:focus-visible,
-select:focus-visible,
 .rhu-edit-icon:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;

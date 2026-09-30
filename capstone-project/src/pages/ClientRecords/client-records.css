@@ -34,9 +34,9 @@
   gap: 8px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  padding: 11px 24px;
+  padding: 9px 24px;
   background: #f1f2f3;
-  width: 480px;
+  width: 380px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -64,8 +64,8 @@
 .client-filter-select {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  padding: 12px 28px;
-  font-size: 15px;
+  padding: 10px 28px;
+  font-size: 14px;
   color: #374151;
   background: #ffffff;
   cursor: pointer;
@@ -83,7 +83,6 @@
 }
 
 .client-filter-select:focus {
-  border-color: #091F7A;
   box-shadow: 0 0 0 3px rgba(9, 31, 122, 0.1);
 }
 
@@ -101,11 +100,11 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 11px 54px;
+  padding: 10px 54px;
   border-radius: 8px;
-  background: #091F7A;
+  background: #5fc92e;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   color: #ffffff;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
@@ -113,8 +112,8 @@
 
 .btn-export:hover,
 .btn-import:hover {
-   background-color: #d7dcf5;
-  color: #091F7A;
+   background-color: #59da5096;
+  color: #086308;
   border: none;
 }
 
@@ -123,12 +122,12 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 12px 26px;
+  padding: 9px 23px;
   border: none;
   border-radius: 8px;
   background: #14990D;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   color: #ffffff;
   cursor: pointer;
   transition: background 0.15s ease;
@@ -174,13 +173,13 @@
 }
 
 .tab-button {
-  padding: 12px 28px;
+  padding: 11px 28px;
   border: none;
   border-radius: 5px;
   background-color: #E5E7EB;
   color: #374151;
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 400;
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease;
 }

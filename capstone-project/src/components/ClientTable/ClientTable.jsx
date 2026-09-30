@@ -4,7 +4,7 @@ import { SquarePen, Trash2, FileText, Eye, ArchiveRestore } from 'lucide-react';
 
 function ClientTable({ clients, loading, onView, onEdit, onDelete, isArchived, onRestore }) {
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 8;
+    const itemsPerPage = 10;
 
     const safeClients = clients || [];
     const totalPages = Math.ceil(safeClients.length / itemsPerPage);
@@ -107,7 +107,7 @@ function ClientTable({ clients, loading, onView, onEdit, onDelete, isArchived, o
                                             </div>
                                         </td>
                                         <td>
-                                            <div className="client-birthdate">
+                                            <div className="client-civil-status">
                                                 <span>{client.civil_status_male}</span>
                                                 <span>{client.civil_status_female}</span>
                                             </div>
@@ -123,25 +123,25 @@ function ClientTable({ clients, loading, onView, onEdit, onDelete, isArchived, o
                                         <td>{client.barangay}</td>
                                         <td>
                                             <div className="client-educational-attainment">
-                                                <span>{client.educational_attainment_male}</span>
-                                                <span>{client.educational_attainment_female}</span>
+                                                <span>{client.educational_attainment_male || "—"}</span>
+                                                <span>{client.educational_attainment_female || "—"}</span>
                                             </div>
                                         </td>
                                         <td>
-                                            <span className="children-badge">{client.no_of_children}</span>
+                                            <span className="children-badge">{client.no_of_children||"—"}</span>
                                         </td>
                                         <td>
-                                            <span className="method-badge">{client.fp_method}</span>
+                                            <span className="method-badge">{client.fp_method||"—"}</span>
                                         </td>
-                                        <td>{client.intention_to_shift}</td>
+                                        <td>{client.intention_to_shift||"—"}</td>
                                         <td>
-                                            <span className="type-badge">{client.type}</span>
+                                            <span className="type-badge">{client.type ||"—"}</span>
                                         </td>
                                         <td>
-                                            <span>{client.status}</span>
+                                            <span>{client.status||"—"}</span>
                                         </td>
-                                        <td>{client.reason}</td>
-                                        <td>{client.classes_held}</td>
+                                        <td>{client.reason||"—"}</td>
+                                        <td>{client.classes_held||"—"}</td>
                                         <td>
                                             <div className="action-buttons">
 

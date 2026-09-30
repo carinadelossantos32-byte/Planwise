@@ -1,0 +1,825 @@
+/* =========================================================
+   MODERN FP USERS ANALYTICS
+   Scoped / Isolated CSS
+   ========================================================= */
+
+.modernfp-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-top: 20px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+
+    --mfp-ink: #1B1B2F;
+    --mfp-ink-soft: #5B5B76;
+    --mfp-ink-faint: #9494AC;
+
+    --mfp-surface: #FFFFFF;
+    --mfp-surface-sunken: #F1F1F8;
+
+    --mfp-border: #E4E3F2;
+    --mfp-border-strong: #D3D2E8;
+
+    --mfp-primary: #091F7A;
+    --mfp-primary-light: #091F7A;
+    --mfp-primary-tint: #EEEBFB;
+
+    --mfp-mint: #148D0D;
+    --mfp-mint-light: #22A51A;
+    --mfp-mint-tint: #E5F6EC;
+
+    --mfp-amber: #E0563D;
+    --mfp-pdf: #DC2626;
+    --mfp-pdf-hover: #B91C1C;
+    --mfp-excel: #15803D;
+    --mfp-excel-hover: #166534;
+
+    --mfp-shadow-sm: 0 1px 2px rgba(20, 8, 109, 0.06);
+    --mfp-shadow-md: 0 6px 20px rgba(20, 8, 109, 0.08);
+}
+
+.modernfp-container,
+.modernfp-container *,
+.modernfp-container *::before,
+.modernfp-container *::after {
+    box-sizing: border-box;
+}
+
+
+/* =========================================================
+   KPI CARDS
+   ========================================================= */
+
+.modernfp-container .modernfp-cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    width: 100%;
+    max-width: 100%;
+}
+
+.modernfp-container .modernfp-card {
+    position: relative;
+    min-width: 0;
+    padding: 22px 24px;
+
+    background: var(--mfp-surface);
+    color: var(--mfp-ink);
+
+    border: 1px solid var(--mfp-border);
+    border-radius: 16px;
+
+    box-shadow: var(--mfp-shadow-sm);
+}
+
+.modernfp-container .modernfp-card::before {
+    content: "";
+
+    position: absolute;
+    left: 0;
+    top: 18px;
+    bottom: 18px;
+
+    width: 4px;
+
+    border-radius: 0 4px 4px 0;
+}
+
+.modernfp-container .modernfp-card.orange::before {
+    background: var(--mfp-amber);
+}
+
+.modernfp-container .modernfp-card.green::before {
+    background: var(--mfp-mint);
+}
+
+.modernfp-container .modernfp-card.purple::before {
+    background: var(--mfp-primary-light);
+}
+
+.modernfp-container .modernfp-card small {
+    display: block;
+    margin-bottom: 10px;
+
+    color: var(--mfp-ink-soft);
+
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.modernfp-container .modernfp-card h2 {
+    margin: 0;
+
+    color: var(--mfp-primary);
+
+    font-size: 32px;
+    line-height: 1.1;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.modernfp-container .modernfp-card.orange h2 {
+    color: var(--mfp-amber);
+}
+
+.modernfp-container .modernfp-card.green h2 {
+    color: var(--mfp-mint);
+}
+
+.modernfp-container .modernfp-card.purple h2 {
+    color: var(--mfp-primary-light);
+}
+
+.modernfp-container .modernfp-card span {
+    display: block;
+    margin-top: 8px;
+
+    color: var(--mfp-ink-faint);
+
+    font-size: 12px;
+    font-weight: 500;
+}
+
+
+/* =========================================================
+   METHOD DISTRIBUTION CONTAINER
+   ========================================================= */
+
+.modernfp-container .modernfp-distribution-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    padding: 22px 24px;
+
+    background: var(--mfp-surface);
+
+    border: 1px solid var(--mfp-border);
+    border-radius: 16px;
+
+    box-shadow: var(--mfp-shadow-sm);
+
+    overflow: hidden;
+}
+
+.modernfp-container .modernfp-distribution-card h3 {
+    margin: 0 0 20px;
+
+    color: var(--mfp-ink);
+
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.modernfp-container .modernfp-method-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+
+    width: 100%;
+    max-width: 100%;
+}
+
+.modernfp-container .method-column {
+    min-width: 0;
+    max-width: 100%;
+
+    padding: 18px;
+
+    background: var(--mfp-surface-sunken);
+
+    border: 1px solid var(--mfp-border);
+    border-radius: 14px;
+
+    overflow: hidden;
+}
+
+.modernfp-container .method-column h4 {
+    margin: 0 0 18px;
+
+    color: var(--mfp-primary);
+
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.modernfp-container .method-row {
+    display: grid;
+    grid-template-columns:
+        minmax(45px, 90px)
+        minmax(0, 1fr)
+        minmax(35px, 50px);
+
+    gap: 10px;
+    align-items: center;
+
+    margin-bottom: 14px;
+    min-width: 0;
+}
+
+.modernfp-container .method-row:last-child {
+    margin-bottom: 0;
+}
+
+.modernfp-container .method-row span {
+    min-width: 0;
+
+    color: var(--mfp-ink-soft);
+
+    font-size: 13px;
+    font-weight: 500;
+
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.modernfp-container .method-row strong {
+    min-width: 0;
+
+    color: var(--mfp-ink);
+
+    font-size: 12px;
+    font-weight: 700;
+
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.modernfp-container .method-progress {
+    width: 100%;
+    min-width: 0;
+
+    height: 8px;
+
+    background: var(--mfp-border);
+
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.modernfp-container .method-progress-fill {
+    height: 100%;
+
+    background: var(--mfp-primary-light);
+
+    border-radius: 999px;
+}
+
+.modernfp-container .method-progress-fill.green {
+    background: var(--mfp-mint);
+}
+
+.modernfp-container .method-progress-fill.orange {
+    background: var(--mfp-amber);
+}
+
+
+/* =========================================================
+   MONTHLY SUMMARY CONTAINER
+   ========================================================= */
+
+.modernfp-container .monthly-summary {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    padding: 22px 24px;
+
+    background: var(--mfp-surface);
+
+    border: 1px solid var(--mfp-border);
+    border-radius: 16px;
+
+    box-shadow: var(--mfp-shadow-sm);
+
+    overflow: hidden;
+}
+
+.modernfp-container .monthly-summary h3 {
+    margin: 0 0 18px;
+
+    color: var(--mfp-ink);
+
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.modernfp-container .monthly-summary-table-wrapper {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    overflow: hidden;
+
+    border: 1px solid var(--mfp-border);
+    border-radius: 12px;
+}
+
+.modernfp-container .monthly-summary-table {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    table-layout: fixed;
+
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+.modernfp-container .monthly-summary-table thead {
+    background: var(--mfp-primary);
+    color: #FFFFFF;
+}
+
+.modernfp-container .monthly-summary-table th {
+    padding: 11px 8px;
+
+    color: #FFFFFF;
+
+    font-size: 10px;
+    font-weight: 700;
+
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+
+    border: 1px solid rgba(255, 255, 255, 0.16);
+
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+
+    line-height: 1.2;
+}
+
+.modernfp-container .monthly-summary-table td {
+    padding: 11px 8px;
+
+    color: var(--mfp-ink-soft);
+
+    font-size: 12px;
+    font-weight: 500;
+
+    text-align: center;
+
+    border: 1px solid var(--mfp-border);
+
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.modernfp-container .monthly-summary-table tbody tr:nth-child(even) {
+    background: #FAFAFD;
+}
+
+.modernfp-container .monthly-summary-table tbody tr:hover {
+    background: var(--mfp-primary-tint);
+}
+
+.modernfp-container .monthly-summary-table tfoot {
+    background: var(--mfp-primary-tint);
+}
+
+.modernfp-container .monthly-summary-table tfoot td,
+.modernfp-container .monthly-summary-table tfoot th {
+    color: var(--mfp-primary);
+
+    padding: 11px 8px;
+
+    font-weight: 700;
+
+    border: 1px solid var(--mfp-border);
+}
+
+
+/* =========================================================
+   OFFICIAL REPORT CONTAINER
+   ========================================================= */
+
+.modernfp-container .modernfp-report-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    padding: 24px;
+
+    background: var(--mfp-surface);
+
+    border: 1px solid var(--mfp-border);
+    border-radius: 18px;
+
+    box-shadow: var(--mfp-shadow-sm);
+
+    overflow: hidden;
+}
+
+
+/* =========================================================
+   OFFICIAL REPORT HEADER
+   ========================================================= */
+
+.modernfp-container .modernfp-report-header {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    gap: 20px;
+
+    width: 100%;
+    min-width: 0;
+
+    margin-bottom: 20px;
+    padding-bottom: 18px;
+
+    border-bottom: 1px solid var(--mfp-border);
+}
+
+.modernfp-container .modernfp-report-header > div:first-child {
+    min-width: 0;
+}
+
+.modernfp-container .modernfp-report-header h3 {
+    margin: 0;
+
+    color: var(--mfp-primary);
+
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.modernfp-container .modernfp-report-header p {
+    margin: 5px 0 0;
+
+    color: var(--mfp-ink-soft);
+
+    font-size: 13px;
+    font-weight: 500;
+}
+
+
+/* =========================================================
+   OFFICIAL REPORT ACTION BUTTONS
+   Fully scoped to Modern FP
+   ========================================================= */
+
+.modernfp-container .modernfp-report-actions {
+    display: flex;
+
+    align-items: center;
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    flex-wrap: wrap;
+
+    flex-shrink: 0;
+}
+
+.modernfp-container .modernfp-report-actions button {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 40px;
+
+    padding: 0 16px;
+
+    border: none;
+    border-radius: 9px;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    box-shadow: none;
+}
+
+.modernfp-container .modernfp-report-actions .refresh-btn {
+    background: #F1F5F9 !important;
+    color: #334155 !important;
+    border: 1px solid #E2E8F0;
+}
+
+.modernfp-container .modernfp-report-actions .refresh-btn:hover {
+    background: #E2E8F0 !important;
+    color: #334155 !important;
+}
+
+.modernfp-container .modernfp-report-actions .export-pdf-btn {
+    background: var(--mfp-pdf) !important;
+    color: #FFFFFF !important;
+}
+
+.modernfp-container .modernfp-report-actions .export-pdf-btn:hover {
+    background: var(--mfp-pdf-hover) !important;
+}
+
+.modernfp-container .modernfp-report-actions .export-excel-btn {
+    background: var(--mfp-excel) !important;
+    color: #FFFFFF !important;
+}
+
+.modernfp-container .modernfp-report-actions .export-excel-btn:hover {
+    background: var(--mfp-excel-hover) !important;
+}
+
+
+/* =========================================================
+   OFFICIAL REPORT TABLE CONTAINER
+   ========================================================= */
+
+.modernfp-container .modernfp-report-table-wrapper {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    border: 1px solid var(--mfp-border);
+    border-radius: 12px;
+
+    background: var(--mfp-surface);
+}
+
+
+/* =========================================================
+   OFFICIAL REPORT TABLE
+   ========================================================= */
+
+.modernfp-container .modernfp-report-table {
+    width: 100%;
+    max-width: 100%;
+
+    min-width: 900px;
+
+    table-layout: fixed;
+
+    border-collapse: collapse;
+    border-spacing: 0;
+
+    margin: 0;
+}
+
+
+/* =========================================================
+   OFFICIAL TABLE HEADER
+   ========================================================= */
+
+.modernfp-container .modernfp-report-table thead {
+    background: var(--mfp-primary);
+}
+
+.modernfp-container .modernfp-report-table thead th {
+    padding: 9px 6px;
+
+    background: var(--mfp-primary);
+    color: #FFFFFF;
+
+    font-size: 10px;
+    font-weight: 700;
+
+    text-align: center;
+    vertical-align: middle;
+
+    border: 1px solid rgba(255, 255, 255, 0.18);
+
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+
+    line-height: 1.2;
+}
+
+
+/* =========================================================
+   OFFICIAL TABLE BODY
+   ========================================================= */
+
+.modernfp-container .modernfp-report-table tbody td {
+    padding: 9px 6px;
+
+    background: var(--mfp-surface);
+
+    color: var(--mfp-ink-soft);
+
+    font-size: 12px;
+    font-weight: 500;
+
+    text-align: center;
+
+    border: 1px solid var(--mfp-border);
+
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.modernfp-container .modernfp-report-table tbody tr:nth-child(even) td {
+    background: #FAFAFD;
+}
+
+.modernfp-container .modernfp-report-table tbody tr:hover td {
+    background: var(--mfp-primary-tint);
+}
+
+
+/* =========================================================
+   GRAND TOTAL
+   ========================================================= */
+
+.modernfp-container .modernfp-report-table tfoot th,
+.modernfp-container .modernfp-report-table tfoot td {
+    padding: 12px 8px;
+
+    background: var(--mfp-primary-light);
+    color: #FFFFFF;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    text-align: center;
+
+    border: 1px solid rgba(255, 255, 255, 0.20);
+}
+
+.modernfp-container .modernfp-report-table tfoot .grand-total-title {
+    background: var(--mfp-primary) !important;
+    color: #FFFFFF !important;
+
+    font-weight: 700;
+    text-align: left;
+}
+
+
+/* =========================================================
+   STICKY FIRST COLUMN
+   ========================================================= */
+
+.modernfp-container .modernfp-report-table th:first-child,
+.modernfp-container .modernfp-report-table td:first-child {
+    position: sticky;
+
+    left: 0;
+
+    font-weight: 700;
+
+    z-index: 2;
+}
+
+.modernfp-container .modernfp-report-table thead th:first-child {
+    background: var(--mfp-primary);
+
+    color: #FFFFFF;
+
+    z-index: 4;
+}
+
+.modernfp-container .modernfp-report-table tbody td:first-child {
+    background: var(--mfp-surface);
+
+    color: var(--mfp-ink);
+}
+
+.modernfp-container .modernfp-report-table tbody tr:nth-child(even) td:first-child {
+    background: #FAFAFD;
+}
+
+.modernfp-container .modernfp-report-table tbody tr:hover td:first-child {
+    background: var(--mfp-primary-tint);
+}
+
+.modernfp-container .modernfp-report-table tfoot th:first-child,
+.modernfp-container .modernfp-report-table tfoot td:first-child {
+    background: var(--mfp-primary);
+
+    color: #FFFFFF;
+
+    z-index: 4;
+}
+
+
+/* =========================================================
+   OFFICIAL TABLE SCROLLBAR
+   ========================================================= */
+
+.modernfp-container .modernfp-report-table-wrapper::-webkit-scrollbar {
+    height: 7px;
+}
+
+.modernfp-container .modernfp-report-table-wrapper::-webkit-scrollbar-track {
+    background: var(--mfp-surface-sunken);
+
+    border-radius: 10px;
+}
+
+.modernfp-container .modernfp-report-table-wrapper::-webkit-scrollbar-thumb {
+    background: var(--mfp-border-strong);
+
+    border-radius: 10px;
+}
+
+.modernfp-container .modernfp-report-table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #B8B7CF;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1100px) {
+    .modernfp-container .modernfp-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .modernfp-container .modernfp-method-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 850px) {
+    .modernfp-container .modernfp-method-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modernfp-container .modernfp-report-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .modernfp-container .modernfp-report-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 650px) {
+    .modernfp-container .modernfp-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .modernfp-container .modernfp-distribution-card,
+    .modernfp-container .monthly-summary,
+    .modernfp-container .modernfp-report-card {
+        padding: 16px;
+    }
+
+    .modernfp-container .modernfp-report-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .modernfp-container .modernfp-report-actions button {
+        width: 100%;
+    }
+
+    .modernfp-container .modernfp-report-table {
+        min-width: 900px;
+    }
+
+    .modernfp-container .modernfp-report-table thead th {
+        padding: 6px 3px;
+        font-size: 9px;
+    }
+
+    .modernfp-container .modernfp-report-table tbody td {
+        padding: 6px 3px;
+        font-size: 10px;
+    }
+
+    .modernfp-container .modernfp-report-table tfoot th,
+    .modernfp-container .modernfp-report-table tfoot td {
+        padding: 7px 3px;
+        font-size: 10px;
+    }
+
+    .modernfp-container .monthly-summary-table th {
+        padding: 7px 3px;
+        font-size: 8px;
+    }
+
+    .modernfp-container .monthly-summary-table td {
+        padding: 7px 3px;
+        font-size: 9px;
+    }
+}
+
+
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
+
+.modernfp-container button:focus-visible {
+    outline: 2px solid var(--mfp-primary-light);
+    outline-offset: 2px;
+}

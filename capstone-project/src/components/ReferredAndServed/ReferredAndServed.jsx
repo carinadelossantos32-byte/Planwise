@@ -61,7 +61,9 @@ function ReferredAndServed({ clients, loading, onView, onEdit, onDelete, isArchi
                                     <th>ID</th>
                                     <td>Name</td>
                                     <td>Address</td>
+                                    <td>Barangay</td>
                                     <td>FP Method</td>
+                                    <td>With Intention to Shift</td>
                                     <td>Name of Health Service Facility</td>
                                     <td>Address of Health Service Facility</td>
                                     <td>Who Referred the Client</td>
@@ -81,7 +83,9 @@ function ReferredAndServed({ clients, loading, onView, onEdit, onDelete, isArchi
                                             </div>
                                         </td>
                                         <td>{client.address || "—"}</td>
-                                        <td>{client.FP_method || "—"}</td>
+                                        <td>{client.barangay || "—"}</td>
+                                        <td>{client.fp_method || "—"}</td>
+                                        <td>{client.with_intention_to_shift || "—"}</td>
                                         <td>{client.facility_name || "—"}</td>
                                         <td>{client.facility_address || "—"}</td>
                                         <td>{client.referred_by || "—"}</td>

@@ -926,9 +926,9 @@ async function handleSingleRhuDeduct() {
                 <div className="modal-overlay">
                     <div className="modal-content allocate-box">
 
-                        <div className="modal-header">
+                        <div className="modal-header-inventory">
                             <h3>  Allocate Stock</h3>
-                            <p className="modal-subtext">Enter total quantity to allocate. It will auto-distributed to each RHU</p>
+                            <p className="modal-subtext-inventory">Enter total quantity to allocate. It will auto-distributed to each RHU</p>
                         </div>
 
                         <div className="allocate-input-section">

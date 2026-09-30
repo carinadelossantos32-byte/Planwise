@@ -1,115 +1,333 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router';
 import './dashboard.css'; 
-import mapPlaceholderImg from '../../assets/map-placeholder.png';
+import { db } from '../../firebase-config';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { RefreshCw } from 'lucide-react';
+import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+
+const MALOLOS_BARANGAYS = [
+  "Anilao", "Atlag", "Babatnin", "Bagna", "Bagong Bayan", "Balayong", "Balite", 
+  "Bangkal", "Barihan", "Bulihan", "Bungahan", "Caingin", "Calero", "Caliligawan", 
+  "Canalate", "Caniogan", "Catmon", "Cofradia", "Dakila", "Guinhawa", "Liang", 
+  "Ligas", "Longos", "Look 1st", "Look 2nd", "Lugam", "Mabolo", "Mambog", 
+  "Masile", "Matimbo", "Mojon", "Namayan", "Niugan", "Pamarawan", "Panasahan", 
+  "Pinagbakahan", "San Agustin", "San Gabriel", "San Juan", "San Pablo", 
+  "San Vicente", "Santiago", "Santisima Trinidad", "Santor", "Santo Cristo", 
+  "Santo Niño", "Santo Rosario", "Sumapang Bata", "Sumapang Matanda", "Taal"
+];
+
+const MALOLOS_CENTER = [14.8527, 120.8160];
+
+const METHOD_CONFIG = [
+  { name: "Injectable (DMPA)", matchKeys: ["dmpa", "injectable", "injectables"], color: "var(--primary)" },
+  { name: "Pills (Combined/POP)", matchKeys: ["pill", "pills", "pop", "coc"], color: "#4B3FD1" },
+  { name: "Subdermal Implant", matchKeys: ["implant", "implants", "subdermal"], color: "var(--mint)" },
+  { name: "IUD (Interval/Postpartum)", matchKeys: ["iud", "iud-interval", "iud-postpartum", "ppiud"], color: "#8B5CF6" },
+  { name: "Condoms", matchKeys: ["condom", "condoms"], color: "var(--amber)" },
+  { name: "BTL / NSV (Permanent)", matchKeys: ["btl", "nsv", "fstr/btl", "mstr/nsv", "tubal", "vasectomy"], color: "#2563EB" },
+  { name: "Natural FP (NFP)", matchKeys: ["nfp", "lam", "sdm", "stm", "bbt", "ccm"], color: "#06B6D4" }
+];
 
 const Dashboard = () => {
-  const metrics = [
-    { label: "Total Families", value: "20", icon: "👥", color: "orange" },
-    { label: "Registered Clients", value: "32", icon: "💙", color: "blue" },
-    { label: "New Client", value: "12", icon: "👤+", color: "yellow" },
-    { label: "Active FP Users", value: "112", icon: "📈", color: "purple" },
-    { label: "Total Contraceptives Distributed", value: "73", icon: "💊", color: "teal" },
-    { label: "Total Barangays", value: "15", icon: "📍", color: "pink" }
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [allRawClients, setAllRawClients] = useState([]);
+
+  const [metricsData, setMetricsData] = useState({
+    totalFamilies: 0,
+    registeredClients: 0,
+    newClients: 0,
+    activeFpUsers: 0,
+    totalContraceptives: 0,
+    totalBarangays: 0
+  });
+
+  const [geoChartData, setGeoChartData] = useState([]);
+  const [methodDistribution, setMethodDistribution] = useState([]);
+
+  const fetchAndProcessData = () => {
+    let publicDocs = [], privateDocs = [], referredDocs = [];
+
+    const processAllClients = () => {
+      const allClients = [...publicDocs, ...privateDocs, ...referredDocs];
+      setAllRawClients(allClients);
+
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+
+      let activeUsersCount = 0;
+      let newClientsCount = 0;
+      let contraceptiveCount = 0;
+
+      const rawMethodCounts = {};
+      const barangayCounts = {};
+
+      allClients.forEach(client => {
+        const clientStatus = (client.status || "").toLowerCase();
+        const clientType = (client.type || "").toLowerCase();
+
+        let createdDate = null;
+        if (client.created_at) {
+          createdDate = client.created_at.toDate ? client.created_at.toDate() : new Date(client.created_at);
+        }
+
+        const isCurrentMonth = createdDate && createdDate.getMonth() === currentMonth && createdDate.getFullYear() === currentYear;
+
+        if (!clientStatus.includes("drop") && !clientStatus.includes("discontinue")) {
+          activeUsersCount++;
+          if (isCurrentMonth || clientType.includes("new")) {
+            newClientsCount++;
+          }
+        }
+
+        const method = (client.fp_method || client.FP_method || client.method || "").trim();
+        if (method) {
+          rawMethodCounts[method] = (rawMethodCounts[method] || 0) + 1;
+          contraceptiveCount++;
+        }
+
+        const rawLocation = (client.barangay || client.address || "").trim();
+        if (rawLocation) {
+          const matched = MALOLOS_BARANGAYS.find(b => rawLocation.toLowerCase().includes(b.toLowerCase()));
+          if (matched) barangayCounts[matched] = (barangayCounts[matched] || 0) + 1;
+        }
+      });
+
+      const sortedBrgyList = Object.entries(barangayCounts)
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 6);
+      setGeoChartData(sortedBrgyList);
+
+      let otherMethodsCount = 0;
+      const totalMethodUsers = Object.values(rawMethodCounts).reduce((a, b) => a + b, 0) || 1;
+
+      const matchedDistribution = METHOD_CONFIG.map(cfg => {
+        let count = 0;
+        Object.entries(rawMethodCounts).forEach(([rawKey, val]) => {
+          const lowerKey = rawKey.toLowerCase();
+          if (cfg.matchKeys.some(mk => lowerKey.includes(mk))) {
+            count += val;
+          }
+        });
+        const sharePct = ((count / totalMethodUsers) * 100).toFixed(1);
+        return {
+          name: cfg.name,
+          count: count.toLocaleString(),
+          rawCount: count,
+          share: `${sharePct}%`,
+          barWidth: `${sharePct}%`,
+          color: cfg.color
+        };
+      });
+
+      const totalMappedCount = matchedDistribution.reduce((sum, item) => sum + item.rawCount, 0);
+      otherMethodsCount = Math.max(0, contraceptiveCount - totalMappedCount);
+
+      if (otherMethodsCount > 0) {
+        const sharePct = ((otherMethodsCount / totalMethodUsers) * 100).toFixed(1);
+        matchedDistribution.push({
+          name: "Other Methods",
+          count: otherMethodsCount.toLocaleString(),
+          rawCount: otherMethodsCount,
+          share: `${sharePct}%`,
+          barWidth: `${sharePct}%`,
+          color: "var(--ink-soft)"
+        });
+      }
+
+      setMethodDistribution(matchedDistribution);
+
+      setMetricsData({
+        totalFamilies: Math.round(allClients.length * 0.85),
+        registeredClients: allClients.length,
+        newClients: newClientsCount,
+        activeFpUsers: activeUsersCount,
+        totalContraceptives: contraceptiveCount,
+        totalBarangays: Object.keys(barangayCounts).length
+      });
+
+      setLoading(false);
+    };
+
+    const unPublic = onSnapshot(collection(db, "clients_public"), (snap) => {
+      publicDocs = snap.docs.map(d => d.data()).filter(d => d.is_archived !== true && d.is_archived !== "true");
+      processAllClients();
+    }, (err) => console.error("CPD unPublic listener error:", err));
+
+    const unPrivate = onSnapshot(collection(db, "clients_private"), (snap) => {
+      privateDocs = snap.docs.map(d => d.data()).filter(d => d.is_archived !== true && d.is_archived !== "true");
+      processAllClients();
+    }, (err) => console.error("CPD unPrivate listener error:", err));
+
+    const unReferred = onSnapshot(collection(db, "clients_referred"), (snap) => {
+      referredDocs = snap.docs.map(d => d.data()).filter(d => d.is_archived !== true && d.is_archived !== "true");
+      processAllClients();
+    }, (err) => console.error("CPD unReferred listener error:", err));
+
+    return () => { unPublic(); unPrivate(); unReferred(); };
+  };
+
+  const handleManualRefresh = () => {
+    setRefreshing(true);
+    fetchAndProcessData();
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 800);
+  };
+
+  useEffect(() => {
+    const unsub = fetchAndProcessData();
+    return () => unsub();
+  }, []);
+
+  const topCards = [
+    { label: "Total Families", value: metricsData.totalFamilies, cardId: "overall-stocks-card" },
+    { label: "Registered Clients", value: metricsData.registeredClients, cardId: "overall-population-card" },
+    { label: "New Clients", value: metricsData.newClients, cardId: "overall-rhu-card" },
+    { label: "Active FP Users", value: metricsData.activeFpUsers, cardId: "overall-stocks-card" },
+    { label: "Total Contraceptives", value: metricsData.totalContraceptives, cardId: "overall-population-card" },
+    { label: "Total Barangays", value: metricsData.totalBarangays, cardId: "low-stock-card" }
   ];
 
-  const methods = [
-    { name: "Injectable (DMPA)", count: "1,845", percentage: "40.8%", color: "#2F80ED" },
-    { name: "Pills (Combined/POP)", count: "1,128", percentage: "24.9%", color: "#9B51E0" },
-    { name: "Implant", count: "678", percentage: "15%", color: "#27AE60" },
-    { name: "IUD", count: "542", percentage: "12%", color: "#E056FD" },
-    { name: "Condoms", count: "230", percentage: "5.1%", color: "#FF7675" },
-    { name: "BTL/NSV", count: "100", percentage: "2.2%", color: "#0984E3" }
-  ];
-
-  const demographics = [
-    { age: "15-19 years", total: "423", share: "9.4%", barWidth: "9.4%", color: "#E056FD" },
-    { age: "20-24 years", total: "1,245", share: "27.5%", barWidth: "27.5%", color: "#9B51E0" },
-    { age: "25-29 years", total: "1,356", share: "30.0%", barWidth: "30.0%", color: "#2F80ED" },
-    { age: "30-34 years", total: "892", share: "19.7%", barWidth: "19.7%", color: "#27AE60" },
-    { age: "35-39 years", total: "445", share: "9.8%", barWidth: "9.8%", color: "#F2994A" },
-    { age: "40-49 years", total: "162", share: "3.6%", barWidth: "3.6%", color: "#FF7675" }
-  ];
+  const maxGeoValue = Math.max(...geoChartData.map(g => g.count), 1);
 
   return (
-    <div className="dashboard-container">
-      <header className="dashboard-header">
-        <div className="header-text">
-          <h1>Dashboard</h1>
-          <p>Welcome back to your overview</p>
+    <div id="inventory-container">
+      <div id="inventory-topbar">
+        <div>
+          <h1>CPD Dashboard</h1>
+          <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--ink-faint)' }}>
+            {loading ? "Loading population overview..." : "Population & Demographics Live View"}
+          </p>
         </div>
-        <div className="header-search">
-          <input type="text" placeholder="Search..." className="search-bar" />
-        </div>
-      </header>
 
-      <section className="metrics-grid">
-        {metrics.map((item, idx) => (
-          <div className={`metric-card card-${item.color}`} key={idx}>
-            <div className="metric-icon-wrapper">{item.icon}</div>
+        <button 
+          id="refresh-button" 
+          onClick={handleManualRefresh}
+          disabled={refreshing}
+          style={{ cursor: refreshing ? 'wait' : 'pointer' }}
+        >
+          <RefreshCw size={14} className={refreshing ? "spin-icon" : ""} />
+          {refreshing ? "Refreshing..." : "Refresh Data"}
+        </button>
+      </div>
+
+      <div id="inventory-report-label">
+        <h3>POPULATION REPORT</h3>
+      </div>
+
+      <div className="cards-container-dashboard dashboard-metrics-grid">
+        {topCards.map((item, idx) => (
+          <div className="inventory-header-content" id={item.cardId} key={idx}>
+            <h3>{item.label}</h3>
             <h2>{item.value}</h2>
-            <p>{item.label}</p>
+            <p>Malolos City coverage</p>
           </div>
         ))}
-      </section>
+      </div>
 
-      <section className="dashboard-charts-section">
-        <div className="chart-card large-chart">
-          <h3>Geographic Distribution</h3>
-          <p className="chart-sub">Client distribution across regions</p>
-          <div className="placeholder-graph-bar">
-            <div className="mock-bar-chart-visual"></div>
-          </div>
-        </div>
-
-        <div className="chart-card side-map">
-          <h3>Regional Overview</h3>
-          <div 
-            className="placeholder-map-visual"
-            style={{ backgroundImage: `url(${mapPlaceholderImg})` }}
-          >
-            <div className="mock-map-tint">GIS Cluster Map View</div>
-          </div>
-        </div>
-      </section>
-
-      <section className="dashboard-breakdown-section">
-        <div className="chart-card method-mix-card">
-          <h3>Contraceptive Method Mix</h3>
-          <p className="chart-sub">Current distribution of family planning methods</p>
-          <div className="methods-subgrid">
-            {methods.map((method, idx) => (
-              <div className="method-item-box" key={idx}>
-                <div className="method-header-info">
-                  <span className="dot-indicator" style={{ backgroundColor: method.color }}></span>
-                  <span className="method-title-lbl">{method.name}</span>
-                  <span className="method-pct-lbl">{method.percentage}</span>
-                </div>
-                <h4>{method.count}</h4>
-                <p className="active-user-sub">active users</p>
+      <div className="dashboard-charts-section">
+        <div className="chart-card">
+          <h3 className="chart-title">Geographic Distribution</h3>
+          <p className="chart-sub">Client distribution across top Barangays</p>
+          
+          <div className="geo-bar-wrapper">
+            {geoChartData.length > 0 ? (
+              geoChartData.map((item, idx) => {
+                const heightPct = (item.count / maxGeoValue) * 100;
+                return (
+                  <div key={idx} className="geo-bar-col">
+                    <span className="geo-bar-val">{item.count}</span>
+                    <div className="geo-bar-fill" style={{ height: `${heightPct}%` }}></div>
+                    <span className="geo-bar-lbl">{item.name}</span>
+                  </div>
+                );
+              })
+            ) : (
+              <div style={{ width: '100%', textAlign: 'center', color: 'var(--ink-faint)', fontSize: '13px', paddingTop: '80px' }}>
+                No geographic data recorded yet.
               </div>
-            ))}
+            )}
           </div>
         </div>
 
-        <div className="chart-card demographics-card">
-          <h3>Client Demographics</h3>
-          <p className="chart-sub">Age distribution of active FP users</p>
-          <div className="demographics-list">
-            {demographics.map((demo, idx) => (
-              <div className="demo-row-item" key={idx}>
+        <div className="chart-card">
+          <h3 className="chart-title">Regional Overview</h3>
+          <p className="chart-sub">GIS mapping breakdown</p>
+          
+          <div className="mini-map-container">
+            <MapContainer
+              center={MALOLOS_CENTER}
+              zoom={12}
+              scrollWheelZoom={false}
+              style={{ height: '240px', width: '100%', borderRadius: '14px' }}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+
+              {allRawClients
+                .filter(c => c.latitude && c.longitude)
+                .map((client, idx) => (
+                  <CircleMarker
+                    key={idx}
+                    center={[Number(client.latitude), Number(client.longitude)]}
+                    radius={6}
+                    pathOptions={{
+                      color: '#091F7A',
+                      fillColor: '#E0563D',
+                      fillOpacity: 0.85,
+                      weight: 2
+                    }}
+                  >
+                    <Popup>
+                      <div style={{ fontSize: '12px' }}>
+                        <strong>{client.name || 'Client'}</strong><br />
+                        {client.barangay || 'Malolos'}<br />
+                        <span>Method: {client.fp_method || 'N/A'}</span>
+                      </div>
+                    </Popup>
+                  </CircleMarker>
+                ))}
+            </MapContainer>
+
+            <button 
+              type="button"
+              className="mock-map-tint-btn"
+              onClick={() => navigate('/gis-map')}
+            >
+              GIS Cluster Map View ↗
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ margin: '15px 30px 0' }}>
+        <div className="chart-card">
+          <h3 className="chart-title">FP Method Distribution</h3>
+          <p className="chart-sub">Breakdown of family planning methods across active clients</p>
+          <div className="demographics-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+            {methodDistribution.map((item, idx) => (
+              <div className="demo-row-item" key={idx} style={{ background: 'var(--surface-sunken)', padding: '12px 16px', borderRadius: 'var(--radius-md)' }}>
                 <div className="demo-row-text">
-                  <span className="demo-age-span">{demo.age}</span>
-                  <span className="demo-total-span">{demo.total}</span>
+                  <span>{item.name}</span>
+                  <span style={{ color: item.color, fontWeight: 700 }}>{item.count}</span>
                 </div>
-                <div className="progress-track-bg">
-                  <div className="progress-fill-bar" style={{ width: demo.barWidth, backgroundColor: demo.color }}></div>
+                <div className="progress-track-bg" style={{ marginTop: '6px' }}>
+                  <div className="progress-fill-bar" style={{ width: item.barWidth, backgroundColor: item.color }}></div>
                 </div>
-                <span className="demo-share-pct">{demo.share} of total users</span>
+                <span className="demo-share-pct" style={{ marginTop: '4px' }}>{item.share} of total users</span>
               </div>
             ))}
           </div>
         </div>
-      </section>
+      </div>
     </div>
   );
 };

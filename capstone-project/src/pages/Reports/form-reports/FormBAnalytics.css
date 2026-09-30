@@ -1,0 +1,938 @@
+/* =========================================================
+   FORM B ANALYTICS
+   Modern Clinical Indigo + Mint Theme
+   FORM B ONLY — NO GLOBAL SELECTORS
+   ========================================================= */
+
+.form-b-container {
+    --fb-ink: #1B1B2F;
+    --fb-ink-soft: #5B5B76;
+    --fb-ink-faint: #9494AC;
+
+    --fb-bg: #F6F7FB;
+    --fb-surface: #FFFFFF;
+    --fb-surface-sunken: #F1F1F8;
+
+    --fb-border: #E4E3F2;
+    --fb-border-strong: #D3D2E8;
+
+    --fb-primary: #091F7A;
+    --fb-primary-light: #091F7A;
+    --fb-primary-tint: #EEEBFB;
+
+    --fb-mint: #148D0D;
+    --fb-amber: #E0563D;
+
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    margin-top: 20px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+
+    box-sizing: border-box;
+}
+
+
+/* =========================================================
+   FORM B — BOX SIZING
+   ========================================================= */
+
+.form-b-container,
+.form-b-container *,
+.form-b-container *::before,
+.form-b-container *::after {
+    box-sizing: border-box;
+}
+
+.form-b-container button {
+    font-family: inherit;
+}
+
+
+/* =========================================================
+   KPI CARDS
+   ========================================================= */
+
+.form-b-container .form-b-cards {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+
+    width: 100%;
+    min-width: 0;
+}
+
+.form-b-container .fb-card {
+    position: relative;
+
+    width: 100%;
+    min-width: 0;
+
+    padding: 22px 24px;
+
+    background: #FFFFFF !important;
+
+    border: 1px solid var(--fb-border);
+    border-radius: 16px;
+
+    color: var(--fb-ink) !important;
+
+    box-shadow: 0 1px 2px rgba(20, 8, 109, 0.06);
+
+    overflow: hidden;
+}
+
+
+/* Left accent */
+
+.form-b-container .fb-card::before {
+    content: "";
+
+    position: absolute;
+    left: 0;
+    top: 18px;
+    bottom: 18px;
+
+    width: 4px;
+
+    border-radius: 0 4px 4px 0;
+}
+
+
+/* Card accent colors */
+
+.form-b-container .fb-card.green::before {
+    background: var(--fb-mint);
+}
+
+.form-b-container .fb-card.orange::before {
+    background: var(--fb-amber);
+}
+
+.form-b-container .fb-card.blue::before {
+    background: var(--fb-primary);
+}
+
+.form-b-container .fb-card.red::before {
+    background: #C62828;
+}
+
+
+/* KPI labels */
+
+.form-b-container .fb-card small {
+    display: block;
+
+    margin-bottom: 10px;
+
+    color: var(--fb-ink-soft) !important;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+
+/* KPI numbers */
+
+.form-b-container .fb-card h2 {
+    margin: 0;
+
+    color: var(--fb-primary) !important;
+
+    font-size: 32px;
+    line-height: 1.1;
+    font-weight: 700;
+
+    font-variant-numeric: tabular-nums;
+}
+
+.form-b-container .fb-card.green h2 {
+    color: var(--fb-mint) !important;
+}
+
+.form-b-container .fb-card.orange h2 {
+    color: var(--fb-amber) !important;
+}
+
+.form-b-container .fb-card.blue h2 {
+    color: var(--fb-primary) !important;
+}
+
+.form-b-container .fb-card.red h2 {
+    color: #C62828 !important;
+}
+
+
+/* =========================================================
+   SUMMARY GRID
+   ========================================================= */
+
+.form-b-container .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+    gap: 16px;
+
+    width: 100%;
+    min-width: 0;
+}
+
+
+/* =========================================================
+   SUMMARY PANELS
+   ========================================================= */
+
+.form-b-container .summary-panel {
+    width: 100%;
+    min-width: 0;
+
+    padding: 22px;
+
+    background: #FFFFFF;
+
+    border: 1px solid var(--fb-border);
+    border-radius: 16px;
+
+    box-shadow: 0 1px 2px rgba(20, 8, 109, 0.06);
+
+    overflow: hidden;
+}
+
+.form-b-container .summary-panel h3 {
+    margin: 0 0 18px;
+
+    color: var(--fb-ink);
+
+    font-size: 16px;
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   SUMMARY ROWS
+   ========================================================= */
+
+.form-b-container .summary-panel .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    min-height: 46px;
+
+    padding: 10px 0;
+
+    border-bottom: 1px solid var(--fb-border);
+}
+
+.form-b-container .summary-panel .summary-row:last-child {
+    border-bottom: none;
+}
+
+.form-b-container .summary-panel .summary-row span {
+    color: var(--fb-ink-soft);
+
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.form-b-container .summary-panel .summary-row strong {
+    color: var(--fb-primary);
+
+    font-size: 17px;
+    font-weight: 700;
+
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* =========================================================
+   LOADING
+   ========================================================= */
+
+.form-b-container.form-b-loading,
+.form-b-container .form-b-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    width: 100%;
+    min-height: 350px;
+
+    padding: 30px;
+
+    background: #FFFFFF;
+
+    border: 1px solid var(--fb-border);
+    border-radius: 16px;
+
+    color: var(--fb-ink-soft);
+
+    font-size: 15px;
+    font-weight: 500;
+}
+
+
+/* =========================================================
+   MONTHLY SUMMARY CONTAINER
+   FORM B ONLY
+   ========================================================= */
+
+.form-b-container .monthly-summary {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    padding: 22px;
+
+    background: #FFFFFF;
+
+    border: 1px solid var(--fb-border);
+    border-radius: 16px;
+
+    box-shadow: 0 1px 2px rgba(20, 8, 109, 0.06);
+
+    overflow: hidden;
+}
+
+.form-b-container .monthly-summary h3 {
+    margin: 0 0 18px;
+
+    color: var(--fb-ink);
+
+    font-size: 17px;
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   FORM B MONTHLY TABLE
+   ========================================================= */
+
+.form-b-container .monthly-summary-table {
+    width: 100%;
+    max-width: 100%;
+    min-width: 760px;
+
+    border-collapse: separate;
+    border-spacing: 0;
+
+    border: 1px solid var(--fb-border);
+    border-radius: 12px;
+
+    overflow: hidden;
+
+    table-layout: fixed;
+}
+
+
+/* Monthly header */
+
+.form-b-container .monthly-summary-table thead th {
+    padding: 12px 10px;
+
+    background: var(--fb-primary) !important;
+    color: #FFFFFF !important;
+
+    text-align: center;
+    vertical-align: middle;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+
+    border-right: 1px solid rgba(255, 255, 255, 0.15);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+
+    line-height: 1.25;
+}
+
+.form-b-container .monthly-summary-table thead th:last-child {
+    border-right: none;
+}
+
+
+/* Monthly body */
+
+.form-b-container .monthly-summary-table tbody td {
+    padding: 12px 10px;
+
+    background: #FFFFFF;
+
+    color: var(--fb-ink-soft);
+
+    text-align: center;
+    vertical-align: middle;
+
+    font-size: 13px;
+    font-weight: 500;
+
+    border-right: 1px solid var(--fb-border);
+    border-bottom: 1px solid var(--fb-border);
+
+    line-height: 1.3;
+}
+
+.form-b-container .monthly-summary-table tbody td:last-child {
+    border-right: none;
+}
+
+
+/* Alternating rows */
+
+.form-b-container .monthly-summary-table tbody tr:nth-child(even) td {
+    background: #F8F9FC;
+}
+
+
+/* First column */
+
+.form-b-container .monthly-summary-table tbody td:first-child {
+    color: var(--fb-ink);
+
+    font-weight: 600;
+
+    text-align: left;
+}
+
+
+/* Hover */
+
+.form-b-container .monthly-summary-table tbody tr:hover td {
+    background: var(--fb-primary-tint);
+}
+
+
+/* =========================================================
+   MONTHLY TABLE FOOTER
+   ========================================================= */
+
+.form-b-container .monthly-summary-table tfoot th,
+.form-b-container .monthly-summary-table tfoot td {
+    padding: 13px 10px;
+
+    background: var(--fb-primary-tint) !important;
+    color: var(--fb-primary) !important;
+
+    text-align: center;
+    vertical-align: middle;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    border-top: 2px solid var(--fb-border-strong);
+}
+
+.form-b-container .monthly-summary-table tfoot th:first-child {
+    text-align: left;
+}
+
+
+/* =========================================================
+   OFFICIAL FORM B REPORT
+   ========================================================= */
+
+.form-b-container .official-report {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    padding: 24px;
+
+    background: #FFFFFF;
+
+    border: 1px solid var(--fb-border);
+    border-radius: 18px;
+
+    box-shadow: 0 1px 2px rgba(20, 8, 109, 0.06);
+
+    overflow: hidden;
+}
+
+
+/* =========================================================
+   OFFICIAL REPORT HEADER
+   ========================================================= */
+
+.form-b-container .official-report .official-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    gap: 20px;
+
+    margin-bottom: 20px;
+    padding-bottom: 18px;
+
+    border-bottom: 1px solid var(--fb-border);
+
+    min-width: 0;
+}
+
+.form-b-container .official-report .official-header > div:first-child {
+    min-width: 0;
+}
+
+.form-b-container .official-report .official-header h2 {
+    margin: 0;
+
+    color: var(--fb-ink);
+
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.form-b-container .official-report .official-header p {
+    margin: 5px 0 0;
+
+    color: var(--fb-ink-soft);
+
+    font-size: 13px;
+    font-weight: 500;
+}
+
+
+/* =========================================================
+   FORM B REPORT BUTTONS
+   IMPORTANT:
+   Uses .official-header .report-buttons so these buttons
+   cannot affect other forms.
+   ========================================================= */
+
+.form-b-container .official-report .official-header .report-buttons {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+    flex-wrap: wrap;
+
+    flex-shrink: 0;
+}
+
+.form-b-container .official-report .official-header .report-buttons button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 40px;
+
+    padding: 0 16px;
+
+    border: none !important;
+    border-radius: 9px;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    box-shadow: none !important;
+}
+
+
+/* Refresh */
+
+.form-b-container .official-report .official-header .report-buttons .refresh-btn {
+    background: #F1F5F9 !important;
+    color: #334155 !important;
+}
+
+.form-b-container .official-report .official-header .report-buttons .refresh-btn:hover {
+    background: #E2E8F0 !important;
+    color: #334155 !important;
+}
+
+
+/* PDF */
+
+.form-b-container .official-report .official-header .report-buttons .pdf-btn {
+    background: #DC2626 !important;
+    color: #FFFFFF !important;
+}
+
+.form-b-container .official-report .official-header .report-buttons .pdf-btn:hover {
+    background: #B91C1C !important;
+    color: #FFFFFF !important;
+}
+
+
+/* Excel */
+
+.form-b-container .official-report .official-header .report-buttons .excel-btn {
+    background: #15803D !important;
+    color: #FFFFFF !important;
+}
+
+.form-b-container .official-report .official-header .report-buttons .excel-btn:hover {
+    background: #166534 !important;
+    color: #FFFFFF !important;
+}
+
+
+/* =========================================================
+   OFFICIAL TABLE WRAPPER
+   ========================================================= */
+
+.form-b-container .official-report .official-table-wrapper {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    border: 1px solid var(--fb-border);
+    border-radius: 12px;
+
+    background: #FFFFFF;
+}
+
+
+/* =========================================================
+   OFFICIAL FORM B TABLE
+   ========================================================= */
+
+.form-b-container .official-report .official-table {
+    width: 100%;
+    min-width: 1050px;
+
+    margin: 0;
+
+    border-collapse: collapse;
+    border-spacing: 0;
+
+    table-layout: fixed;
+}
+
+
+/* =========================================================
+   OFFICIAL TABLE HEADER
+   ========================================================= */
+
+.form-b-container .official-report .official-table thead th {
+    padding: 10px 8px;
+
+    background: var(--fb-primary) !important;
+    color: #FFFFFF !important;
+
+    border: 1px solid rgba(255, 255, 255, 0.18);
+
+    text-align: center;
+    vertical-align: middle;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    line-height: 1.25;
+
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+
+/* =========================================================
+   OFFICIAL TABLE BODY
+   ========================================================= */
+
+.form-b-container .official-report .official-table tbody td {
+    padding: 10px 8px;
+
+    background: #FFFFFF;
+
+    color: var(--fb-ink-soft);
+
+    border: 1px solid var(--fb-border);
+
+    text-align: center;
+    vertical-align: middle;
+
+    font-size: 13px;
+    font-weight: 500;
+
+    line-height: 1.3;
+
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+
+/* Alternating body rows */
+
+.form-b-container .official-report .official-table tbody tr:nth-child(even) td {
+    background: #FAFAFD;
+}
+
+
+/* Hover */
+
+.form-b-container .official-report .official-table tbody tr:hover td {
+    background: var(--fb-primary-tint);
+}
+
+
+/* =========================================================
+   OFFICIAL TABLE — MONTH COLUMN
+   ========================================================= */
+
+.form-b-container .official-report .official-table thead th:first-child,
+.form-b-container .official-report .official-table tbody td:first-child,
+.form-b-container .official-report .official-table tfoot th:first-child {
+    width: 110px;
+    min-width: 110px;
+    max-width: 110px;
+}
+
+
+/* Body month cells */
+
+.form-b-container .official-report .official-table tbody td:first-child {
+    color: var(--fb-ink);
+
+    font-weight: 700;
+
+    text-align: left;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   OFFICIAL TABLE FOOTER
+   ========================================================= */
+
+.form-b-container .official-report .official-table tfoot {
+    display: table-footer-group !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.form-b-container .official-report .official-table tfoot th,
+.form-b-container .official-report .official-table tfoot td {
+    padding: 12px 8px;
+
+    background: var(--fb-primary-light) !important;
+    color: #FFFFFF !important;
+
+    border: 1px solid rgba(255, 255, 255, 0.20);
+
+    text-align: center;
+    vertical-align: middle;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+
+/* Grand total title */
+
+.form-b-container .official-report .official-table tfoot .grand-total-title {
+    background: var(--fb-primary) !important;
+    color: #FFFFFF !important;
+
+    text-align: left;
+}
+
+
+/* =========================================================
+   OFFICIAL TABLE — STICKY MONTH COLUMN
+   ========================================================= */
+
+.form-b-container .official-report .official-table thead th:first-child {
+    position: sticky;
+
+    left: 0;
+
+    z-index: 5;
+
+    background: var(--fb-primary) !important;
+    color: #FFFFFF !important;
+}
+
+.form-b-container .official-report .official-table tbody td:first-child {
+    position: sticky;
+
+    left: 0;
+
+    z-index: 3;
+
+    background: #FFFFFF;
+}
+
+.form-b-container .official-report .official-table tbody tr:nth-child(even) td:first-child {
+    background: #FAFAFD;
+}
+
+.form-b-container .official-report .official-table tbody tr:hover td:first-child {
+    background: var(--fb-primary-tint);
+}
+
+.form-b-container .official-report .official-table tfoot th:first-child {
+    position: sticky;
+
+    left: 0;
+
+    z-index: 5;
+
+    background: var(--fb-primary) !important;
+    color: #FFFFFF !important;
+}
+
+
+/* =========================================================
+   OFFICIAL TABLE COLUMN WIDTHS
+   Keeps the large Form B headings readable
+   ========================================================= */
+
+.form-b-container .official-report .official-table th:nth-child(2),
+.form-b-container .official-report .official-table td:nth-child(2) {
+    width: 150px;
+}
+
+.form-b-container .official-report .official-table th:nth-child(3),
+.form-b-container .official-report .official-table td:nth-child(3) {
+    width: 155px;
+}
+
+.form-b-container .official-report .official-table th:nth-child(4),
+.form-b-container .official-report .official-table td:nth-child(4),
+.form-b-container .official-report .official-table th:nth-child(5),
+.form-b-container .official-report .official-table td:nth-child(5) {
+    width: 125px;
+}
+
+.form-b-container .official-report .official-table th:nth-child(6),
+.form-b-container .official-report .official-table td:nth-child(6) {
+    width: 145px;
+}
+
+.form-b-container .official-report .official-table th:nth-child(7),
+.form-b-container .official-report .official-table td:nth-child(7) {
+    width: 125px;
+}
+
+.form-b-container .official-report .official-table th:nth-child(8),
+.form-b-container .official-report .official-table td:nth-child(8) {
+    width: 135px;
+}
+
+
+/* =========================================================
+   OFFICIAL TABLE SCROLLBAR
+   ========================================================= */
+
+.form-b-container .official-report .official-table-wrapper::-webkit-scrollbar {
+    height: 7px;
+}
+
+.form-b-container .official-report .official-table-wrapper::-webkit-scrollbar-track {
+    background: var(--fb-surface-sunken);
+
+    border-radius: 10px;
+}
+
+.form-b-container .official-report .official-table-wrapper::-webkit-scrollbar-thumb {
+    background: var(--fb-border-strong);
+
+    border-radius: 10px;
+}
+
+.form-b-container .official-report .official-table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #B8B7CF;
+}
+
+
+/* =========================================================
+   RESPONSIVE — FORM B ONLY
+   ========================================================= */
+
+@media (max-width: 1100px) {
+
+    .form-b-container .form-b-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .form-b-container .summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+
+@media (max-width: 850px) {
+
+    .form-b-container .summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-b-container .official-report .official-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .form-b-container .official-report .official-header .report-buttons {
+        width: 100%;
+    }
+
+}
+
+
+@media (max-width: 650px) {
+
+    .form-b-container .form-b-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .form-b-container .summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-b-container .official-report {
+        padding: 16px;
+    }
+
+    .form-b-container .official-report .official-header {
+        gap: 16px;
+    }
+
+    .form-b-container .official-report .official-header .report-buttons {
+        width: 100%;
+
+        flex-direction: column;
+    }
+
+    .form-b-container .official-report .official-header .report-buttons button {
+        width: 100%;
+    }
+
+    .form-b-container .summary-panel {
+        padding: 18px;
+    }
+
+    .form-b-container .monthly-summary {
+        padding: 16px;
+    }
+
+}
+
+
+/* =========================================================
+   ACCESSIBILITY — FORM B ONLY
+   ========================================================= */
+
+.form-b-container button:focus-visible {
+    outline: 2px solid var(--fb-primary-light);
+
+    outline-offset: 2px;
+}

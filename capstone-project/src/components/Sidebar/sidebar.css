@@ -12,7 +12,6 @@
   flex-direction: column;
   font-family: 'Segoe UI', system-ui, sans-serif;
   flex-shrink: 0;
-  box-shadow: 2px 0 12px rgba(9, 31, 122, 0.15);
 
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.25) transparent;

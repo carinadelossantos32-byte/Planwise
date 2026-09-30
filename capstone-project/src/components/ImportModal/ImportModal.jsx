@@ -59,9 +59,22 @@ const REASON_MAP = {
   "3": "Achieving", "3-": "Achieving",
 };
 
+// ─── HELPERS ──────────────────────────────────────────────────────
+
+// Safely extract primitive string values from raw cell data or formula objects
+const sanitizeCell = (val) => {
+  if (val === null || val === undefined) return "";
+  if (typeof val === "object") {
+    if ("result" in val) return String(val.result ?? "").trim();
+    if ("formula" in val) return String(val.formula ?? "").trim();
+    if ("text" in val) return String(val.text ?? "").trim();
+  }
+  return String(val).trim();
+};
+
 const decode = (map, raw) => {
-  if (!raw) return "";
-  const str = String(raw).trim();
+  const str = sanitizeCell(raw);
+  if (!str) return "";
   if (map[str]) return map[str];
   const match = str.match(/^([A-Za-z0-9]+)\s*[-–]?\s*/);
   if (match && map[match[1]]) return map[match[1]];
@@ -74,6 +87,16 @@ const excelDateToString = (serial) => {
   return date.toISOString().split("T")[0];
 };
 
+// Check for summary/total headers that should be ignored
+const isSummaryRow = (name) => {
+  const clean = name.toUpperCase().trim();
+  const summaryKeywords = [
+    "MSTR/NSV", "CONDOM", "NFP-LAM", "METHODS", "NFP-STM", 
+    "PILLS-COC", "TOTAL", "GRAND TOTAL", "SUM(", "SUBTOTAL"
+  ];
+  return summaryKeywords.some(keyword => clean.includes(keyword));
+};
+
 // ─── PARSERS ──────────────────────────────────────────────────────
 
 // Public FP — paired husband/wife rows
@@ -82,41 +105,49 @@ const parsePublicRows = (rows) => {
   let i = 0;
   while (i < rows.length) {
     const row = rows[i];
-    const husbandName = row["Name"];
-    if (!husbandName || String(husbandName).trim() === "" || String(husbandName) === "-1") {
+    const husbandName = sanitizeCell(row["Name"]);
+
+    // Skip empty or summary/total rows
+    if (!husbandName || husbandName === "-1" || isSummaryRow(husbandName)) {
       i++; continue;
     }
+
     const nextRow = rows[i + 1] || {};
-    const nextRowSex = String(nextRow["Sex (M/F)"] || "").trim().toUpperCase();
+    const nextRowSex = sanitizeCell(nextRow["Sex (M/F)"]).toUpperCase();
     const isWifeRow = nextRowSex === "F";
     const wifeRow = isWifeRow ? nextRow : {};
 
+    const rawBirthdateMale = row["Birthdate / Age"];
+    const rawBirthdateFemale = wifeRow["Birthdate / Age"];
+
     const client = {
-      name: String(husbandName).trim(),
-      spouse_name: wifeRow["Name"] ? String(wifeRow["Name"]).trim() : "",
-      civil_status: decode(CIVIL_STATUS_MAP, row["Civil Status"]),
-      birthdate_male: typeof row["Birthdate / Age"] === "number"
-        ? excelDateToString(row["Birthdate / Age"])
-        : String(row["Birthdate / Age"] || "").trim(),
+      name: husbandName,
+      spouse_name: isWifeRow ? sanitizeCell(wifeRow["Name"]) : "",
+      civil_status_male: decode(CIVIL_STATUS_MAP, row["Civil Status"]),
+      civil_status_female: isWifeRow ? decode(CIVIL_STATUS_MAP, wifeRow["Civil Status"]) : "",
+      birthdate_male: typeof rawBirthdateMale === "number"
+        ? excelDateToString(rawBirthdateMale)
+        : sanitizeCell(rawBirthdateMale),
       birthdate_female: isWifeRow
-        ? typeof wifeRow["Birthdate / Age"] === "number"
-          ? excelDateToString(wifeRow["Birthdate / Age"])
-          : String(wifeRow["Birthdate / Age"] || "").trim()
+        ? typeof rawBirthdateFemale === "number"
+          ? excelDateToString(rawBirthdateFemale)
+          : sanitizeCell(rawBirthdateFemale)
         : "",
-      address: String(row["Address& Contact Number"] || "").trim(),
-      barangay: "",
+      address: sanitizeCell(row["Address& Contact Number"]),
+      barangay: sanitizeCell(row["Barangay"]),
       educational_attainment_male: decode(EDUCATION_MAP, row["Highest Educational Attainment"]),
       educational_attainment_female: isWifeRow ? decode(EDUCATION_MAP, wifeRow["Highest Educational Attainment"]) : "",
-      no_of_children: row["No. of Children"] ? String(Math.round(Number(row["No. of Children"]))) : "",
+      no_of_children: sanitizeCell(row["No. of Children"]) ? String(Math.round(Number(sanitizeCell(row["No. of Children"])))) : "",
       fp_method: decode(METHOD_MAP, row["Method Used"]),
       intention_to_shift: decode(METHOD_MAP, row["Intention to shift to other FP Method"]),
       type: decode(TYPE_MAP, row["Type"]),
       status: decode(STATUS_MAP, row["Status"]),
       reason: decode(REASON_MAP, row["Reason for Intending to use FP Method"]),
     };
+
     client._errors = [];
     if (!client.name) client._errors.push("Missing husband name");
-    if (!client.civil_status) client._errors.push("Missing civil status");
+    if (!client.civil_status_male) client._errors.push("Missing civil status");
     if (!client.birthdate_male) client._errors.push("Missing male birthdate");
     if (!client.fp_method) client._errors.push("Missing FP method");
 
@@ -130,19 +161,20 @@ const parsePublicRows = (rows) => {
 const parsePrivateRows = (rows) => {
   const clients = [];
   rows.forEach((row) => {
-    const name = row["Name:             "] || row["Name"] || row["Name:"] || "";
-    if (!name || String(name).trim() === "") return;
+    const rawName = row["Name:             "] || row["Name"] || row["Name:"] || "";
+    const name = sanitizeCell(rawName);
+
+    if (!name || isSummaryRow(name)) return;
 
     const client = {
-      name: String(name).trim(),
-      age: row["Age:"] ? String(row["Age:"]).trim() : "",
-      birthdate: row["Birthday:"] ? String(row["Birthday:"]).trim() : "",
-      barangay: row["Barangay:"] ? String(row["Barangay:"]).trim() : "",
-      fp_method: row["Family Planning Method"] ? String(row["Family Planning Method"]).trim() : "",
-      fp_issued_by: row["Fp issued by: (Name of Clinic, Hospitals, Lying Inn)"]
-        ? String(row["Fp issued by: (Name of Clinic, Hospitals, Lying Inn)"]).trim()
-        : "",
+      name: name,
+      age: sanitizeCell(row["Age:"]),
+      birthdate: sanitizeCell(row["Birthday:"]),
+      barangay: sanitizeCell(row["Barangay:"]),
+      fp_method: sanitizeCell(row["Family Planning Method"]),
+      fp_issued_by: sanitizeCell(row["Fp issued by: (Name of Clinic, Hospitals, Lying Inn)"]),
     };
+
     client._errors = [];
     if (!client.name) client._errors.push("Missing name");
     if (!client.fp_method) client._errors.push("Missing FP method");
@@ -155,24 +187,25 @@ const parsePrivateRows = (rows) => {
 const parseReferredRows = (rows) => {
   const clients = [];
   rows.forEach((row) => {
-    const name = row["Name"] || "";
-    if (!name || String(name).trim() === "") return;
+    const name = sanitizeCell(row["Name"]);
+
+    if (!name || isSummaryRow(name)) return;
 
     const client = {
-      name:              String(name).trim(),
-      address:           row["Address"] ? String(row["Address"]).trim() : "",
-      FP_method:         row["FP Method"] ? String(row["FP Method"]).trim() : "",
-      facility_name:     row["Name of Health Service Facility"] ? String(row["Name of Health Service Facility"]).trim() : "",
-      facility_address:  row["Address of Health Service Facility"] ? String(row["Address of Health Service Facility"]).trim() : "",
-      referred_by:       row["Referred By"] ? String(row["Referred By"]).trim() : "",
-      volunteer_contact: row["Contact No. Volunteer"] ? String(row["Contact No. Volunteer"]).trim() : "",
-      date:              row["Date"] ? String(row["Date"]).trim() : "",
+      name: name,
+      address: sanitizeCell(row["Address"]),
+      fp_method: sanitizeCell(row["FP Method"]),
+      facility_name: sanitizeCell(row["Name of Health Service Facility"]),
+      facility_address: sanitizeCell(row["Address of Health Service Facility"]),
+      referred_by: sanitizeCell(row["Referred By"]),
+      volunteer_contact: sanitizeCell(row["Contact No. Volunteer"]),
+      date: sanitizeCell(row["Date"]),
     };
 
     client._errors = [];
-    if (!client.name)    client._errors.push("Missing name");
+    if (!client.name) client._errors.push("Missing name");
     if (!client.address) client._errors.push("Missing address");
-    if (!client.date)    client._errors.push("Missing date");
+    if (!client.date) client._errors.push("Missing date");
 
     clients.push(client);
   });
@@ -191,7 +224,8 @@ const TAB_CONFIG = {
       { label: "#", key: "_index" },
       { label: "Husband Name", key: "name" },
       { label: "Wife Name", key: "spouse_name" },
-      { label: "Civil Status", key: "civil_status" },
+      { label: "Civil Status (M)", key: "civil_status_male" },
+      { label: "Civil Status (F)", key: "civil_status_female" },
       { label: "Birthdate (M)", key: "birthdate_male" },
       { label: "Birthdate (F)", key: "birthdate_female" },
       { label: "Address", key: "address" },
@@ -231,7 +265,7 @@ const TAB_CONFIG = {
       { label: "#", key: "_index" },
       { label: "Name", key: "name" },
       { label: "Address", key: "address" },
-      { label: "FP Method", key: "FP_method" },
+      { label: "FP Method", key: "fp_method" },
       { label: "Facility Name", key: "facility_name" },
       { label: "Facility Address", key: "facility_address" },
       { label: "Referred By", key: "referred_by" },
