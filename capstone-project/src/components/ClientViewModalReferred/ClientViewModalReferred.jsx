@@ -2,61 +2,61 @@ import "../ClientViewModal/client-view-modal.css";
 
 function ClientViewModalReferred({ client, onClose }) {
   return (
-    <div className="modal-overlay-view">
-      <div className="modal-view">
-        <div className="modal-header-view">
-          <h2>Referral Record Details</h2>
+    <div className="vfpr-overlay">
+      <div className="vfpr-modal" id="vfpr-modal-root" role="dialog" aria-labelledby="vfpr-title">
+        <div className="vfpr-header">
+          <h2 id="vfpr-title" className="vfpr-title">Referral Record Details</h2>
         </div>
 
-        <div className="modal-body-view">
-          <div className="view-grid">
-            <div className="view-item">
-              <span className="view-label">Client Name</span>
-              <p className="view-value">{client.name || "—"}</p>
+        <div className="vfpr-body">
+          <div className="vfpr-grid-2">
+            <div className="vfpr-item">
+              <span className="vfpr-label">Client Name</span>
+              <span className="vfpr-value">{client.name || "—"}</span>
             </div>
 
-            <div className="view-item">
-              <span className="view-label">FP Method</span>
-              <p className="view-value">{client.fp_method || "—"}</p>
+            <div className="vfpr-item">
+              <span className="vfpr-label">FP Method</span>
+              <span className="vfpr-value">{client.fp_method || "—"}</span>
             </div>
 
-            <div className="view-item">
-              <span className="view-label">With Intention to Shift</span>
-              <p className="view-value">{client.with_intention_to_shift || "—"}</p>
+            <div className="vfpr-item">
+              <span className="vfpr-label">With Intention to Shift</span>
+              <span className="vfpr-value">{client.with_intention_to_shift || "—"}</span>
             </div>
 
-            <div className="view-item">
-              <span className="view-label">Address</span>
-              <p className="view-value">{client.address || "—"}</p>
+            <div className="vfpr-item">
+              <span className="vfpr-label">Address</span>
+              <span className="vfpr-value">{client.address || "—"}</span>
             </div>
 
-            <div className="view-item">
-              <span className="view-label">Health Service Facility</span>
-              <p className="view-value">{client.facility_name || "—"}</p>
+            <div className="vfpr-item">
+              <span className="vfpr-label">Health Service Facility</span>
+              <span className="vfpr-value">{client.facility_name || "—"}</span>
             </div>
 
-            <div className="view-item">
-              <span className="view-label">Facility Address</span>
-              <p className="view-value">{client.facility_address || "—"}</p>
+            <div className="vfpr-item">
+              <span className="vfpr-label">Facility Address</span>
+              <span className="vfpr-value">{client.facility_address || "—"}</span>
             </div>
 
-            <div className="view-item">
-              <span className="view-label">Who Referred the Client</span>
-              <p className="view-value">{client.referred_by || "—"}</p>
+            <div className="vfpr-item">
+              <span className="vfpr-label">Who Referred the Client</span>
+              <span className="vfpr-value">{client.referred_by || "—"}</span>
             </div>
 
-            <div className="view-item">
-              <span className="view-label">Volunteer Contact No.</span>
-              <p className="view-value">{client.volunteer_contact || "—"}</p>
+            <div className="vfpr-item">
+              <span className="vfpr-label">Volunteer Contact No.</span>
+              <span className="vfpr-value">{client.volunteer_contact || "—"}</span>
             </div>
 
-            <div className="view-item">
-              <span className="view-label">Date</span>
-              <p className="view-value">{client.date || "—"}</p>
+            <div className="vfpr-item">
+              <span className="vfpr-label">Date</span>
+              <span className="vfpr-value">{client.date || "—"}</span>
             </div>
 
-            <div className="view-item" style={{ gridColumn: "1 / -1" }}>
-              <span className="view-label">Referral Slip Attachment</span>
+            <div className="vfpr-item" style={{ gridColumn: "1 / -1" }}>
+              <span className="vfpr-label">Referral Slip Attachment</span>
               {client.referral_slip_file ? (
                 <div style={{ marginTop: "8px" }}>
                   <img
@@ -67,15 +67,17 @@ function ClientViewModalReferred({ client, onClose }) {
                   />
                 </div>
               ) : (
-                <p className="view-value" style={{ color: "#9ca3af", fontStyle: "italic" }}>
+                <p className="vfpr-value" style={{ color: "#9ca3af", fontStyle: "italic" }}>
                   No image attached to this record.
                 </p>
               )}
             </div>
           </div>
         </div>
-        <div className="modal-btn-view">
-          <button className="btn-back" onClick={onClose}>Back</button>
+        <div className="vfpr-footer">
+          <button className="vfpr-btn vfpr-btn-back" onClick={onClose}>
+            Back
+          </button>
         </div>
       </div>
     </div>

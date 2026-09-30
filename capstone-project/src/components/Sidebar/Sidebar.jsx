@@ -1,5 +1,5 @@
 import "./sidebar.css";
-import { NavLink, useNavigate } from "react-router";
+import { NavLink, useNavigate, useLocation } from "react-router";
 import {
   LayoutDashboard,
   Users,
@@ -9,25 +9,53 @@ import {
   LogOut,
   FileText,
 } from "lucide-react";
+import { auth, signOut } from "../../firebase-config";
 
-const navItems = [
+const allNavItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
   { label: "Client Records", icon: Users, path: "/client-records" },
   { label: "GIS Map", icon: Map, path: "/gis-map" },
-  { label: "Inventory", icon: FileText, path: "/inventory" },
+  { label: "Inventory", icon: FileText, path: "/inventory", hideForRole: "cpd" },
   { label: "Reports", icon: FileBarChart2, path: "/reports" },
 ];
 
 export default function Sidebar() {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleLogout = () => {
-    navigate("/login");
+  const savedUserRole = (localStorage.getItem("userRole") || "").toLowerCase();
+
+  const isCpdUser = () => {
+    if (savedUserRole === "cpd") return true;
+    if (savedUserRole === "health") return false;
+
+    const path = location.pathname.toLowerCase();
+    return !path.includes("health") && !path.includes("chc");
+  };
+
+  const getOfficeName = () => {
+    return isCpdUser() ? "CPD - Office" : "Health - Office";
+  };
+
+  const visibleNavItems = allNavItems.filter((item) => {
+    if (item.hideForRole === "cpd" && isCpdUser()) {
+      return false;
+    }
+    return true;
+  });
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      localStorage.removeItem("userRole");
+      navigate("/login", { replace: true });
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   return (
     <aside className="sidebar">
-      {/* Brand */}
       <div className="brand">
         <div className="logo-wrapper">
           <img
@@ -49,9 +77,8 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Nav Items */}
       <nav className="nav">
-        {navItems.map(({ label, icon: Icon, path }) => (
+        {visibleNavItems.map(({ label, icon: Icon, path }) => (
           <NavLink
             key={path}
             to={path}
@@ -68,7 +95,6 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Bottom Section */}
       <div className="bottom">
         <NavLink
           to="/settings"
@@ -83,13 +109,14 @@ export default function Sidebar() {
           )}
         </NavLink>
 
-        {/* User / Logout */}
         <div className="user-row">
           <div className="user-avatar">
-            <span className="user-avatar-text">C</span>
+            <span className="user-avatar-text">
+              {getOfficeName().charAt(0)}
+            </span>
           </div>
           <div className="user-info">
-            <span className="user-name">CPD - Office</span>
+            <span className="user-name">{getOfficeName()}</span>
           </div>
           <button onClick={handleLogout} className="logout-btn" title="Log out">
             <LogOut size={18} className="nav-icon" />

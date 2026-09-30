@@ -539,9 +539,9 @@ function Inventory() {
                 <div className="modal-overlay">
                     <div className="modal-content allocate-box">
 
-                        <div className="modal-header">
+                        <div className="modal-header-inventory">
                             <h3>  Allocate Stock</h3>
-                            <p className="modal-subtext">Enter total quantity to allocate. It will auto-distributed to each RHU</p>
+                            <p className="modal-subtext-inventory">Enter total quantity to allocate. It will auto-distributed to each RHU</p>
                         </div>
 
                         <div className="allocate-input-section">
@@ -644,9 +644,9 @@ function Inventory() {
 
                 <div className="modal-overlay">
                     <div className="modal-content deduct-box ">
-                        <div className="modal-header">
+                        <div className="modal-header-inventory">
                             <h3>Deduct Stock</h3>
-                            <p className="modal-subtext">Enter deduction quantities for each health unit below</p>
+                            <p className="modal-subtext-inventory">Enter deduction quantities for each health unit below</p>
                         </div>
 
                         <div className="modal-table-wrapper">

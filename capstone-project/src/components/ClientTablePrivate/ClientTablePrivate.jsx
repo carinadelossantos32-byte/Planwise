@@ -66,6 +66,7 @@ function ClientTablePrivate({ clients, loading, onView, onEdit, onDelete, isArch
                                     <td>Name</td>
                                     <td>Age</td>
                                     <td>Birthdate</td>
+                                    <td>Address</td>
                                     <td>Barangay</td>
                                     <td>Method Used</td>
                                     <td>FP Issued By (Name of Clinic, Hospital, Lying-In)</td>
@@ -83,6 +84,7 @@ function ClientTablePrivate({ clients, loading, onView, onEdit, onDelete, isArch
                                         </td>
                                         <td>{client.age || "—"}</td>
                                         <td>{client.birthdate || "—"}</td>
+                                        <td>{client.address || "—"}</td>
                                         <td>{client.barangay || "—"}</td>
                                         <td>
                                             <span className="method-badge">{client.fp_method}</span>

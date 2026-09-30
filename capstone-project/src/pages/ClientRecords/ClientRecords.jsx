@@ -507,10 +507,10 @@ const filteredClients = clients.filter((client) => {
                     <option value="Tubal Ligation">Tubal Ligation</option>
                     <option value="Implant">Implant</option>
                     <option value="CMM/Billings">CMM/Billings</option>
-                    <option value="BBT">BBT</option>
-                    <option value="Symptothermal">Symptothermal</option>
-                    <option value="SDM">SDM</option>
-                    <option value="LAM">LAM</option>
+                    <option value="BBT">Basal Body Temperature(BBT)</option>
+                    <option value="Symptothermal">Sympto-Thermal Method(STM)</option>
+                    <option value="SDM">Standard Days Method(SDM)</option>
+                    <option value="LAM">Lactational Amenorrhea Method(LAM)</option>
                   </select>
 
                 )}

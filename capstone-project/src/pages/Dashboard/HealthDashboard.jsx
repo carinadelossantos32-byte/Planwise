@@ -1,26 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router';
 import './dashboard.css'; 
-import mapPlaceholderImg from '../../assets/map-placeholder.png';
 import { db } from '../../firebase-config';
-import { collection, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
-import { RefreshCw, Download, Upload } from 'lucide-react';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { RefreshCw, FileSpreadsheet } from 'lucide-react';
 import ExcelJS from 'exceljs';
-import { saveAs } from 'file-saver';
+import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
 
 const MALOLOS_BARANGAYS = [
-        "Anilao", "Atlag", "Babatnin", "Bagna", "Bagong Bayan", "Balayong", "Balite", 
-        "Bangkal", "Barihan", "Bulihan", "Bungahan", "Caingin", "Calero", "Caliligawan", 
-        "Canalate", "Caniogan", "Catmon", "Cofradia", "Dakila", "Guinhawa", "Liang", 
-        "Ligas", "Longos", "Look 1st", "Look 2nd", "Lugam", "Mabolo", "Mambog", 
-        "Masile", "Matimbo", "Mojon", "Namayan", "Niugan", "Pamarawan", "Panasahan", 
-        "Pinagbakahan", "San Agustin", "San Gabriel", "San Juan", "San Pablo", 
-        "San Vicente", "Santiago", "Santisima Trinidad", "Santor", "Santo Cristo", 
-        "Santo Niño", "Santo Rosario", "Sumapang Bata", "Sumapang Matanda", "Taal"
+  "Anilao", "Atlag", "Babatnin", "Bagna", "Bagong Bayan", "Balayong", "Balite", 
+  "Bangkal", "Barihan", "Bulihan", "Bungahan", "Caingin", "Calero", "Caliligawan", 
+  "Canalate", "Caniogan", "Catmon", "Cofradia", "Dakila", "Guinhawa", "Liang", 
+  "Ligas", "Longos", "Look 1st", "Look 2nd", "Lugam", "Mabolo", "Mambog", 
+  "Masile", "Matimbo", "Mojon", "Namayan", "Niugan", "Pamarawan", "Panasahan", 
+  "Pinagbakahan", "San Agustin", "San Gabriel", "San Juan", "San Pablo", 
+  "San Vicente", "Santiago", "Santisima Trinidad", "Santor", "Santo Cristo", 
+  "Santo Niño", "Santo Rosario", "Sumapang Bata", "Sumapang Matanda", "Taal"
 ];
 
+const MALOLOS_CENTER = [14.8527, 120.8160];
+
 const HealthDashboard = () => {
+  const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [allRawClients, setAllRawClients] = useState([]);
+  const [activeDataSource, setActiveDataSource] = useState("Live Database");
 
   const [metricsData, setMetricsData] = useState({
     currentUsersPrevMonth: 0,
@@ -34,22 +42,20 @@ const HealthDashboard = () => {
   const [geoChartData, setGeoChartData] = useState([]);
 
   const [methodMix, setMethodMix] = useState([
-    { name: "FSTR/BTL", keys: ["FSTR/BTL", "BTL", "Tubal Ligation"], count: 0, percentage: "0%", color: "#2F80ED" },
-    { name: "MSTR/NSV", keys: ["MSTR/NSV", "NSV", "Vasectomy"], count: 0, percentage: "0%", color: "#9B51E0" },
-    { name: "Implant", keys: ["Implant", "Subdermal Implant"], count: 0, percentage: "0%", color: "#27AE60" },
-    { name: "IUD-INTERVAL", keys: ["IUD-INTERVAL", "IUD", "IUD-TCu380A"], count: 0, percentage: "0%", color: "#E056FD" },
-    { name: "Condoms", keys: ["Condom", "Condoms"], count: 0, percentage: "0%", color: "#FF7675" },
-    { name: "IUD-POSTPARTUM", keys: ["IUD-POSTPARTUM", "PPIUD"], count: 0, percentage: "0%", color: "#0984E3" }
+    { name: "FSTR/BTL", keys: ["FSTR/BTL", "BTL", "Tubal Ligation"], count: 0, percentage: "0%", color: "var(--primary)" },
+    { name: "MSTR/NSV", keys: ["MSTR/NSV", "NSV", "Vasectomy"], count: 0, percentage: "0%", color: "#4B3FD1" },
+    { name: "Implant", keys: ["Implant", "Implants", "Subdermal Implant"], count: 0, percentage: "0%", color: "var(--mint)" },
+    { name: "IUD-INTERVAL", keys: ["IUD-INTERVAL", "IUD", "IUD-TCu380A"], count: 0, percentage: "0%", color: "#8B5CF6" },
+    { name: "Condoms", keys: ["Condom", "Condoms"], count: 0, percentage: "0%", color: "var(--amber)" },
+    { name: "IUD-POSTPARTUM", keys: ["IUD-POSTPARTUM", "PPIUD"], count: 0, percentage: "0%", color: "#2563EB" },
+    { name: "Pills (POP/COC)", keys: ["PILLS-POP", "PILLS-COC", "Pills"], count: 0, percentage: "0%", color: "#06B6D4" },
+    { name: "Injectables", keys: ["INJECTABLES", "DMPA"], count: 0, percentage: "0%", color: "#F59E0B" }
   ]);
 
-  // 4. Demographics State
   const [demographics, setDemographics] = useState([
-    { age: "15-19 years", total: 0, share: "0%", barWidth: "0%", color: "#E056FD" },
-    { age: "20-24 years", total: 0, share: "0%", barWidth: "0%", color: "#9B51E0" },
-    { age: "25-29 years", total: 0, share: "0%", barWidth: "0%", color: "#2F80ED" },
-    { age: "30-34 years", total: 0, share: "0%", barWidth: "0%", color: "#27AE60" },
-    { age: "35-39 years", total: 0, share: "0%", barWidth: "0%", color: "#F2994A" },
-    { age: "40-49 years", total: 0, share: "0%", barWidth: "0%", color: "#FF7675" }
+    { age: "10-14 years", total: 0, share: "0%", barWidth: "0%", color: "#6366F1" },
+    { age: "15-19 years", total: 0, share: "0%", barWidth: "0%", color: "var(--primary)" },
+    { age: "20-49 years", total: 0, share: "0%", barWidth: "0%", color: "#2563EB" }
   ]);
 
   const calculateAge = (birthdateStr) => {
@@ -64,11 +70,11 @@ const HealthDashboard = () => {
   };
 
   const fetchAndProcessData = () => {
-    setRefreshing(true);
     let publicDocs = [], privateDocs = [], referredDocs = [];
 
     const processAllClients = () => {
       const allClients = [...publicDocs, ...privateDocs, ...referredDocs];
+      setAllRawClients(allClients);
 
       const now = new Date();
       const currentMonth = now.getMonth();
@@ -83,7 +89,7 @@ const HealthDashboard = () => {
 
       const rawMethodCounts = {};
       const barangayCounts = {};
-      const ageGroups = { "15-19": 0, "20-24": 0, "25-29": 0, "30-34": 0, "35-39": 0, "40-49": 0 };
+      const ageGroups = { "10-14": 0, "15-19": 0, "20-49": 0 };
 
       allClients.forEach(client => {
         const clientStatus = (client.status || "").toLowerCase();
@@ -128,12 +134,9 @@ const HealthDashboard = () => {
 
         const computedAge = calculateAge(client.birthdate_female) || calculateAge(client.birthdate) || (isNaN(Number(client.age)) ? null : Number(client.age));
         if (computedAge) {
-          if (computedAge >= 15 && computedAge <= 19) ageGroups["15-19"]++;
-          else if (computedAge >= 20 && computedAge <= 24) ageGroups["20-24"]++;
-          else if (computedAge >= 25 && computedAge <= 29) ageGroups["25-29"]++;
-          else if (computedAge >= 30 && computedAge <= 34) ageGroups["30-34"]++;
-          else if (computedAge >= 35 && computedAge <= 39) ageGroups["35-39"]++;
-          else if (computedAge >= 40 && computedAge <= 49) ageGroups["40-49"]++;
+          if (computedAge >= 10 && computedAge <= 14) ageGroups["10-14"]++;
+          else if (computedAge >= 15 && computedAge <= 19) ageGroups["15-19"]++;
+          else if (computedAge >= 20 && computedAge <= 49) ageGroups["20-49"]++;
         }
       });
 
@@ -159,12 +162,9 @@ const HealthDashboard = () => {
 
       const totalAgesMapped = Object.values(ageGroups).reduce((a, b) => a + b, 0) || 1;
       const demoConfig = [
-        { key: "15-19", label: "15-19 years", color: "#E056FD" },
-        { key: "20-24", label: "20-24 years", color: "#9B51E0" },
-        { key: "25-29", label: "25-29 years", color: "#2F80ED" },
-        { key: "30-34", label: "30-34 years", color: "#27AE60" },
-        { key: "35-39", label: "35-39 years", color: "#F2994A" },
-        { key: "40-49", label: "40-49 years", color: "#FF7675" }
+        { key: "10-14", label: "10-14 years", color: "#6366F1" },
+        { key: "15-19", label: "15-19 years", color: "var(--primary)" },
+        { key: "20-49", label: "20-49 years", color: "#2563EB" }
       ];
 
       setDemographics(
@@ -191,7 +191,6 @@ const HealthDashboard = () => {
       });
 
       setLoading(false);
-      setRefreshing(false);
     };
 
     const unPublic = onSnapshot(collection(db, "clients_public"), (snap) => {
@@ -212,149 +211,284 @@ const HealthDashboard = () => {
     return () => { unPublic(); unPrivate(); unReferred(); };
   };
 
+  const handleManualRefresh = () => {
+    setRefreshing(true);
+    setActiveDataSource("Live Database");
+    fetchAndProcessData();
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 800);
+  };
+
   useEffect(() => {
     const unsub = fetchAndProcessData();
     return () => unsub();
   }, []);
 
-  const handleExportExcel = async () => {
-    const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet('Health Overview');
-
-    sheet.columns = [
-      { header: 'Metric Category', key: 'category', width: 30 },
-      { header: 'Total Value', key: 'value', width: 20 }
-    ];
-
-    sheet.addRow({ category: 'Current Users (Previous Month)', value: metricsData.currentUsersPrevMonth });
-    sheet.addRow({ category: 'New Acceptors (Previous Month)', value: metricsData.newAcceptorsPrevMonth });
-    sheet.addRow({ category: 'Other Acceptors', value: metricsData.otherAcceptors });
-    sheet.addRow({ category: 'Drop Outs', value: metricsData.dropOuts });
-    sheet.addRow({ category: 'Current Users (Current Month)', value: metricsData.currentUsersCurrentMonth });
-    sheet.addRow({ category: 'New Acceptors (Current Month)', value: metricsData.newAcceptorsCurrentMonth });
-
-    const buffer = await workbook.xlsx.writeBuffer();
-    saveAs(new Blob([buffer]), `Health_Dashboard_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
+  const getCellNum = (cell) => {
+    if (!cell || cell.value === null || cell.value === undefined) return 0;
+    if (typeof cell.value === 'object' && cell.value.result !== undefined) {
+      return Number(cell.value.result) || 0;
+    }
+    return Number(cell.value) || 0;
   };
 
-  const handleImportExcel = (e) => {
-    const file = e.target.files[0];
+  const handleImportExcel = async (e) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      const buffer = evt.target.result;
+    setImporting(true);
+    try {
+      const buffer = await file.arrayBuffer();
       const workbook = new ExcelJS.Workbook();
       await workbook.xlsx.load(buffer);
-      const sheet = workbook.getWorksheet(1);
 
-      sheet.eachRow((row, rowNumber) => {
-        if (rowNumber > 1) {
-          const name = row.getCell(1).value;
-          const fp_method = row.getCell(2).value;
-          const barangay = row.getCell(3).value;
+      const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      const currentMonthName = months[new Date().getMonth()];
+      const sheet = workbook.getWorksheet(currentMonthName) || workbook.worksheets[0];
 
-          if (name) {
-            addDoc(collection(db, "clients_public"), {
-              name: typeof name === 'object' ? String(name.result || name.value || name) : String(name),
-              fp_method: fp_method ? String(fp_method) : "",
-              barangay: barangay ? String(barangay) : "",
-              is_archived: false,
-              created_at: serverTimestamp()
-            });
-          }
-        }
+      if (!sheet) {
+        throw new Error("Could not find a valid sheet in the imported workbook.");
+      }
+
+      const prevBeginning = getCellNum(sheet.getRow(61).getCell(45));
+      const prevNew = getCellNum(sheet.getRow(61).getCell(46));
+      const otherAcc = getCellNum(sheet.getRow(61).getCell(47));
+      const dropOuts = getCellNum(sheet.getRow(61).getCell(48));
+      const currEnding = getCellNum(sheet.getRow(61).getCell(49));
+      const currNew = getCellNum(sheet.getRow(61).getCell(50));
+
+      setMetricsData({
+        currentUsersPrevMonth: prevBeginning,
+        newAcceptorsPrevMonth: prevNew,
+        otherAcceptors: otherAcc,
+        dropOuts: dropOuts,
+        currentUsersCurrentMonth: currEnding,
+        newAcceptorsCurrentMonth: currNew
       });
-      alert("Excel records imported successfully!");
-    };
-    reader.readAsArrayBuffer(file);
+
+      const parsedMethods = [
+        { name: "FSTR/BTL", count: getCellNum(sheet.getRow(8).getCell(49)), color: "var(--primary)" },
+        { name: "MSTR/NSV", count: getCellNum(sheet.getRow(12).getCell(49)), color: "#4B3FD1" },
+        { name: "Condoms", count: getCellNum(sheet.getRow(16).getCell(49)), color: "var(--amber)" },
+        { name: "IUD-INTERVAL", count: getCellNum(sheet.getRow(20).getCell(49)), color: "#8B5CF6" },
+        { name: "IUD-POSTPARTUM", count: getCellNum(sheet.getRow(24).getCell(49)), color: "#2563EB" },
+        { name: "Pills (POP/COC)", count: getCellNum(sheet.getRow(28).getCell(49)) + getCellNum(sheet.getRow(32).getCell(49)), color: "#06B6D4" },
+        { name: "Injectables", count: getCellNum(sheet.getRow(36).getCell(49)), color: "#F59E0B" },
+        { name: "Implant", count: getCellNum(sheet.getRow(40).getCell(49)), color: "var(--mint)" }
+      ];
+
+      const totalMethodUsers = parsedMethods.reduce((sum, m) => sum + m.count, 0) || 1;
+      setMethodMix(
+        parsedMethods.map(m => ({
+          ...m,
+          keys: [m.name],
+          percentage: `${((m.count / totalMethodUsers) * 100).toFixed(1)}%`,
+          count: m.count.toLocaleString()
+        }))
+      );
+
+      const rows10_14 = [5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45, 49, 53, 57];
+      const rows15_19 = [6, 10, 14, 18, 22, 26, 30, 34, 38, 42, 46, 50, 54, 58];
+      const rows20_49 = [7, 11, 15, 19, 23, 27, 31, 35, 39, 43, 47, 51, 55, 59];
+
+      const sumAgeGroup = (rows) => rows.reduce((total, r) => total + getCellNum(sheet.getRow(r).getCell(49)), 0);
+
+      const age10_14 = sumAgeGroup(rows10_14);
+      const age15_19 = sumAgeGroup(rows15_19);
+      const age20_49 = sumAgeGroup(rows20_49);
+      const totalDemo = (age10_14 + age15_19 + age20_49) || 1;
+
+      setDemographics([
+        {
+          age: "10-14 years",
+          total: age10_14.toLocaleString(),
+          share: `${((age10_14 / totalDemo) * 100).toFixed(1)}%`,
+          barWidth: `${((age10_14 / totalDemo) * 100).toFixed(1)}%`,
+          color: "#6366F1"
+        },
+        {
+          age: "15-19 years",
+          total: age15_19.toLocaleString(),
+          share: `${((age15_19 / totalDemo) * 100).toFixed(1)}%`,
+          barWidth: `${((age15_19 / totalDemo) * 100).toFixed(1)}%`,
+          color: "var(--primary)"
+        },
+        {
+          age: "20-49 years",
+          total: age20_49.toLocaleString(),
+          share: `${((age20_49 / totalDemo) * 100).toFixed(1)}%`,
+          barWidth: `${((age20_49 / totalDemo) * 100).toFixed(1)}%`,
+          color: "#2563EB"
+        }
+      ]);
+
+      setActiveDataSource(`Imported: ${file.name} (${sheet.name})`);
+    } catch (err) {
+      console.error("Excel import error:", err);
+      alert("Failed to parse the Excel file. Please ensure it follows the official RPFP / Health Office Form format.");
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   const topCards = [
-    { label: "Current Users", subLabel: "(Previous Month)", value: metricsData.currentUsersPrevMonth, icon: "👥", color: "orange" },
-    { label: "New Acceptors", subLabel: "(Previous Month)", value: metricsData.newAcceptorsPrevMonth, icon: "💙", color: "blue" },
-    { label: "Other Acceptors", subLabel: "", value: metricsData.otherAcceptors, icon: "👤+", color: "yellow" },
-    { label: "Drop Outs", subLabel: "", value: metricsData.dropOuts, icon: "📉", color: "purple" },
-    { label: "Current Users", subLabel: "(Current Month)", value: metricsData.currentUsersCurrentMonth, icon: "👥", color: "teal" },
-    { label: "New Acceptors", subLabel: "(Current Month)", value: metricsData.newAcceptorsCurrentMonth, icon: "👤+", color: "pink" }
+    { label: "Current Users", subLabel: "(Previous Month)", value: metricsData.currentUsersPrevMonth.toLocaleString(), cardId: "overall-stocks-card" },
+    { label: "New Acceptors", subLabel: "(Previous Month)", value: metricsData.newAcceptorsPrevMonth.toLocaleString(), cardId: "overall-population-card" },
+    { label: "Other Acceptors", subLabel: "Active users", value: metricsData.otherAcceptors.toLocaleString(), cardId: "overall-rhu-card" },
+    { label: "Drop Outs", subLabel: "Discontinued", value: metricsData.dropOuts.toLocaleString(), cardId: "low-stock-card" },
+    { label: "Current Users", subLabel: "(Current Month)", value: metricsData.currentUsersCurrentMonth.toLocaleString(), cardId: "overall-stocks-card" },
+    { label: "New Acceptors", subLabel: "(Current Month)", value: metricsData.newAcceptorsCurrentMonth.toLocaleString(), cardId: "overall-population-card" }
   ];
 
   const maxGeoValue = Math.max(...geoChartData.map(g => g.count), 1);
 
   return (
-    <div className="dashboard-container">
-      <header className="dashboard-header">
-        <div className="header-text">
-          <h1>Dashboard</h1>
-          <p>{loading ? "Loading overview..." : "Welcome back to your overview"}</p>
+    <div id="inventory-container">
+      <div id="inventory-topbar">
+        <div>
+          <h1>City Health Dashboard</h1>
+          <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--ink-faint)' }}>
+            {loading ? "Loading overview..." : `Source: ${activeDataSource}`}
+          </p>
         </div>
 
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <button 
-            onClick={fetchAndProcessData}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', border: '1px solid #D1D5DB', backgroundColor: '#FFF', fontWeight: 600, cursor: 'pointer' }}
+            id="refresh-button" 
+            onClick={handleManualRefresh}
+            disabled={refreshing}
+            style={{ cursor: refreshing ? 'wait' : 'pointer' }}
           >
-            <RefreshCw size={14} className={refreshing ? "spin-icon" : ""} /> Refresh Data
+            <RefreshCw size={14} className={refreshing ? "spin-icon" : ""} /> 
+            {refreshing ? "Refreshing..." : "Refresh Data"}
           </button>
+
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImportExcel}
+            accept=".xlsx, .xls"
+            style={{ display: 'none' }}
+          />
 
           <button 
-            onClick={handleExportExcel}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#EF4444', color: '#FFF', fontWeight: 600, cursor: 'pointer' }}
+            onClick={() => fileInputRef.current?.click()}
+            id="deduct-button"
+            disabled={importing}
+            style={{ 
+              height: '36px', 
+              padding: '0 16px', 
+              fontSize: '13px', 
+              fontWeight: 600,
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px', 
+              backgroundColor: '#107C41',
+              color: '#FFFFFF',
+              border: 'none',
+              borderRadius: 'var(--radius-sm)',
+              boxShadow: 'var(--shadow-sm)',
+              cursor: importing ? 'wait' : 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0B5C30'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#107C41'}
           >
-            <Download size={14} /> Export as Excel
+            <FileSpreadsheet size={15} /> {importing ? "Importing..." : "Import Excel"}
           </button>
-
-          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#10B981', color: '#FFF', fontWeight: 600, cursor: 'pointer' }}>
-            <Upload size={14} /> Import Excel
-            <input type="file" accept=".xlsx, .xls" onChange={handleImportExcel} style={{ display: 'none' }} />
-          </label>
         </div>
-      </header>
+      </div>
 
-      <section className="metrics-grid">
+      <div id="inventory-report-label">
+        <h3>HEALTH METRICS REPORT</h3>
+      </div>
+
+      <div className="cards-container-dashboard dashboard-metrics-grid">
         {topCards.map((item, idx) => (
-          <div className={`metric-card card-${item.color}`} key={idx}>
-            <div className="metric-icon-wrapper">{item.icon}</div>
+          <div className="inventory-header-content" id={item.cardId} key={idx}>
+            <h3>{item.label}</h3>
             <h2>{item.value}</h2>
-            <p style={{ fontWeight: 600, marginBottom: '2px' }}>{item.label}</p>
-            {item.subLabel && <span style={{ fontSize: '0.75rem', color: '#6B7280' }}>{item.subLabel}</span>}
+            <p>{item.subLabel}</p>
           </div>
         ))}
-      </section>
+      </div>
 
-      <section className="dashboard-charts-section">
-        <div className="chart-card large-chart">
-          <h3>Geographic Distribution</h3>
-          <p className="chart-sub">Client distribution across regions</p>
+      <div className="dashboard-charts-section">
+        <div className="chart-card">
+          <h3 className="chart-title">Geographic Distribution</h3>
+          <p className="chart-sub">Client density per Barangay</p>
           
-          <div style={{ height: '220px', display: 'flex', alignItems: 'flex-end', gap: '12px', marginTop: '20px', paddingBottom: '10px', borderBottom: '1px solid #E5E7EB' }}>
+          <div className="geo-bar-wrapper">
             {geoChartData.map((item, idx) => {
               const heightPct = (item.count / maxGeoValue) * 100;
               return (
-                <div key={idx} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#4B5563', marginBottom: '4px' }}>{item.count}</span>
-                  <div style={{ width: '100%', height: `${heightPct}%`, backgroundColor: '#2F80ED', borderRadius: '4px 4px 0 0', minHeight: '6px' }}></div>
-                  <span style={{ fontSize: '0.7rem', color: '#6B7280', marginTop: '8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '42px' }}>{item.name}</span>
+                <div key={idx} className="geo-bar-col">
+                  <span className="geo-bar-val">{item.count}</span>
+                  <div className="geo-bar-fill" style={{ height: `${heightPct}%` }}></div>
+                  <span className="geo-bar-lbl">{item.name}</span>
                 </div>
               );
             })}
           </div>
         </div>
 
-        <div className="chart-card side-map">
-          <h3>Regional Overview</h3>
-          <div 
-            className="placeholder-map-visual"
-            style={{ backgroundImage: `url(${mapPlaceholderImg})` }}
-          >
-            <div className="mock-map-tint">GIS Cluster Map View</div>
+        <div className="chart-card">
+          <h3 className="chart-title">Regional Overview</h3>
+          <p className="chart-sub">GIS Cluster Mapping</p>
+          
+          <div className="mini-map-container">
+            <MapContainer
+              center={MALOLOS_CENTER}
+              zoom={12}
+              scrollWheelZoom={false}
+              style={{ height: '240px', width: '100%', borderRadius: '14px' }}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+
+              {allRawClients
+                .filter(c => c.latitude && c.longitude)
+                .map((client, idx) => (
+                  <CircleMarker
+                    key={idx}
+                    center={[Number(client.latitude), Number(client.longitude)]}
+                    radius={6}
+                    pathOptions={{
+                      color: '#091F7A',
+                      fillColor: '#E0563D',
+                      fillOpacity: 0.85,
+                      weight: 2
+                    }}
+                  >
+                    <Popup>
+                      <div style={{ fontSize: '12px' }}>
+                        <strong>{client.name || 'Client'}</strong><br />
+                        {client.barangay || 'Malolos'}<br />
+                        <span>Method: {client.fp_method || 'N/A'}</span>
+                      </div>
+                    </Popup>
+                  </CircleMarker>
+                ))}
+            </MapContainer>
+
+            <button 
+              type="button"
+              className="mock-map-tint-btn"
+              onClick={() => navigate('/gis-map')}
+            >
+              GIS Cluster Map View ↗
+            </button>
           </div>
         </div>
-      </section>
+      </div>
 
-      <section className="dashboard-breakdown-section">
-        <div className="chart-card method-mix-card">
-          <h3>Contraceptive Methods</h3>
+      <div className="dashboard-breakdown-section">
+        <div className="chart-card">
+          <h3 className="chart-title">Contraceptive Methods</h3>
           <p className="chart-sub">Current distribution of family planning methods</p>
           <div className="methods-subgrid">
             {methodMix.map((method, idx) => (
@@ -365,21 +499,21 @@ const HealthDashboard = () => {
                   <span className="method-pct-lbl">{method.percentage}</span>
                 </div>
                 <h4>{method.count}</h4>
-                <p className="active-user-sub">active users</p>
+                <p className="active-user-sub">Active Users</p>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="chart-card demographics-card">
-          <h3>Client Demographics</h3>
+        <div className="chart-card">
+          <h3 className="chart-title">Client Demographics</h3>
           <p className="chart-sub">Age distribution of active FP users</p>
           <div className="demographics-list">
             {demographics.map((demo, idx) => (
               <div className="demo-row-item" key={idx}>
                 <div className="demo-row-text">
-                  <span className="demo-age-span">{demo.age}</span>
-                  <span className="demo-total-span">{demo.total}</span>
+                  <span>{demo.age}</span>
+                  <span style={{ color: 'var(--primary)', fontWeight: 700 }}>{demo.total}</span>
                 </div>
                 <div className="progress-track-bg">
                   <div className="progress-fill-bar" style={{ width: demo.barWidth, backgroundColor: demo.color }}></div>
@@ -389,7 +523,7 @@ const HealthDashboard = () => {
             ))}
           </div>
         </div>
-      </section>
+      </div>
     </div>
   );
 };

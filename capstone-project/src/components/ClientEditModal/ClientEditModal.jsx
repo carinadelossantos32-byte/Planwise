@@ -151,347 +151,398 @@ function ClientEditModal({ client, onClose, onSuccess }) {
     }
   };
 
-return (
-    <div className="modal-overlay-edit">
-      <div className="modal">
-        <div className="modal-header-edit">
-          <h2>Edit Public Client</h2>
+  return (
+    <div className="efpr-overlay">
+      <div className="efpr-modal" id="efpr-modal-root" role="dialog" aria-labelledby="efpr-title">
+
+        <div className="efpr-header">
+          <h2 id="efpr-title" className="efpr-title">Edit Public Client</h2>
+          <p className="efpr-subtitle">
+            Ensure all modified fields are correct and complete to maintain data integrity.
+          </p>
         </div>
 
-        {/* Form wraps both the scrollable body and fixed footer */}
-        <form onSubmit={handleUpdate}>
-          <div className="modal-body-edit">
-            <h3>Ensure all modified fields are correct and complete to maintain data integrity</h3>
-            
-            <div className="form-grid-edit">
-              
-              <div className="form-group-edit">
-                <label>Male Partner</label>
-                <input 
-                  name="name" 
-                  value={formData.name || ""} 
-                  onChange={handleInputChange} 
-                  className={errors.name ? "input-error" : ""} 
-                />
-                {errors.name && <span className="error-text">{errors.name}</span>}
-              </div>
-              
-              <div className="form-group-edit">
-                <label>Female Partner</label>
-                <input 
-                  name="spouse_name" 
-                  value={formData.spouse_name || ""} 
-                  onChange={handleInputChange} 
-                  className={errors.spouse_name ? "input-error" : ""} 
-                />
-                {errors.spouse_name && <span className="error-text">{errors.spouse_name}</span>}
-              </div>
-              
-              <div className="form-group-edit">
-                <label>Birthdate Male</label>
-                <input 
-                  type="date" 
-                  name="birthdate_male" 
-                  value={formData.birthdate_male || ""} 
-                  onChange={handleInputChange} 
-                  className={errors.birthdate_male ? "input-error" : ""} 
-                />
-                {errors.birthdate_male && <span className="error-text">{errors.birthdate_male}</span>}
-              </div>
-              
-              <div className="form-group-edit">
-                <label>Birthdate Female</label>
-                <input 
-                  type="date" 
-                  name="birthdate_female" 
-                  value={formData.birthdate_female || ""} 
-                  onChange={handleInputChange} 
-                  className={errors.birthdate_female ? "input-error" : ""} 
-                />
-                {errors.birthdate_female && <span className="error-text">{errors.birthdate_female}</span>}
-              </div>
-              
-              <div className="form-group-edit">
-                <label>Educational Attainment Male</label>
-                <select 
-                  name="educational_attainment_male" 
-                  value={formData.educational_attainment_male || ""} 
-                  onChange={handleInputChange} 
-                  className={errors.educational_attainment_male ? "input-error" : ""}
-                >
-                  <option value="">Select</option>
-                  <option value="No Education">1 - No Education</option>
-                  <option value="Elementary Level">2 - Elementary Level</option>
-                  <option value="Elementary Graduate">3 - Elementary Graduate</option>
-                  <option value="High School Level">4 - High School Level</option>
-                  <option value="High School Graduate">5 - High School Graduate</option>
-                  <option value="Vocational">6 - Vocational</option>
-                  <option value="College Level">7 - College Level</option>
-                  <option value="College Graduate">8 - College Graduate</option>
-                  <option value="Post Graduate">9 - Post Graduate</option>
-                </select>
-                {errors.educational_attainment_male && <span className="error-text">{errors.educational_attainment_male}</span>}
-              </div>
-              
-              <div className="form-group-edit">
-                <label>Educational Attainment Female</label>
-                <select 
-                  name="educational_attainment_female" 
-                  value={formData.educational_attainment_female || ""} 
-                  onChange={handleInputChange} 
-                  className={errors.educational_attainment_female ? "input-error" : ""}
-                >
-                  <option value="">Select</option>
-                  <option value="No Education">1 - No Education</option>
-                  <option value="Elementary Level">2 - Elementary Level</option>
-                  <option value="Elementary Graduate">3 - Elementary Graduate</option>
-                  <option value="High School Level">4 - High School Level</option>
-                  <option value="High School Graduate">5 - High School Graduate</option>
-                  <option value="Vocational">6 - Vocational</option>
-                  <option value="College Level">7 - College Level</option>
-                  <option value="College Graduate">8 - College Graduate</option>
-                  <option value="Post Graduate">9 - Post Graduate</option>
-                </select>
-                {errors.educational_attainment_female && <span className="error-text">{errors.educational_attainment_female}</span>}
-              </div>
-              
-              <div className="form-group-edit">
-                <label>Civil Status Male</label>
-                <select 
-                  name="civil_status_male" 
-                  value={formData.civil_status_male || ""} 
-                  onChange={handleInputChange} 
-                  className={errors.civil_status_male ? "input-error" : ""}
-                >
-                  <option value="">Select</option>
-                  <option value="Single">1 - Single</option>
-                  <option value="Married">2 - Married</option>
-                  <option value="Widowed">3 - Widowed</option>
-                  <option value="Separated">4 - Separated</option>
-                  <option value="Live-In">5 - Live-In</option>
-                </select>
-                {errors.civil_status_male && <span className="error-text">{errors.civil_status_male}</span>}
-              </div>
-              
-              <div className="form-group-edit">
-                <label>Civil Status Female</label>
-                <select 
-                  name="civil_status_female" 
-                  value={formData.civil_status_female || ""} 
-                  onChange={handleInputChange} 
-                  className={errors.civil_status_female ? "input-error" : ""}
-                >
-                  <option value="">Select</option>
-                  <option value="Single">1 - Single</option>
-                  <option value="Married">2 - Married</option>
-                  <option value="Widowed">3 - Widowed</option>
-                  <option value="Separated">4 - Separated</option>
-                  <option value="Live-In">5 - Live-In</option>
-                </select>
-                {errors.civil_status_female && <span className="error-text">{errors.civil_status_female}</span>}
-              </div>
-              
-              <div className="form-group-edit">
-                <label>Address {isSearching && <span style={{ color: "#3b82f6", fontSize: "12px" }}>(Updating Map...)</span>}</label>
-                <input 
-                  name="address" 
-                  value={formData.address || ""} 
-                  onChange={handleInputChange} 
-                  className={errors.address ? "input-error" : ""} 
-                />
-                {errors.address && <span className="error-text">{errors.address}</span>}
-              </div>
-              
-              <div className="form-group-edit">
-                <label>Barangay</label>
-                <input 
-                  name="barangay" 
-                  value={formData.barangay || ""} 
-                  onChange={handleInputChange} 
-                  className={errors.barangay ? "input-error" : ""} 
-                />
-                {errors.barangay && <span className="error-text">{errors.barangay}</span>}
+        <form onSubmit={handleUpdate} className="efpr-form">
+          <div className="efpr-body">
+
+            {/* ── Partner Information ───────────────────────── */}
+            <section className="efpr-section">
+              <h3 className="efpr-section-title">Partner Information</h3>
+
+              <div className="efpr-paired">
+                <span className="efpr-paired-label">Name</span>
+                <div className="efpr-paired-cols">
+                  <div className="efpr-group-public">
+                    <span className="efpr-tag efpr-tag-male">Male</span>
+                    <input
+                      name="name"
+                      value={formData.name || ""}
+                      onChange={handleInputChange}
+                      className={`efpr-input ${errors.name ? "efpr-input-error" : ""}`}
+                    />
+                    {errors.name && <span className="efpr-error-text">{errors.name}</span>}
+                  </div>
+                  <div className="efpr-group-public">
+                    <span className="efpr-tag efpr-tag-female">Female</span>
+                    <input
+                      name="spouse_name"
+                      value={formData.spouse_name || ""}
+                      onChange={handleInputChange}
+                      className={`efpr-input ${errors.spouse_name ? "efpr-input-error" : ""}`}
+                    />
+                    {errors.spouse_name && <span className="efpr-error-text">{errors.spouse_name}</span>}
+                  </div>
+                </div>
               </div>
 
-              <div className="form-group-edit">
-                <label>Latitude</label>
-                <input 
-                  type="number" 
-                  step="any" 
-                  name="latitude" 
-                  value={formData.latitude !== undefined ? formData.latitude : ""} 
-                  onChange={handleCoordinateChange}
-                  className={errors.latitude ? "input-error" : ""} 
-                />
-                {errors.latitude && <span className="error-text">{errors.latitude}</span>}
+              <div className="efpr-paired">
+                <span className="efpr-paired-label">Birthdate</span>
+                <div className="efpr-paired-cols">
+                  <div className="efpr-group-public">
+                    <span className="efpr-tag efpr-tag-male">Male</span>
+                    <input
+                      type="date"
+                      name="birthdate_male"
+                      value={formData.birthdate_male || ""}
+                      onChange={handleInputChange}
+                      className={`efpr-input ${errors.birthdate_male ? "efpr-input-error" : ""}`}
+                    />
+                    {errors.birthdate_male && <span className="efpr-error-text">{errors.birthdate_male}</span>}
+                  </div>
+                  <div className="efpr-group-public">
+                    <span className="efpr-tag efpr-tag-female">Female</span>
+                    <input
+                      type="date"
+                      name="birthdate_female"
+                      value={formData.birthdate_female || ""}
+                      onChange={handleInputChange}
+                      className={`efpr-input ${errors.birthdate_female ? "efpr-input-error" : ""}`}
+                    />
+                    {errors.birthdate_female && <span className="efpr-error-text">{errors.birthdate_female}</span>}
+                  </div>
+                </div>
               </div>
 
-              <div className="form-group-edit">
-                <label>Longitude</label>
-                <input 
-                  type="number" 
-                  step="any" 
-                  name="longitude" 
-                  value={formData.longitude !== undefined ? formData.longitude : ""} 
-                  onChange={handleCoordinateChange}
-                  className={errors.longitude ? "input-error" : ""} 
-                />
-                {errors.longitude && <span className="error-text">{errors.longitude}</span>}
+              <div className="efpr-paired">
+                <span className="efpr-paired-label">Educational Attainment</span>
+                <div className="efpr-paired-cols">
+                  <div className="efpr-group-public">
+                    <span className="efpr-tag efpr-tag-male">Male</span>
+                    <select
+                      name="educational_attainment_male"
+                      value={formData.educational_attainment_male || ""}
+                      onChange={handleInputChange}
+                      className={`efpr-select ${errors.educational_attainment_male ? "efpr-input-error" : ""}`}
+                    >
+                      <option value="">Select</option>
+                      <option value="No Education">1 - No Education</option>
+                      <option value="Elementary Level">2 - Elementary Level</option>
+                      <option value="Elementary Graduate">3 - Elementary Graduate</option>
+                      <option value="High School Level">4 - High School Level</option>
+                      <option value="High School Graduate">5 - High School Graduate</option>
+                      <option value="Vocational">6 - Vocational</option>
+                      <option value="College Level">7 - College Level</option>
+                      <option value="College Graduate">8 - College Graduate</option>
+                      <option value="Post Graduate">9 - Post Graduate</option>
+                    </select>
+                    {errors.educational_attainment_male && (
+                      <span className="efpr-error-text">{errors.educational_attainment_male}</span>
+                    )}
+                  </div>
+                  <div className="efpr-group-public">
+                    <span className="efpr-tag efpr-tag-female">Female</span>
+                    <select
+                      name="educational_attainment_female"
+                      value={formData.educational_attainment_female || ""}
+                      onChange={handleInputChange}
+                      className={`efpr-select ${errors.educational_attainment_female ? "efpr-input-error" : ""}`}
+                    >
+                      <option value="">Select</option>
+                      <option value="No Education">1 - No Education</option>
+                      <option value="Elementary Level">2 - Elementary Level</option>
+                      <option value="Elementary Graduate">3 - Elementary Graduate</option>
+                      <option value="High School Level">4 - High School Level</option>
+                      <option value="High School Graduate">5 - High School Graduate</option>
+                      <option value="Vocational">6 - Vocational</option>
+                      <option value="College Level">7 - College Level</option>
+                      <option value="College Graduate">8 - College Graduate</option>
+                      <option value="Post Graduate">9 - Post Graduate</option>
+                    </select>
+                    {errors.educational_attainment_female && (
+                      <span className="efpr-error-text">{errors.educational_attainment_female}</span>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              {/* Leaflet Verification and Adjustment Panel */}
-              <div className="form-group-edit" style={{ gridColumn: "1 / -1", height: "250px", marginBottom: "15px" }}>
-                <label style={{ marginBottom: "5px", display: "block" }}>Location Visual Verification</label>
-                <MapContainer 
-                  center={[formData.latitude || 14.8436, formData.longitude || 120.8114]} 
-                  zoom={14} 
-                  scrollWheelZoom={false}
-                  style={{ height: "100%", width: "100%", borderRadius: "4px", zIndex: "1" }}
-                >
-                  <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              <div className="efpr-paired">
+                <span className="efpr-paired-label">Civil Status</span>
+                <div className="efpr-paired-cols">
+                  <div className="efpr-group-public">
+                    <span className="efpr-tag efpr-tag-male">Male</span>
+                    <select
+                      name="civil_status_male"
+                      value={formData.civil_status_male || ""}
+                      onChange={handleInputChange}
+                      className={`efpr-select ${errors.civil_status_male ? "efpr-input-error" : ""}`}
+                    >
+                      <option value="">Select</option>
+                      <option value="Single">1 - Single</option>
+                      <option value="Married">2 - Married</option>
+                      <option value="Widowed">3 - Widowed</option>
+                      <option value="Separated">4 - Separated</option>
+                      <option value="Live-In">5 - Live-In</option>
+                    </select>
+                    {errors.civil_status_male && <span className="efpr-error-text">{errors.civil_status_male}</span>}
+                  </div>
+                  <div className="efpr-group-public">
+                    <span className="efpr-tag efpr-tag-female">Female</span>
+                    <select
+                      name="civil_status_female"
+                      value={formData.civil_status_female || ""}
+                      onChange={handleInputChange}
+                      className={`efpr-select ${errors.civil_status_female ? "efpr-input-error" : ""}`}
+                    >
+                      <option value="">Select</option>
+                      <option value="Single">1 - Single</option>
+                      <option value="Married">2 - Married</option>
+                      <option value="Widowed">3 - Widowed</option>
+                      <option value="Separated">4 - Separated</option>
+                      <option value="Live-In">5 - Live-In</option>
+                    </select>
+                    {errors.civil_status_female && <span className="efpr-error-text">{errors.civil_status_female}</span>}
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* ── Location ──────────────────────────────────── */}
+            <section className="efpr-section">
+              <h3 className="efpr-section-title">Location</h3>
+
+              <div className="efpr-grid-2">
+                <div className="efpr-group-public">
+                  <label className="efpr-label">
+                    Address{" "}
+                    {isSearching && <span className="efpr-searching">(Updating Map...)</span>}
+                  </label>
+                  <input
+                    name="address"
+                    value={formData.address || ""}
+                    onChange={handleInputChange}
+                    className={`efpr-input ${errors.address ? "efpr-input-error" : ""}`}
                   />
-                  <MapClickHandler />
-                  <ChangeMapView coords={[formData.latitude, formData.longitude]} />
-                  {formData.latitude && formData.longitude && (
-                    <Marker position={[formData.latitude, formData.longitude]} />
-                  )}
-                </MapContainer>
-              </div>
-              
-              <div className="form-group-edit">
-                <label>No. of Children</label>
-                <input 
-                  type="number" 
-                  name="no_of_children" 
-                  value={formData.no_of_children !== undefined ? formData.no_of_children : ""} 
-                  onChange={handleInputChange} 
-                  min="0" 
-                  className={errors.no_of_children ? "input-error" : ""} 
-                />
-                {errors.no_of_children && <span className="error-text">{errors.no_of_children}</span>}
-              </div>
-              
-              <div className="form-group-edit">
-                <label>Method Used</label>
-                <select 
-                  name="fp_method" 
-                  value={formData.fp_method || ""} 
-                  onChange={handleInputChange} 
-                >
-                  <option value="">Select</option>
-                  <option value="Condom">1 - Condom</option>
-                  <option value="IUD">2 - IUD</option>
-                  <option value="Pills">3 - Pills</option>
-                  <option value="Injectable">4 - Injectable</option>
-                  <option value="Vasectomy">5 - Vasectomy</option>
-                  <option value="Tubal Ligation">6 - Tubal Ligation</option>
-                  <option value="Implant">7 - Implant</option>
-                  <option value="CMM/Billings">8 - CMM/Billings</option>
-                  <option value="BBT">9 - BBT</option>
-                  <option value="Symptothermal">10 - Symptothermal</option>
-                  <option value="SDM">11 - SDM</option>
-                  <option value="LAM">12 - LAM</option>
-                </select>
-              </div>
-              
-              <div className="form-group-edit">
-                <label>Intention to Shift</label>
-                <select 
-                  name="intention_to_shift" 
-                  value={formData.intention_to_shift || ""} 
-                  onChange={handleInputChange} 
-                >
-                  <option value="">Select</option>
-                  <option value="Condom">1 - Condom</option>
-                  <option value="IUD">2 - IUD</option>
-                  <option value="Pills">3 - Pills</option>
-                  <option value="Injectable">4 - Injectable</option>
-                  <option value="Vasectomy">5 - Vasectomy</option>
-                  <option value="Tubal Ligation">6 - Tubal Ligation</option>
-                  <option value="Implant">7 - Implant</option>
-                  <option value="CMM/Billings">8 - CMM/Billings</option>
-                  <option value="BBT">9 - BBT</option>
-                  <option value="Symptothermal">10 - Symptothermal</option>
-                  <option value="SDM">11 - SDM</option>
-                  <option value="LAM">12 - LAM</option>
-                </select>
-              </div>
-              
-              <div className="form-group-edit">
-                <label>Type</label>
-                <select 
-                  name="type" 
-                  value={formData.type || ""} 
-                  onChange={handleInputChange} 
-                >
-                  <option value="">Select</option>
-                  <option value="Withdrawal">1 - Withdrawal</option>
-                  <option value="Rhythm">2 - Rhythm</option>
-                  <option value="Calendar">3 - Calendar</option>
-                  <option value="Abstinence">4 - Abstinence</option>
-                  <option value="Herbal">5 - Herbal</option>
-                  <option value="No Method">6 - No Method</option>
-                </select>
-              </div>
-              
-              <div className="form-group-edit">
-                <label>Status</label>
-                <select 
-                  name="status" 
-                  value={formData.status || ""} 
-                  onChange={handleInputChange} 
-                >
-                  <option value="">Select</option>
-                  <option value="Expressing Intention to Use Modern FP">A - Expressing Intention to Use Modern FP</option>
-                  <option value="Undecided">B - Undecided</option>
-                  <option value="Currently Pregnant">C - Currently Pregnant</option>
-                  <option value="No Intention to Use">D - No Intention to Use</option>
-                </select>
-              </div>
-              
-              <div className="form-group-edit">
-                <label>Reason</label>
-                <select 
-                  name="reason" 
-                  value={formData.reason || ""} 
-                  onChange={handleInputChange} 
-                >
-                  <option value="">Select</option>
-                  <option value="Spacing">1 - Spacing</option>
-                  <option value="Limiting">2 - Limiting</option>
-                  <option value="Achieving">3 - Achieving</option>
-                </select>
+                  {errors.address && <span className="efpr-error-text">{errors.address}</span>}
+                </div>
+
+                <div className="efpr-group-public">
+                  <label className="efpr-label">Barangay</label>
+                  <input
+                    name="barangay"
+                    value={formData.barangay || ""}
+                    onChange={handleInputChange}
+                    className={`efpr-input ${errors.barangay ? "efpr-input-error" : ""}`}
+                  />
+                  {errors.barangay && <span className="efpr-error-text">{errors.barangay}</span>}
+                </div>
+
+                <div className="efpr-group-public">
+                  <label className="efpr-label">Latitude</label>
+                  <input
+                    type="number"
+                    step="any"
+                    name="latitude"
+                    value={formData.latitude !== undefined ? formData.latitude : ""}
+                    onChange={handleCoordinateChange}
+                    className={`efpr-input ${errors.latitude ? "efpr-input-error" : ""}`}
+                  />
+                  {errors.latitude && <span className="efpr-error-text">{errors.latitude}</span>}
+                </div>
+
+                <div className="efpr-group-public">
+                  <label className="efpr-label">Longitude</label>
+                  <input
+                    type="number"
+                    step="any"
+                    name="longitude"
+                    value={formData.longitude !== undefined ? formData.longitude : ""}
+                    onChange={handleCoordinateChange}
+                    className={`efpr-input ${errors.longitude ? "efpr-input-error" : ""}`}
+                  />
+                  {errors.longitude && <span className="efpr-error-text">{errors.longitude}</span>}
+                </div>
               </div>
 
-              <div className="form-group-edit">
-                <label>Classes Held</label>
-                <select 
-                  name="classes_held" 
-                  value={formData.classes_held || ""} 
-                  onChange={handleInputChange} 
-                  className={errors.classes_held ? "input-error" : ""}
-                >
-                  <option value="">Select</option>
-                  <option value="4Ps">4Ps</option>
-                  <option value="Non-4Ps">Non-4Ps</option>
-                  <option value="Faith-Based Organization">Faith-Based Organization</option>
-                  <option value="USAPAN">USAPAN</option>
-                  <option value="PMOC">PMOC</option>
-                  <option value="House to House">House to House</option>
-                  <option value="Profiled Only">Profiled Only</option>
-                  <option value="Others">Others</option>
-                </select>
-                {errors.classes_held && <span className="error-text">{errors.classes_held}</span>}
-              </div>  
+              <div className="efpr-map-wrap" id="efpr-map-wrap">
+                <label className="efpr-label">Location Visual Verification</label>
+                <div className="efpr-map-frame">
+                  <MapContainer
+                    center={[formData.latitude || 14.8436, formData.longitude || 120.8114]}
+                    zoom={14}
+                    scrollWheelZoom={false}
+                    style={{ height: "100%", width: "100%" }}
+                  >
+                    <TileLayer
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    <MapClickHandler />
+                    <ChangeMapView coords={[formData.latitude, formData.longitude]} />
+                    {formData.latitude && formData.longitude && (
+                      <Marker position={[formData.latitude, formData.longitude]} />
+                    )}
+                  </MapContainer>
+                </div>
+              </div>
+            </section>
 
-            </div>
+            {/* ── Family Planning Details ──────────────────── */}
+            <section className="efpr-section">
+              <h3 className="efpr-section-title">Family Planning Details</h3>
+
+              <div className="efpr-grid-2">
+                <div className="efpr-group-public">
+                  <label className="efpr-label">No. of Children</label>
+                  <input
+                    type="number"
+                    name="no_of_children"
+                    value={formData.no_of_children !== undefined ? formData.no_of_children : ""}
+                    onChange={handleInputChange}
+                    min="0"
+                    className={`efpr-input ${errors.no_of_children ? "efpr-input-error" : ""}`}
+                  />
+                  {errors.no_of_children && <span className="efpr-error-text">{errors.no_of_children}</span>}
+                </div>
+
+                <div className="efpr-group-public">
+                  <label className="efpr-label">Method Used</label>
+                  <select
+                    name="fp_method"
+                    value={formData.fp_method || ""}
+                    onChange={handleInputChange}
+                    className="efpr-select"
+                  >
+                    <option value="">Select</option>
+                    <option value="Condom">1 - Condom</option>
+                    <option value="IUD">2 - IUD</option>
+                    <option value="Pills">3 - Pills</option>
+                    <option value="Injectable">4 - Injectable</option>
+                    <option value="Vasectomy">5 - Vasectomy</option>
+                    <option value="Tubal Ligation">6 - Tubal Ligation</option>
+                    <option value="Implant">7 - Implant</option>
+                    <option value="CMM/Billings">8 - CMM/Billings</option>
+                    <option value="BBT">9 - BBT</option>
+                    <option value="Symptothermal">10 - Symptothermal</option>
+                    <option value="SDM">11 - SDM</option>
+                    <option value="LAM">12 - LAM</option>
+                  </select>
+                </div>
+
+                <div className="efpr-group-public">
+                  <label className="efpr-label">Intention to Shift</label>
+                  <select
+                    name="intention_to_shift"
+                    value={formData.intention_to_shift || ""}
+                    onChange={handleInputChange}
+                    className="efpr-select"
+                  >
+                    <option value="">Select</option>
+                    <option value="Condom">1 - Condom</option>
+                    <option value="IUD">2 - IUD</option>
+                    <option value="Pills">3 - Pills</option>
+                    <option value="Injectable">4 - Injectable</option>
+                    <option value="Vasectomy">5 - Vasectomy</option>
+                    <option value="Tubal Ligation">6 - Tubal Ligation</option>
+                    <option value="Implant">7 - Implant</option>
+                    <option value="CMM/Billings">8 - CMM/Billings</option>
+                    <option value="BBT">9 - BBT</option>
+                    <option value="Symptothermal">10 - Symptothermal</option>
+                    <option value="SDM">11 - SDM</option>
+                    <option value="LAM">12 - LAM</option>
+                  </select>
+                </div>
+
+                <div className="efpr-group-public">
+                  <label className="efpr-label">Traditional FP User: Type</label>
+                  <select
+                    name="type"
+                    value={formData.type || ""}
+                    onChange={handleInputChange}
+                    className="efpr-select"
+                  >
+                    <option value="">Select</option>
+                    <option value="Withdrawal">1 - Withdrawal</option>
+                    <option value="Rhythm">2 - Rhythm</option>
+                    <option value="Calendar">3 - Calendar</option>
+                    <option value="Abstinence">4 - Abstinence</option>
+                    <option value="Herbal">5 - Herbal</option>
+                    <option value="No Method">6 - No Method</option>
+                  </select>
+                </div>
+
+                <div className="efpr-group-public">
+                  <label className="efpr-label">Traditional FP User: Status</label>
+                  <select
+                    name="status"
+                    value={formData.status || ""}
+                    onChange={handleInputChange}
+                    className="efpr-select"
+                  >
+                    <option value="">Select</option>
+                    <option value="Expressing Intention to Use Modern FP">A - Expressing Intention to Use Modern FP</option>
+                    <option value="Undecided">B - Undecided</option>
+                    <option value="Currently Pregnant">C - Currently Pregnant</option>
+                    <option value="No Intention to Use">D - No Intention to Use</option>
+                  </select>
+                </div>
+
+                <div className="efpr-group-public">
+                  <label className="efpr-label">Reason</label>
+                  <select
+                    name="reason"
+                    value={formData.reason || ""}
+                    onChange={handleInputChange}
+                    className="efpr-select"
+                  >
+                    <option value="">Select</option>
+                    <option value="Spacing">1 - Spacing</option>
+                    <option value="Limiting">2 - Limiting</option>
+                    <option value="Achieving">3 - Achieving</option>
+                  </select>
+                </div>
+
+                <div className="efpr-group-public efpr-span-2">
+                  <label className="efpr-label">Classes Held</label>
+                  <select
+                    name="classes_held"
+                    value={formData.classes_held || ""}
+                    onChange={handleInputChange}
+                    className={`efpr-select ${errors.classes_held ? "efpr-input-error" : ""}`}
+                  >
+                    <option value="">Select</option>
+                    <option value="4Ps">4Ps</option>
+                    <option value="Non-4Ps">Non-4Ps</option>
+                    <option value="Faith-Based Organization">Faith-Based Organization</option>
+                    <option value="USAPAN">USAPAN</option>
+                    <option value="PMOC">PMOC</option>
+                    <option value="House to House">House to House</option>
+                    <option value="Profiled Only">Profiled Only</option>
+                    <option value="Others">Others</option>
+                  </select>
+                  {errors.classes_held && <span className="efpr-error-text">{errors.classes_held}</span>}
+                </div>
+              </div>
+            </section>
+
           </div>
 
-          <div className="modal-btn-edit">
-            <button type="button" className="btn-cancel-cr" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn-edit">Update Record</button>
+          <div className="efpr-footer">
+            <button type="button" className="efpr-btn efpr-btn-cancel" onClick={onClose}>
+              Cancel
+            </button>
+            <button type="submit" className="efpr-btn efpr-btn-save">
+              Update Record
+            </button>
           </div>
         </form>
       </div>
