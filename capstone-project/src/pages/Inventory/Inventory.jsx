@@ -1,11 +1,24 @@
 import "./inventory.css"
 import { useEffect, useState } from "react";
 import { db } from "../../firebase-config"
-import { doc, getDoc, getDocs, updateDoc, setDoc, collection } from "firebase/firestore";
-import { CheckCircle, RefreshCw, Upload, FileText, SquarePen } from "lucide-react";
+import { doc, getDoc, getDocs, updateDoc, setDoc, collection,addDoc, increment, serverTimestamp } from "firebase/firestore";
+import { CheckCircle, RefreshCw, Upload, FileText, SquarePen,SquarePlus, SquareMinus } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, Cell } from "recharts";
 
-
+const FP_METHODS = [
+    { id: "condom", label: "Condom" },
+    { id: "iud", label: "IUD" },
+    { id: "pills", label: "Pills" },
+    { id: "injectable", label: "Injectable" },
+    { id: "vasectomy", label: "Vasectomy" },
+    { id: "tubal_ligation", label: "Tubal Ligation" },
+    { id: "implant", label: "Implant" },
+    { id: "cmm_billings", label: "CMM/Billings" },
+    { id: "bbt", label: "Basal Body Temperature(BBT)" },
+    { id: "stm", label: "Sympto-Thermal Method(STM)" },
+    { id: "sdm", label: "Standard Days Method(SDM)" },
+    { id: "lam", label: "Lactational Amenorrhea Method(LAM)" },
+];
 function Inventory() {
     const [editingRHUId, setEditingRHUId] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -35,6 +48,155 @@ function Inventory() {
     const [selectedRHU, setSelectedRHU] = useState(null);
 
     const [chartRefreshKey, setChartRefreshKey] = useState(0);
+
+    const [showRhuAllocate, setShowRhuAllocate] = useState(false);
+    const [allocRHU, setAllocRHU] = useState(null);
+    const [allocQty, setAllocQty] = useState("");
+    const [allocMethod, setAllocMethod] = useState("");
+    const [allocError, setAllocError] = useState("");
+
+    const [showRhuDeduct, setShowRhuDeduct] = useState(false);
+    const [deductRHU, setDeductRHU] = useState(null);
+    const [singleDeductQty, setSingleDeductQty] = useState("");
+    const [singleDeductMethod, setSingleDeductMethod] = useState("");
+    const [singleDeductError, setSingleDeductError] = useState("");
+
+    const [bulkDeductMethod, setBulkDeductMethod] = useState("");
+
+    function openRhuAllocate(item) {
+    setAllocRHU(item);
+    setAllocQty("");
+    setAllocMethod("");
+    setAllocError("");
+    setShowRhuAllocate(true);
+}
+
+function closeRhuAllocate() {
+    setShowRhuAllocate(false);
+    setAllocRHU(null);
+}
+// 1. Triggered when clicking "Allocate" / "Confirm" inside the input form
+function handleRhuAllocate() {
+    const qty = Number(allocQty);
+
+    if (!allocMethod) return setAllocError("Please select an FP method.");
+    if (!Number.isInteger(qty) || qty <= 0) return setAllocError("Enter a whole number greater than 0.");
+
+    setAllocError("");
+    setShowConfirmAllocate(true); // Opens confirmation overlay
+}
+
+// 2. Triggered when clicking "Confirm" inside the confirmation overlay
+async function ConfirmRhuAllocation() {
+    const qty = Number(allocQty);
+
+    try {
+        await updateDoc(doc(db, "rhu", allocRHU.id), {
+            stock: increment(qty),
+            [`stockByMethod.${allocMethod}`]: increment(qty),
+        });
+
+        await setDoc(
+            doc(db, "inventory", "allocation"),
+            { totalAllocation: increment(qty), rhuCount: rhuData.length },
+            { merge: true }
+        );
+
+        await addDoc(collection(db, "inventory", "allocation", "history"), {
+            rhuId: allocRHU.id,
+            rhuName: allocRHU.name,
+            method: allocMethod,
+            quantity: qty,
+            createdAt: serverTimestamp(),
+        });
+
+        await fetchRHUData();
+        
+        const label = FP_METHODS.find(m => m.id === allocMethod)?.label;
+        
+        // Close both confirmation and allocation modals
+        setShowConfirmAllocate(false);
+        closeRhuAllocate();
+
+        // Trigger Toast Notification
+        setToastTitle("Allocation Successful");
+        setToastMessage(`${qty} units of ${label} allocated to ${allocRHU.name}.`);
+        setShowToast(true);
+
+        setTimeout(() => { 
+            setShowToast(false); 
+            setToastTitle(""); 
+            setToastMessage(""); 
+        }, 4000);
+
+    } catch (err) {
+        console.error("rhu allocation error:", err);
+        setShowConfirmAllocate(false);
+        setAllocError("Failed to allocate. Please try again.");
+    }
+}
+
+
+function openRhuDeduct(item) {
+    setDeductRHU(item);
+    setSingleDeductQty("");
+    setSingleDeductMethod("");
+    setSingleDeductError("");
+    setShowRhuDeduct(true);
+}
+
+function closeRhuDeduct() {
+    setShowRhuDeduct(false);
+    setDeductRHU(null);
+}
+
+async function handleSingleRhuDeduct() {
+    const qty = Number(singleDeductQty);
+
+    if (!singleDeductMethod) {
+        return setSingleDeductError("Please select an FP method.");
+    }
+    if (!Number.isInteger(qty) || qty <= 0) {
+        return setSingleDeductError("Enter a whole number greater than 0.");
+    }
+
+    const available = Number(deductRHU?.stockByMethod?.[singleDeductMethod] ?? 0);
+    if (qty > available) {
+        return setSingleDeductError(`Only ${available} units available for this method.`);
+    }
+
+    try {
+        await updateDoc(doc(db, "rhu", deductRHU.id), {
+            stock: increment(-qty),
+            [`stockByMethod.${singleDeductMethod}`]: increment(-qty),
+        });
+
+        await addDoc(collection(db, "inventory", "allocation", "history"), {
+            type: "deduct",
+            rhuId: deductRHU.id,
+            rhuName: deductRHU.name,
+            method: singleDeductMethod,
+            quantity: qty,
+            createdAt: serverTimestamp(),
+        });
+
+        await fetchRHUData();
+        const label = FP_METHODS.find(m => m.id === singleDeductMethod)?.label;
+        closeRhuDeduct();
+
+        setToastTitle("Deduction Successful");
+        setToastMessage(`${qty} units of ${label} deducted from ${deductRHU.name}.`);
+        setShowToast(true);
+        setTimeout(() => {
+            setShowToast(false);
+            setToastTitle("");
+            setToastMessage("");
+        }, 4000);
+    } catch (err) {
+        console.error("Single RHU deduction error:", err);
+        setSingleDeductError("Failed to deduct. Please try again.");
+    }
+}
 
     async function fetchRHUData() {
         setIsLoading(true);
@@ -67,61 +229,90 @@ function Inventory() {
     }
 
     function handleConfirmDeduct() {
-        const hasDeduction = Object.values(deductValue).some(qty => Number(qty) > 0);
-        if (!hasDeduction) {
-            setShowDeductError(true);
-            setTimeout(() => setShowDeductError(false), 3000);
-            return;
+    const fail = (msg) => {
+        setDeductError(msg);
+        setTimeout(() => setDeductError(""), 3000);
+    };
 
-        }
-        setDeductError("");
-        setShowConfirmDeduct(true);
-        setShowDeductModal(false);
+    if (!bulkDeductMethod) return fail("Please select an FP method.");
 
+    const entries = Object.entries(deductValue).filter(([_, q]) => Number(q) > 0);
+    if (entries.length === 0) return fail("Please enter at least 1 deduction amount.");
+
+    for (const [id, q] of entries) {
+        const qty = Number(q);
+        const item = rhuData.find((r) => r.id === id);
+        const available = Number(item?.stockByMethod?.[bulkDeductMethod] ?? 0);
+        if (!Number.isInteger(qty)) return fail(`${item?.name}: quantity must be a whole number.`);
+        if (qty > available) return fail(`${item?.name}: only ${available} available for this method.`);
     }
 
-    async function ConfirmDeduction() {
-        const deductions = Object.entries(deductValue)
-            .filter(([_, qty]) => Number(qty) > 0);
+    setDeductError("");
+    setShowConfirmDeduct(true);
+    setShowDeductModal(false);
+}
 
-        if (deductions.length === 0) {
-            setDeductError("Please enter at least one deduction amount.");
-            return;
-        }
+  async function ConfirmDeduction() {
+    const entries = Object.entries(deductValue).filter(([_, q]) => Number(q) > 0);
+    if (!bulkDeductMethod || entries.length === 0) return;
 
-        try {
-            const updates = deductions.map(([id, qty]) => {
-                const amount = Number(qty);
-                const item = rhuData.find((row) => row.id === id);
-                const currentStock = item?.stock || 0;
-                const finalStock = Math.max(0, currentStock - amount);
-                return updateDoc(doc(db, "rhu", id), { stock: finalStock });
+    const label = FP_METHODS.find((m) => m.id === bulkDeductMethod)?.label;
+    const totalDeducted = entries.reduce((sum, [_, q]) => sum + Number(q), 0);
+
+    try {
+        await runTransaction(db, async (tx) => {
+            // reads first
+            const refs = entries.map(([id]) => doc(db, "rhu", id));
+            const snaps = await Promise.all(refs.map((r) => tx.get(r)));
+
+            snaps.forEach((snap, i) => {
+                if (!snap.exists()) throw new Error("An RHU was not found.");
+                const qty = Number(entries[i][1]);
+                const available = Number(snap.data().stockByMethod?.[bulkDeductMethod] ?? 0);
+                if (qty > available) {
+                    throw new Error(`${snap.data().name}: only ${available} in stock for this method.`);
+                }
             });
 
-            await Promise.all(updates);
-            setDeductValue({});
-            await fetchRHUData();
-            setShowConfirmDeduct(false);
-            setToastTitle("Deduction Successful");
-            setToastMessage("Stock deduction completed and inventory updated.");
-            setShowToast(true);
-            setTimeout(() => {
-                setShowToast(false);
-                setToastTitle("");
-                setToastMessage("");
-            }, 4000);
+            // then writes
+            snaps.forEach((snap, i) => {
+                const qty = Number(entries[i][1]);
+                tx.update(refs[i], {
+                    stock: increment(-qty),
+                    [`stockByMethod.${bulkDeductMethod}`]: increment(-qty),
+                });
+                tx.set(doc(collection(db, "inventory", "allocation", "history")), {
+                    type: "deduct",
+                    rhuId: refs[i].id,
+                    rhuName: snap.data().name,
+                    method: bulkDeductMethod,
+                    quantity: qty,
+                    createdAt: serverTimestamp(),
+                });
+            });
+        });
 
-
-
-
-        } catch (error) {
-            console.error("deduction:", error);
-        }
+        setDeductValue({});
+        setBulkDeductMethod("");
+        await fetchRHUData();
+        setShowConfirmDeduct(false);
+        setToastTitle("Deduction Successful");
+        setToastMessage(`${totalDeducted} units of ${label} deducted from ${entries.length} RHU(s).`);
+        setShowToast(true);
+        setTimeout(() => {
+            setShowToast(false);
+            setToastTitle("");
+            setToastMessage("");
+        }, 4000);
+    } catch (error) {
+        console.error("deduction:", error);
+        // go back to the input modal so the user can fix it
+        setShowConfirmDeduct(false);
+        setShowDeductModal(true);
+        setDeductError(error.message || "Deduction failed. No changes were saved.");
+        setTimeout(() => setDeductError(""), 4000);
     }
-
-
-
-
+}
 
     async function ConfirmAllocation() {
         try {
@@ -229,7 +420,7 @@ function Inventory() {
                 barangays: updatedBarangays,
                 total_population: updatedPopulation,
             };
-
+            setshowRHUInfo(false);
             setSelectedRHU(updatedRHU);
             setRhuData((prev) => prev.map((item) => (item.id === updatedRHU.id ? updatedRHU : item)));
             setEditingRHUId(null);
@@ -292,12 +483,13 @@ function Inventory() {
                 <div className="cards-container">
                     <div className="inventory-header-content" id="overall-stocks-card">
                         <h3 >Overall Stocks</h3>
-                        <h2>{rhuData.reduce((sum, item) => sum + item.stock, 0)}</h2>
+                        <h2>{rhuData.reduce((totalSum, item) =>  totalSum + FP_METHODS.reduce((mSum, m) => mSum + Number(item.stockByMethod?.[m.id] ?? 0), 0), 0).toLocaleString()}</h2>
                     </div>
 
                     <div className="inventory-header-content" id="low-stock-card">
                         <h3 >RHU with Low Stocks</h3>
-                        <h2>{rhuData.filter((item) => item.stock <= lowStockLimit).length}</h2>
+                        <h2>{rhuData.filter((item) => {const itemTotal = FP_METHODS.reduce((sum, m) => sum 
+                        + Number(item.stockByMethod?.[m.id] ?? 0), 0);return itemTotal <= lowStockLimit;}).length}</h2>
                     </div>
 
                     <div className="inventory-header-content" id="overall-rhu-card">
@@ -366,10 +558,9 @@ function Inventory() {
                         <h3 id="rhu-title">Stock per RHU</h3>
                         <ResponsiveContainer width="100%" height={290}>
                             <BarChart key={`stock-${chartRefreshKey}`}
-                                data={sortedRHUData.map((item) => ({
-                                    name: item.name,
-                                    stock: Number(item.stock || 0),
-                                }))}
+                                data={sortedRHUData.map((item) => ({name: item.name,
+                                 stock: FP_METHODS.reduce((sum, m) => sum + Number(item.stockByMethod?.[m.id] ?? 0), 0),
+                    }))}
                                 margin={{ top: 20, right: 6, left: 0, bottom: 0 }}
                                 barCategoryGap="20%"
                             >
@@ -437,41 +628,132 @@ function Inventory() {
                         </thead>
 
                         <tbody>
-                            {sortedRHUData.map((item) => (
-                                <tr key={item.id}>
-                                    <td className="rhu-name">{item.name}</td>
-                                    <td className="rhu-population">{Number(item.total_population).toLocaleString()}</td>
-                                    <td>
-                                        <div className="rhu-progress-container">
-                                            <progress className="rhu-progress"
-                                                value={item.stock}
-                                                max={Math.max(...sortedRHUData.map(r => r.stock), 1)} ></progress>
-                                            <span className="rhu-stock-count">{item.stock} stocks</span>
-                                        </div>
-                                    </td>
+                            {sortedRHUData.map((item) => {
+                                const rowTotal = FP_METHODS.reduce(
+                                    (sum, m) => sum + Number(item.stockByMethod?.[m.id] ?? 0),
+                                    0
+                                );
 
-                                    <td>
-                                        <span className={`status-badge ${item.stock <= lowStockLimit ? "status-low" : "status-sufficient"}`}>
-                                            {item.stock <= lowStockLimit ? 'Low Stock' : 'Sufficient'}</span>
+                                return (
+                                    <tr key={item.id}>
+                                        <td className="rhu-name">{item.name}</td>
+                                        <td className="rhu-population">{Number(item.total_population).toLocaleString()}</td>
+                                        <td>
+                                            <div className="rhu-progress-container">
+                                                <progress
+                                                    className="rhu-progress"
+                                                    value={rowTotal}
+                                                    max={Math.max(
+                                                        ...sortedRHUData.map((r) =>
+                                                            FP_METHODS.reduce(
+                                                                (sum, m) => sum + Number(r.stockByMethod?.[m.id] ?? 0),
+                                                                0
+                                                            )
+                                                        ),
+                                                        1
+                                                    )}
+                                                ></progress>
+                                                <span className="rhu-stock-count">{rowTotal} stocks</span>
+                                            </div>
+                                        </td>
 
-                                    </td>
+                                        <td>
+                                            <span className={`status-badge ${rowTotal <= lowStockLimit ? "status-low" : "status-sufficient"}`}>
+                                                {rowTotal <= lowStockLimit ? 'Low Stock' : 'Sufficient'}
+                                            </span>
+                                        </td>
 
-                                    <td>
-                                        <SquarePen color="#14086d" strokeWidth={1.5} className="rhu-edit-icon"
-                                            onClick={() => { setSelectedRHU(item); setshowRHUInfo(true); setEditingRHUId(null); }}
-
-                                        />
-                                    </td>
-
-
-                                </tr>
-
-                            ))}
+                                        <td>
+                                            <div className="rhu-row-actions">
+                                                <button className="row-btn row-btn-allocate" onClick={() => openRhuAllocate(item)} title="Allocate">
+                                                    <SquarePlus size={14} /> 
+                                                </button>
+                                                <button className="row-btn row-btn-deduct" onClick={() => openRhuDeduct(item)} title="Deduct">
+                                                    <SquareMinus size={14} /> 
+                                                </button>
+                                                
+                                                <button className="rhu-edit-icon" onClick={() => { setSelectedRHU(item); setshowRHUInfo(true); setEditingRHUId(null); }}title="Edit">
+                                                      <SquarePen color="#14086d" size={16} strokeWidth={1.5} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
 
+                <div id="inventory-matrix-content">
+    <h3 id="rhu-title">Stocks Matrix by FP Method</h3>
+    <div className="table-responsive">
+        <table className="rhu-table matrix-table">
+            <thead>
+                <tr>
+                    <th>RHU</th>
+                    {FP_METHODS.map((method) => (
+                        <th key={method.id} className="text-center">
+                            {method.label}
+                        </th>
+                    ))}
+                    <th>TOTAL</th>
+                </tr>
+            </thead>
+            <tbody>
+                {sortedRHUData.map((item) => {
+                    const rowTotal = FP_METHODS.reduce(
+                        (sum, m) => sum + Number(item.stockByMethod?.[m.id] ?? 0),
+                        0
+                    );
 
+                    return (
+                        <tr key={item.id}>
+                            <td className="rhu-name">{item.name}</td>
+                            {FP_METHODS.map((method) => {
+                                const count = Number(item.stockByMethod?.[method.id] ?? 0);
+                                return (
+                                    <td key={method.id} className="text-center">
+                                        <span className={count === 0 ? "stock-zero" : "stock-active"}>
+                                            {count}
+                                        </span>
+                                    </td>
+                                );
+                            })}
+                            <td className="font-bold">{rowTotal}</td>
+                        </tr>
+                    );
+                })}
+            </tbody>
+            <tfoot>
+                <tr className="matrix-footer-row">
+                    <td>Total</td>
+                    {FP_METHODS.map((method) => {
+                        const colTotal = sortedRHUData.reduce(
+                            (sum, item) => sum + Number(item.stockByMethod?.[method.id] ?? 0),
+                            0
+                        );
+                        return (
+                            <td key={method.id} className="text-center font-bold">
+                                {colTotal}
+                            </td>
+                        );
+                    })}
+                   <td className="font-bold">
+                        {sortedRHUData.reduce((total, item) => {
+                            const rowTotal = FP_METHODS.reduce(
+                                (sum, m) => sum + Number(item.stockByMethod?.[m.id] ?? 0),
+                                0
+                            );
+                            return total + rowTotal;
+                        }, 0)}
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+                
 
                 {showRHUInfo && selectedRHU && (
                     <div className="modal-overlay">
@@ -522,17 +804,122 @@ function Inventory() {
                         </div>
                     </div>
                 )}
+
+                {showRhuAllocate && allocRHU && (
+                        <div className="modal-overlay">
+                            <div className="modal-content allocate-box rhu-allocate-box">
+                                <div className="modal-header">
+                                    <h3>Allocate Stock — {allocRHU.name}</h3>
+                                    <p className="modal-subtext">Choose the FP method and quantity to add to this RHU.</p>
+                                </div>
+
+                                <div className="allocate-input-section">
+                                    <h3>FP Method:</h3>
+                                    <select
+                                        className="allocate-input allocate-select"
+                                        value={allocMethod}
+                                        onChange={(e) => { setAllocMethod(e.target.value); setAllocError(""); }}
+                                    >
+                                        <option value="" disabled>Select FP method</option>
+                                        {FP_METHODS.map(m => (
+                                            <option key={m.id} value={m.id}>{m.label}</option>
+                                        ))}
+                                    </select>
+
+                                    <h3>Quantity to Allocate:</h3>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        step="1"
+                                        value={allocQty}
+                                        placeholder="e.g. 100"
+                                        onChange={(e) => { setAllocQty(e.target.value); setAllocError(""); }}
+                                        className="allocate-input"
+                                    />
+
+                                    {allocError && <p className="error-text">{allocError}</p>}
+                                </div>
+
+                                <div className="modal-footer">
+                                    <button className="btn-cancel" onClick={closeRhuAllocate}>Cancel</button>
+                                    <button className="btn-confirm-success" onClick={ConfirmRhuAllocation}>Confirm</button>
+                                </div>
+
+                                {showConfirmAllocate && (
+                            <div className="modal-overlay confirm-overlay">
+                                <div className="modal-content confirm-box">
+                                    <h3 className="confirm-title">Confirm Stock Allocation</h3>
+                                    <p className="confirm-note"> Note: This action will allocate stocks to all RHUs. </p>
+                                    <p className="confirm-detail" >Please ensure you have reviewed the current stock levels and the allocation quantities for each RHU before confirming. Click Confirm to authorize the automated ledger updates and finalize the distribution process.</p>
+
+
+                                    <div className="modal-footer confirm-footer">
+                                        <button className="btn-cancel-large" onClick={() => { setShowConfirmAllocate(false); setshowAllocateModal(true); }}
+                                        >Cancel
+                                        </button>
+                                        <button className="btn-confirm-success-large" onClick={ConfirmAllocation}
+                                        >Confirm
+                                        </button>
+                                    </div>
+
+                                </div>
+                            </div>
+                        )}
+                            </div>
+                        </div>
+                    )}
             </div>
-            {/* buttons  */}
-            <div id="inventory-actions">
+         
+        
 
-                <button id="deduct-button" onClick={() => setShowDeductModal(true)}>
-                    Deduct Stock</button>
-
-                <button id="allocate-button" onClick={() => setshowAllocateModal(true)}>
-                    Allocate Stock</button>
+            {showRhuDeduct && deductRHU && (
+    <div className="modal-overlay">
+        <div className="modal-content allocate-box rhu-allocate-box">
+            <div className="modal-header">
+                <h3>Deduct Stock — {deductRHU.name}</h3>
+                <p className="modal-subtext">Choose the FP method and quantity to deduct from this RHU.</p>
             </div>
 
+            <div className="allocate-input-section">
+                <h3>FP METHOD:</h3>
+                <select
+                    className="allocate-input allocate-select"
+                    value={singleDeductMethod}
+                    onChange={(e) => { 
+                        setSingleDeductMethod(e.target.value); 
+                        setSingleDeductError(""); 
+                    }}
+                >
+                    <option value="" disabled>Select FP method</option>
+                    {FP_METHODS.map(m => (
+                        <option key={m.id} value={m.id}>{m.label}</option>
+                    ))}
+                </select>
+
+                <h3>QUANTITY TO DEDUCT:</h3>
+                <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={singleDeductQty}
+                    placeholder="e.g. 100"
+                    onChange={(e) => { 
+                        setSingleDeductQty(e.target.value); 
+                        setSingleDeductError(""); 
+                    }}
+                    className="allocate-input"
+                />
+
+                {singleDeductError && <p className="error-text">{singleDeductError}</p>}
+            </div>
+
+            <div className="modal-footer">
+                <button className="btn-cancel" onClick={closeRhuDeduct}>Cancel</button>
+                <button className="btn-confirm-solid" onClick={handleSingleRhuDeduct}>Confirm</button>
+            </div>
+        </div>
+    </div>
+)}
 
 
             {showAllocateModal && (
@@ -640,83 +1027,97 @@ function Inventory() {
 
             )}
 
-            {showDeductModal && (
-
-                <div className="modal-overlay">
-                    <div className="modal-content deduct-box ">
-                        <div className="modal-header-inventory">
-                            <h3>Deduct Stock</h3>
-                            <p className="modal-subtext-inventory">Enter deduction quantities for each health unit below</p>
-                        </div>
-
-                        <div className="modal-table-wrapper">
-                            <table className="modal-table">
-                                {/* head */}
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>RHU Name</th>
-                                        <th>Current Stock</th>
-                                        <th>Status</th>
-                                        <th>Deduct Qty</th>
-
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {/* row 1 */}
-                                    {sortedRHUData.map((item, index) => (
-                                        <tr key={item.id}>
-                                            <th>{index + 1}</th>
-                                            <td>{item.name}</td>
-                                            <td>{item.stock} stocks</td>
-
-                                            <td>
-                                                <span className={`status-badge ${item.stock <= lowStockLimit ? "status-low" : "status-sufficient"}`}>
-                                                    {item.stock <= lowStockLimit ? 'Low Stock' : 'Sufficient'}</span>
-                                            </td>
-                                            <td>
-                                                <input
-                                                    type="number"
-                                                    placeholder="qty"
-                                                    min="1"
-                                                    max={item.stock}
-                                                    value={deductValue[item.id] || ""}
-                                                    onChange={(e) => setDeductValue(prev => ({
-                                                        ...prev,
-                                                        [item.id]: e.target.value
-                                                    }))}
-                                                    className="deduct-qty-input"
-                                                />
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-
-
-
-                        <div className="modal-footer">
-                            <button className="btn-cancel"
-                                onClick={() => setShowDeductModal(false)}>
-                                Cancel</button>
-
-                            <button className="btn-confirm-solid"
-                                onClick={handleConfirmDeduct}>
-                                Confirm Deduct</button>
-                        </div>
-                        {showDeductError && (
-                            <div className="error-banner deduct-error-banner">
-                                <span>Please enter at least 1 deduction amount</span>
-                            </div>
-                        )}
-
-                    </div>
+           {showDeductModal && (
+    <div className="modal-overlay">
+        <div className="modal-content deduct-box ">
+            <div className="modal-header">
+                <div className="allocate-input-section">
+                    <h3>FP Method:</h3>
+                    <select
+                        className="allocate-input allocate-select"
+                        value={bulkDeductMethod}
+                        onChange={(e) => { setBulkDeductMethod(e.target.value); setDeductError(""); }}
+                    >
+                        <option value="" disabled>Select FP method</option>
+                        {FP_METHODS.map((m) => (
+                            <option key={m.id} value={m.id}>{m.label}</option>
+                        ))}
+                    </select>
                 </div>
+                <h3>Deduct Stock</h3>
+                <p className="modal-subtext">Enter deduction quantities for each health unit below</p>
+            </div>
 
+            <div className="modal-table-wrapper">
+                <table className="modal-table">
+                    {/* head */}
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>RHU Name</th>
+                            <th>Current Stock</th>
+                            <th>Status</th>
+                            <th>Available</th>
+                            <th>Deduct Qty</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {/* row 1 */}
+                        {sortedRHUData.map((item, index) => (
+                            <tr key={item.id}>
+                                <th>{index + 1}</th>
+                                <td>{item.name}</td>
+                                <td>{item.stock} stocks</td>
 
-            )}
+                                <td>
+                                    <span className={`status-badge ${item.stock <= lowStockLimit ? "status-low" : "status-sufficient"}`}>
+                                        {item.stock <= lowStockLimit ? 'Low Stock' : 'Sufficient'}
+                                    </span>
+                                </td>
 
+                                {/* Added cell after Status */}
+                                <td>
+                                    {bulkDeductMethod ? Number(item.stockByMethod?.[bulkDeductMethod] ?? 0) : "-"}
+                                </td>
+
+                                <td>
+                                    <input
+                                        type="number"
+                                        placeholder="qty"
+                                        min="1"
+                                        max={bulkDeductMethod ? Number(item.stockByMethod?.[bulkDeductMethod] ?? 0) : item.stock}
+                                        value={deductValue[item.id] || ""}
+                                        onChange={(e) => setDeductValue(prev => ({
+                                            ...prev,
+                                            [item.id]: e.target.value
+                                        }))}
+                                        className="deduct-qty-input"
+                                    />
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="modal-footer">
+                <button className="btn-cancel"
+                    onClick={() => { setShowDeductModal(false); setBulkDeductMethod(""); setDeductValue({}); }}>
+                    Cancel</button>
+
+                <button className="btn-confirm-solid"
+                    onClick={handleConfirmDeduct}>
+                    Confirm Deduct</button>
+            </div>
+           {deductError && (
+                <div className="error-banner deduct-error-banner">
+                    <span>{deductError}</span>
+                </div>
+             )}
+
+        </div>
+    </div>
+)}
 
 
 
