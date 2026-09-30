@@ -1,156 +1,153 @@
-import "./notification-settings.css"
-import { useState, useEffect } from "react";
-import {db} from "../../firebase-config";
-import {doc, getDoc, setDoc} from "firebase/firestore";
-import Settings from "../../pages/Settings/settings";
-function LowStock(){
-    const [isLowStockOn, setisLowStockOn]=useState(false);
-    const [lowStockValue, setLowStockValue]=useState("");
-    const [showToast, setShowToast]=useState("");
-    const [errorMessage, setErrorMessage]=useState("");
+import React, { useState, useEffect } from "react";
+import { db } from "../../firebase-config"
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import "./notification-settings.css";
+const FP_METHODS = [
+    { id: "condom", label: "Condom" },
+    { id: "iud", label: "IUD" },
+    { id: "pills", label: "Pills" },
+    { id: "injectable", label: "Injectable" },
+    { id: "vasectomy", label: "Vasectomy" },
+    { id: "tubal_ligation", label: "Tubal Ligation" },
+    { id: "implant", label: "Implant" },
+    { id: "cmm_billings", label: "CMM/Billings" },
+    { id: "bbt", label: "Basal Body Temperature (BBT)" },
+    { id: "stm", label: "Sympto-Thermal Method (STM)" },
+    { id: "sdm", label: "Standard Days Method (SDM)" },
+    { id: "lam", label: "Lactational Amenorrhea Method (LAM)" },
+];
 
-        function validateLowStock(value) {
-        const number = Number(value);
+function LowStockSettings() {
+    const [alertsEnabled, setAlertsEnabled] = useState(true);
+    const [thresholds, setThresholds] = useState({});
+    const [globalValue, setGlobalValue] = useState("");
+    const [showToast, setShowToast] = useState(false);
+    const [toastTitle, setToastTitle] = useState("");
+    const [toastMessage, setToastMessage] = useState("");
 
-        if (!value.trim()) {
-            setErrorMessage("");
-            return false;
-        }
-
-        if (isNaN(number) || number <= 0) {
-            setErrorMessage("Please enter a valid number greater than 0");
-            return false;
-        }
-
-        setErrorMessage("");
-        return true;
-    }
-   
-     useEffect(()=>{
-        async function fetchLowStockSettings(){
-            try{
-                const docRef = doc(db,"lowStock","lowStockLimit");
-                const docSnap = await getDoc(docRef);
-
-                if(docSnap.exists()){
-                    const data=docSnap.data();
-                    setisLowStockOn(data.isEnabled|| false);
-                    setLowStockValue(data.lowStockLimit ? data.lowStockLimit.toString(): "");
-                }
-            }catch(error){
-            console.log("low stock error:" + error);
+    // Load existing thresholds from Firestore
+    useEffect(() => {
+        async function loadSettings() {
+            const snap = await getDoc(doc(db, "lowStock", "lowStockLimit"));
+            if (snap.exists()) {
+                const data = snap.data();
+                setAlertsEnabled(data.enabled ?? true);
+                setThresholds(data.limitsByMethod || {});
             }
-        } fetchLowStockSettings();},[]);
-     
-     
-     async function handleLowStockValue(){
-
-            const currentNumber=Number(lowStockValue);
-
-            if (!validateLowStock(lowStockValue)) return;
-
-            
-                 try{
-                    await setDoc(doc(db,"lowStock","lowStockLimit"),{
-                        lowStockLimit:currentNumber,
-                        isEnabled:isLowStockOn,
-                    
-
-                    },{merge:true});
-                    setShowToast(`Low stock limit updated to ${currentNumber}`);
-                    setTimeout(() => {setShowToast("");}, 3000);
-
-                 }catch(error){
-                    console.log("error:" + error);
-                 }
-             
         }
-        async function handleToggle(e){
+        loadSettings();
+    }, []);
 
-            const toggleState=e.target.checked;
-            setisLowStockOn(toggleState);
-            
-                 try{
-                    await setDoc(doc(db,"lowStock","lowStockLimit"),{
-                        isEnabled:toggleState,
-                    
+    // Helper: Update individual method limit
+    const handleLimitChange = (methodId, value) => {
+        setThresholds(prev => ({
+            ...prev,
+            [methodId]: value === "" ? "" : Math.max(0, Number(value))
+        }));
+    };
 
-                    },{merge:true});
-                    setShowToast(`Low stock alerts ${toggleState ? "enabled" : "disabled"}`);
-                    setTimeout(() => {setShowToast("");}, 3000);
+    // Helper: Apply global value to all methods
+    const handleApplyGlobal = () => {
+        if (!globalValue && globalValue !== 0) return;
+        const updated = {};
+        FP_METHODS.forEach(m => {
+            updated[m.id] = Number(globalValue);
+        });
+        setThresholds(updated);
+    };
 
-                 }catch(error){
-                    console.log("error:" + error);
-                 }
-             
-        }
-    
-    
-    return(
+    // Save all thresholds to Firestore
+    const handleSave = async () => {
+    try {
+        await setDoc(doc(db, "lowStock", "lowStockLimit"), {
+            enabled: alertsEnabled,
+            limitsByMethod: thresholds,
+        }, { merge: true });
+
+        setToastTitle("Low Stock Thresholds Updated");
+        setToastMessage("Your changes have been saved.");
+    } catch (err) {
+        console.error("Error saving thresholds:", err);
+        setToastTitle("Save Failed");
+        setToastMessage("Could not save thresholds. Please try again.");
+    }
+
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 4000);
+};
+
+    return (
         <>
+        <div className="low-stock-card">
+            <div className="low-stock-header">
+                <div>
+                    <h2>Low Stock Alerts</h2>
+                    <p className="subtext">Get notified when commodity levels fall below method thresholds.</p>
+                </div>
+                <label className="toggle-switch">
+                    <input 
+                        type="checkbox" 
+                        checked={alertsEnabled} 
+                        onChange={(e) => setAlertsEnabled(e.target.checked)} 
+                    />
+                    <span className="slider round"></span>
+                </label>
+            </div>
 
-        {showToast && (
-            <div className="toast-container">
+            <hr className="divider" />
+
+            {/* Quick Bulk Set Section */}
+            <div className="bulk-set-container">
+                <label>Quick Set All Limits:</label>
+                <input 
+                    type="number" 
+                    placeholder="e.g. 10" 
+                    value={globalValue} 
+                    onChange={(e) => setGlobalValue(e.target.value)}
+                    className="threshold-input"
+                />
+                <button className="btn-secondary" onClick={handleApplyGlobal}>Apply to All</button>
+            </div>
+
+            {/* Per-Method Grid Settings */}
+            <div className="method-thresholds-grid">
+                {FP_METHODS.map((method) => (
+                    <div key={method.id} className="method-threshold-item">
+                        <span className="method-label">{method.label}</span>
+                        <input 
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            value={thresholds[method.id] ?? ""}
+                            onChange={(e) => handleLimitChange(method.id, e.target.value)}
+                            className="threshold-input"
+                        />
+                    </div>
+                ))}
+            </div>
+
+            <div className="settings-footer">
+                <button className="btn-primary" onClick={handleSave}>
+                    Save Threshold Limits
+                </button>
+            </div>
+
+            
+        </div>
+
+         {showToast && (
+            <div id="toast-container">
                 <div id="toast-alert">
-                    <span >{showToast}</span>
+                    <div>
+                        <span id="toast-title">{toastTitle}</span>
+                        <span id="toast-message">{toastMessage}</span>
+                    </div>
                 </div>
             </div>
         )}
-       
-        <div className="lowstock-shell">
-          <h1>Low Stock Settings</h1>
-        <div id="notification-container">
 
-        <div id="low-stock-item" className="notif-item">
-                
-                <div className="notif-text">
-                    <div className="notif-text-header">
-                    <h3>Low Stock Alerts</h3>
-                    <p>Get notified when commodity levels are low</p>
-                </div>
-                <label className="switch">
-                    <input type="checkbox"  
-                    checked={isLowStockOn} onChange={handleToggle}/>
-                    <span className="slider round"></span>
-                </label>
-                </div>
+       </> 
+    );
+}
 
-                {isLowStockOn && (
-                    <div className="lowstock-settings">
-                    <label>
-                        Set Low Stock Threshold
-                    </label>
-                    
-                    <div className="lowstock-input-row">
-                        <input 
-                        type="number" 
-                        placeholder="Enter minimum qty (e.g. 5)" 
-                        value={lowStockValue}
-                        onChange={(e) => {setLowStockValue(e.target.value);validateLowStock(e.target.value);}}
-                        className="lowstock-input"
-                        />
-                        <button 
-                        type="button"
-                        onClick={handleLowStockValue}
-                        className="lowstock-button"
-                        >
-                        Set Limit
-                        </button>
-                        
-                    </div>
-                       {errorMessage && <p className="error-message">{errorMessage}</p>}
-                    
-                    
-                    <span className="status-text">
-                        Status: System will notify you when stock hits this number.
-                    </span>
-                    </div>
-                )}
-
-            </div>
-
-        </div>
-        </div>
-        </>
-    )
-}export default LowStock;
+export default LowStockSettings;
