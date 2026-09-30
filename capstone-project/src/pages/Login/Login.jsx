@@ -2,11 +2,15 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router'; 
 import './Login.css'; 
 import logoImg from '../../assets/malolos-logo.png'; 
-import { auth, db, signInWithEmailAndPassword, doc, getDoc, sendPasswordResetEmail } from '../../firebase-config';
+import { auth, db } from '../../firebase-config.js';
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   
   const [resetEmail, setResetEmail] = useState('');
@@ -17,6 +21,27 @@ const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const navigate = useNavigate();
+
+  const getEmailErrorHint = (val) => {
+    if (!val) return '';
+    if (!val.includes('@')) {
+      return 'Please include an "@" in the email address.';
+    }
+    const [localPart, domainPart] = val.split('@');
+    if (!domainPart) {
+      return 'Please enter a domain name (e.g. gmail).';
+    }
+    if (!domainPart.includes('.')) {
+      return 'Please include a domain extension (e.g. .com).';
+    }
+    const domainExt = domainPart.split('.')[1];
+    if (!domainExt || domainExt.length < 2) {
+      return 'Please complete the domain extension (e.g. .com).';
+    }
+    return '';
+  };
+
+  const emailHint = getEmailErrorHint(email);
 
   const handleOpenModal = () => {
     setShowModal(true);
@@ -54,6 +79,7 @@ const Login = () => {
         const userRole = userData.role; 
 
         localStorage.setItem('userRole', userRole);
+        localStorage.setItem('userEmail', user.email);
 
         if (userRole === 'cpd') {
           navigate('/dashboard/cpd', { replace: true }); 
@@ -141,13 +167,62 @@ const Login = () => {
         <div className="login-left">
           <h1 className="login-title">Sign In</h1>
           <p className="login-subtitle">Please enter your credentials to access the system dashboard.</p>
+          
           <form onSubmit={handleSubmit}>
             <div className="login-form-group">
-              <input type="email" className="login-input" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <input 
+                type="email" 
+                className="login-input" 
+                placeholder="Email Address" 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)} 
+                required 
+              />
+              {emailHint && (
+                <p style={{
+                  color: '#FF6B6B',
+                  fontSize: '12px',
+                  margin: '6px 0 0 14px',
+                  textAlign: 'left',
+                  fontWeight: 500
+                }}>
+                  {emailHint}
+                </p>
+              )}
             </div>
-            <div className="login-form-group">
-              <input type="password" className="login-input" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+
+            <div className="login-form-group" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <input 
+                type={showPassword ? "text" : "password"} 
+                className="login-input" 
+                placeholder="Password" 
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)} 
+                required 
+                style={{ width: '100%', paddingRight: '44px', boxSizing: 'border-box' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                tabIndex="-1"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                style={{
+                  position: 'absolute',
+                  right: '18px',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#64748B'
+                }}
+              >
+                {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+              </button>
             </div>
+
             {errorMessage && <div className="login-error">{errorMessage}</div>}
             <button type="submit" className="login-btn">Log In</button>
           </form>
