@@ -15,6 +15,7 @@ function Reports() {
     const [activeTab, setActiveTab] = useState("client");
     const [period, setPeriod] = useState("all");
     const [year, setYear] = useState(new Date().getFullYear());
+    const [importedYears, setImportedYears] = useState([]);
     const [barangayFilter, setBarangayFilter] = useState("all");
     const [methodFilter, setMethodFilter] = useState("all");
     const [reportType, setReportType] = useState("form-a");
@@ -42,11 +43,12 @@ function Reports() {
         { value: "december", label: "December" },
     ];
 
-    const years = [];
-
-    for (let y = 2024; y <= 2035; y++) {
-        years.push(y);
-    }
+    // 2010-2035, plus any imported year outside that range
+    const years = useMemo(() => {
+        const list = new Set(importedYears.map(Number));
+        for (let y = 2010; y <= 2035; y++) list.add(y);
+        return [...list].sort((a, b) => a - b);
+    }, [importedYears]);
 
     useEffect(() => {
         let isMounted = true;
@@ -338,6 +340,11 @@ function Reports() {
                         clients={filteredClients}
                         loading={loading}
                         error={error}
+                        year={year}
+                        period={period}
+                        onYearChange={setYear}
+                        onPeriodChange={setPeriod}
+                        onImportedYearsChange={setImportedYears}
                     />
                 );
 
@@ -347,6 +354,13 @@ function Reports() {
                         clients={filteredClients}
                         loading={loading}
                         error={error}
+                        year={year}
+                        period={period}
+                        onYearChange={setYear}
+                        onPeriodChange={setPeriod}
+                        onImportedYearsChange={setImportedYears}
+                        barangayFilter={barangayFilter}
+                        methodFilter={methodFilter}
                     />
                 );
 
@@ -375,6 +389,11 @@ function Reports() {
                         clients={filteredClients}
                         loading={loading}
                         error={error}
+                        year={year}
+                        period={period}
+                        onYearChange={setYear}
+                        onPeriodChange={setPeriod}
+                        onImportedYearsChange={setImportedYears}
                     />
                 );
         }
@@ -460,6 +479,7 @@ function Reports() {
                             <div>
                                 <p>Year</p>
                                 <select value={year} onChange={(e) => setYear(e.target.value)}>
+                                    <option value="all">All Years</option>
                                     {years.map((yr) => (
                                         <option key={yr} value={yr}>
                                             {yr}
