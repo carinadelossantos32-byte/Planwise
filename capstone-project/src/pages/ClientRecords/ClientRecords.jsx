@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import {
   collection,
-  getDocs,
+  onSnapshot,
   addDoc,
   updateDoc,
   doc,
@@ -9,8 +9,6 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import ExcelJS from "exceljs";
-import { saveAs } from "file-saver";
 import ClientTable from "../../components/ClientTable/ClientTable";
 import ClientTablePrivate from "../../components/ClientTablePrivate/ClientTablePrivate";
 import ClientArchive from "../../components/ClientArchive/ClientArchive";
@@ -31,6 +29,7 @@ import ClientEditModalReferred from "../../components/ClientEditModalReferred/Cl
 import ClientViewModalReferred from "../../components/ClientViewModalReferred/ClientViewModalReferred";
 import KoboSyncModal from "../../components/KoboSyncModal/KoboSyncModal";
 import { PUBLIC_FORM_CONFIG, PRIVATE_FORM_CONFIG } from "../../utils/kobo-form-configs.js";
+import { exportClientRecordsExcel, exportClientRecordsPDF } from "../../utils/client-record-exports.js";
 
 function ClientRecords() {
 
@@ -71,7 +70,9 @@ function ClientRecords() {
     type: "",
     status: "",
     reason: "",
-    classes_held: ""
+    classes_held: "",
+    signature_url: null,
+    signature_status: "none",
   });
 
   // COLLECTION HELPER
@@ -81,33 +82,39 @@ function ClientRecords() {
     return "clients_public"; // Default fallback
   }, [activeTab]);
 
-
-  // READ
-  const fetchClients = useCallback(async () => {
-    setLoading(true);
-    try {
-      const q = query(
-        collection(db, getCollection()),
-        where("is_archived", "==", false)
-      );
-      const querySnapshot = await getDocs(q);
-      const data = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setClients(data);
-    } catch (error) {
-      console.error("Error fetching clients:", error);
-    }
-    setLoading(false);
-  }, [getCollection]);
-
+  // ⚡ REAL-TIME READ LISTENER (onSnapshot para kusa mag-update kapag natapos ang signature sync)
   useEffect(() => {
-    if (activeTab !== "archived") {
-      fetchClients();
-    }
-  }, [activeTab, fetchClients]);
+    if (activeTab === "archived") return;
 
+    setLoading(true);
+    const q = query(
+      collection(db, getCollection()),
+      where("is_archived", "==", false)
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
+      (querySnapshot) => {
+        const data = querySnapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...docSnap.data(),
+        }));
+        setClients(data);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error listening to clients:", error);
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [activeTab, getCollection]);
+
+  // Manual fallback refresh kung kailangan
+  const fetchClients = useCallback(() => {
+    // Kusang pinapagana ng onSnapshot ang updates
+  }, []);
 
   // CREATE
   const handleAdd = async () => {
@@ -119,7 +126,6 @@ function ClientRecords() {
       });
       setShowAddModal(false);
       resetForm();
-      fetchClients();
     } catch (error) {
       console.error("Error adding client:", error);
     }
@@ -136,7 +142,6 @@ function ClientRecords() {
       });
       setShowEditModal(false);
       resetForm();
-      fetchClients();
     } catch (error) {
       console.error("Error updating client:", error);
     }
@@ -151,185 +156,19 @@ function ClientRecords() {
       });
       setShowDeleteModal(false);
       setSelectedClient(null);
-      fetchClients();
     } catch (error) {
       console.error("Error archiving client:", error);
     }
   };
 
-  // EXPORT
-  // ─── Tab-specific export configs ─────────────────────────────────
-  const EXPORT_CONFIG = {
-    public: {
-      template: "/Export_Template.xlsx",
-      filename: "RPFP_Form_1.xlsx",
-      writeRows: writePublicRows,   // your existing logic
-    },
-    private: {
-      template: "/Private_Template.xlsx",
-      filename: "FP_User_Private.xlsx",
-      writeRows: writePrivateRows,
-    },
-    referred: {
-      template: "/Export_Template_Referred.xlsx",
-      filename: "Referred_and_Served.xlsx",
-      writeRows: writeReferredRows,
-    },
-  };
-
-  // ─── Shared helpers ───────────────────────────────────────────────
-  const thin = { style: "thin" };
-  const border = { top: thin, bottom: thin, left: thin, right: thin };
-  const noBorder = { top: { style: null }, bottom: { style: null }, left: { style: null }, right: { style: null } };
-  const center = { horizontal: "center", vertical: "middle", wrapText: true };
-  const left = { horizontal: "left", vertical: "middle", wrapText: true };
-
-  const setCell = (sheet, ref, value, align = center) => {
-    const cell = sheet.getCell(ref);
-    cell.value = value;
-    cell.border = border;
-    cell.alignment = align;
-    cell.font = { name: "Arial", size: 10 };
-  };
-
-  // ─── Row writers ──────────────────────────────────────────────────
-  function writePublicRows(sheet, filteredClients) {
-    const allCols = ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"];
-
-    // Clear rows 6–500
-    for (let r = 6; r <= 500; r++) {
-      allCols.forEach(col => {
-        const cell = sheet.getCell(`${col}${r}`);
-        cell.value = null;
-        cell.style = { border: noBorder, fill: { type: "pattern", pattern: "none" }, font: {}, alignment: {} };
-      });
-    }
-
-    filteredClients.forEach((client, index) => {
-      const husbandRow = 6 + index * 2;
-      const wifeRow = husbandRow + 1;
-
-      const merges = ["B", "H", "J", "K", "L", "M", "N", "O", "P"];
-      merges.forEach(col => { try { sheet.mergeCells(`${col}${husbandRow}:${col}${wifeRow}`); } catch { } });
-      try { sheet.mergeCells(`C${husbandRow}:D${husbandRow}`); } catch { }
-      try { sheet.mergeCells(`C${wifeRow}:D${wifeRow}`); } catch { }
-
-      // Husband row
-      setCell(sheet, `B${husbandRow}`, index + 1);
-      setCell(sheet, `C${husbandRow}`, client.name || "", left);
-      setCell(sheet, `E${husbandRow}`, "M");
-      setCell(sheet, `F${husbandRow}`, client.civil_status_male || "");
-      setCell(sheet, `G${husbandRow}`, client.birthdate_male || "");
-      setCell(sheet, `H${husbandRow}`, client.address || "", left);
-      setCell(sheet, `I${husbandRow}`, client.educational_attainment_male || "");
-      setCell(sheet, `J${husbandRow}`, client.no_of_children ? Number(client.no_of_children) : "");
-      setCell(sheet, `K${husbandRow}`, client.fp_method || "");
-      setCell(sheet, `L${husbandRow}`, client.intention_to_shift || "");
-      setCell(sheet, `M${husbandRow}`, client.type || "");
-      setCell(sheet, `N${husbandRow}`, client.status || "");
-      setCell(sheet, `O${husbandRow}`, client.reason || "");
-      setCell(sheet, `P${husbandRow}`, "");
-
-      // Wife row
-      setCell(sheet, `C${wifeRow}`, client.spouse_name || "", left);
-      setCell(sheet, `E${wifeRow}`, "F");
-      setCell(sheet, `F${wifeRow}`, client.civil_status_female || "");
-      setCell(sheet, `G${wifeRow}`, client.birthdate_female || "");
-      setCell(sheet, `I${wifeRow}`, client.educational_attainment_female || "");
-
-      // Patch borders on merged wife-row cells
-      merges.forEach(col => {
-        sheet.getCell(`${col}${wifeRow}`).border = border;
-      });
-    });
-  }
-
-  function writePrivateRows(sheet, filteredClients) {
-    const allCols = ["B", "C", "D", "E", "F", "G"];
-
-    // Clear rows 7–100
-    for (let r = 7; r <= 100; r++) {
-      allCols.forEach(col => {
-        const cell = sheet.getCell(`${col}${r}`);
-        cell.value = null;
-        cell.style = {
-          border: noBorder,
-          fill: { type: "pattern", pattern: "none" },
-          font: {},
-          alignment: {},
-        };
-      });
-    }
-
-    filteredClients.forEach((client, index) => {
-      const row = 7 + index;
-
-      setCell(sheet, `B${row}`, client.name || "", left);
-      setCell(sheet, `C${row}`, client.age || "");
-      setCell(sheet, `D${row}`, client.birthdate || "");
-      setCell(sheet, `E${row}`, client.barangay || "", left);
-      setCell(sheet, `F${row}`, client.fp_method || "");
-      setCell(sheet, `G${row}`, client.fp_issued_by || "", left);
-    });
-  }
-
-  function writeReferredRows(sheet, filteredClients) {
-    const allCols = ["B", "C", "D", "E", "F", "G", "H", "I", "J"];
-
-    // Clear rows 5–200
-    for (let r = 5; r <= 200; r++) {
-      allCols.forEach(col => {
-        const cell = sheet.getCell(`${col}${r}`);
-        cell.value = null;
-        cell.style = {
-          border: noBorder,
-          fill: { type: "pattern", pattern: "none" },
-          font: {},
-          alignment: {},
-        };
-      });
-    }
-
-    filteredClients.forEach((client, index) => {
-      const row = 5 + index;
-
-      setCell(sheet, `B${row}`, index + 1);
-      setCell(sheet, `C${row}`, client.name || "", left);
-      setCell(sheet, `D${row}`, client.address || "", left);
-      setCell(sheet, `E${row}`, client.fp_method || "");
-      setCell(sheet, `F${row}`, client.facility_name || "", left);
-      setCell(sheet, `G${row}`, client.facility_address || "", left);
-      setCell(sheet, `H${row}`, client.referred_by || "", left);
-      setCell(sheet, `I${row}`, client.volunteer_contact || "");
-      setCell(sheet, `J${row}`, client.date || "");
-    });
-  }
-
-  // ─── Main export handler ──────────────────────────────────────────
   const handleExport = async () => {
-    const config = EXPORT_CONFIG[activeTab];
-    if (!config) return;
-
-    try {
-      const response = await fetch(config.template);
-      const arrayBuffer = await response.arrayBuffer();
-
-      const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.load(arrayBuffer);
-      const sheet = workbook.getWorksheet(1);
-
-      config.writeRows(sheet, filteredClients);
-
-      const buffer = await workbook.xlsx.writeBuffer();
-      saveAs(new Blob([buffer]), config.filename);
-
-    } catch (error) {
-      console.error("Export failed:", error);
-      alert(`Could not export. Make sure '${config.template.replace("/", "")}' is in your public folder!`);
-    }
+    await exportClientRecordsExcel(activeTab, filteredClients);
   };
 
-  // HELPERS
+  const handleExportPDF = async () => {
+    await exportClientRecordsPDF(activeTab, filteredClients);
+  };
+
   const resetForm = () => {
     setFormData({
       name: "",
@@ -349,7 +188,9 @@ function ClientRecords() {
       type: "",
       status: "",
       reason: "",
-      classes_held: ""
+      classes_held: "",
+      signature_url: null,
+      signature_status: "none",
     });
     setSelectedClient(null);
   };
@@ -374,44 +215,47 @@ function ClientRecords() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // FILTER & SEARCH LOGIC
+  const filteredClients = clients.filter((client) => {
+    const query = searchQuery.toLowerCase().trim();
 
-  // FILTER
-const filteredClients = clients.filter((client) => {
-  const query = searchQuery.toLowerCase();
-
-  // 1. Search filter across tabs
-  const matchesSearch =
-    activeTab === "referred"
-      ? client.name?.toLowerCase().includes(query) ||
+    // 1. Search filter (panatilihing buo ang client data)
+    const matchesSearch = !query || (
+      activeTab === "referred"
+        ? client.name?.toLowerCase().includes(query) ||
         client.facility_name?.toLowerCase().includes(query) ||
         client.referred_by?.toLowerCase().includes(query) ||
         client.address?.toLowerCase().includes(query) ||
         client.fp_method?.toLowerCase().includes(query)
-      : client.name?.toLowerCase().includes(query) ||
+        : client.name?.toLowerCase().includes(query) ||
         client.spouse_name?.toLowerCase().includes(query) ||
         client.address?.toLowerCase().includes(query) ||
-        client.fp_method?.toLowerCase().includes(query);
+        client.barangay?.toLowerCase().includes(query) ||
+        client.fp_method?.toLowerCase().includes(query)
+    );
 
-  // 2. Method dropdown filter
-  const matchesMethod = filterMethod 
-    ? client.fp_method?.toLowerCase() === filterMethod.toLowerCase() 
-    : true;
+    // 2. Method dropdown filter
+    const matchesMethod = filterMethod
+      ? client.fp_method?.toLowerCase() === filterMethod.toLowerCase()
+      : true;
 
-  // 3. Category dropdown filter (Public tab)
-  const matchesCategory =
-    filterCategory === "fp_users"
-      ? client.fp_method && client.fp_method.trim() !== ""
-      : filterCategory === "unmet_needs"
-        ? client.type && client.type.trim() !== ""
-        : filterCategory === "intention_to_shift"
-          ? client.intention_to_shift && client.intention_to_shift.trim() !== ""
-          : true;
+    // 3. Category dropdown filter (Public tab)
+const matchesCategory =
+      filterCategory === "fp_users"
+        ? Boolean(client.fp_method && client.fp_method.trim() !== "")
+        : filterCategory === "unmet_needs"
+          ? (
+              Boolean(client.type && client.type.trim() !== "") &&
+              !client.status?.toLowerCase().includes("pregnant") &&
+              !client.reason?.toLowerCase().includes("achieving")
+            )
+          : filterCategory === "intention_to_shift"
+            ? Boolean(client.intention_to_shift && client.intention_to_shift.trim() !== "")
+            : true;
 
-  return matchesSearch && matchesMethod && matchesCategory;
-});
+    return matchesSearch && matchesMethod && matchesCategory;
+  });
 
-
-  // RENDER
   return (
     <>
       <div className="client-records-container">
@@ -440,27 +284,30 @@ const filteredClients = clients.filter((client) => {
                 onClick={() => setActiveTab("archived")}>Archived</button>
             </div>
 
-                  <div className="toolbar-actions">
-                  {activeTab === "public" && (
-                    <button className="btn-sync-client" onClick={() => { setSyncConfig(PUBLIC_FORM_CONFIG); setShowKoboSyncModal(true); }}>
-                      <CloudSync size={16} strokeWidth={2.0} /> Sync Public Form
-                    </button>)}
-                  {activeTab === "private" && (
-                    <button className="btn-sync-client" onClick={() => { setSyncConfig(PRIVATE_FORM_CONFIG); setShowKoboSyncModal(true); }}>
-                      <CloudSync size={16} strokeWidth={2.00} />Sync Private Form
-                    </button>)}
-                  {activeTab !== "archived" && (
-                  <button className="btn-add-client" onClick={() => setShowAddModal(true)}>
-                    <CirclePlus size={16}  strokeWidth={1.75} />
-                    {activeTab === "referred" ? "Add New Referral" : "Add New Client"}
-                  </button>
-                  )}
-                </div>
-      
+            <div className="toolbar-actions">
+              {activeTab === "public" && (
+                <button className="btn-sync-client" onClick={() => { setSyncConfig(PUBLIC_FORM_CONFIG); setShowKoboSyncModal(true); }}>
+                  <CloudSync size={16} strokeWidth={2.0} /> Sync Public Form
+                </button>
+              )}
+              {activeTab === "private" && (
+                <button className="btn-sync-client" onClick={() => { setSyncConfig(PRIVATE_FORM_CONFIG); setShowKoboSyncModal(true); }}>
+                  <CloudSync size={16} strokeWidth={2.00} /> Sync Private Form
+                </button>
+              )}
+              {activeTab !== "archived" && (
+                <button className="btn-add-client" onClick={() => setShowAddModal(true)}>
+                  <CirclePlus size={16} strokeWidth={1.75} />
+                  {activeTab === "referred" ? "Add New Referral" : "Add New Client"}
+                </button>
+              )}
+              <button className="btn-import" onClick={() => setShowImportModal(true)}>
+                <Upload size={14} /> Import
+              </button>
+            </div>
           </div>
 
           <div className="client-toolbar">
-
             <div className="client-search">
               <Search size={14} color="#9ca3af" />
               <input
@@ -492,7 +339,7 @@ const filteredClients = clients.filter((client) => {
                   </select>
                 )}
 
-                {(activeTab === "public" || activeTab === "private"|| activeTab === "referred") && (
+                {(activeTab === "public" || activeTab === "private" || activeTab === "referred") && (
                   <select
                     className="client-filter-select"
                     value={filterMethod}
@@ -512,22 +359,19 @@ const filteredClients = clients.filter((client) => {
                     <option value="SDM">Standard Days Method(SDM)</option>
                     <option value="LAM">Lactational Amenorrhea Method(LAM)</option>
                   </select>
-
                 )}
 
+                {(activeTab === "public" || activeTab === "private" || activeTab === "referred") && (
+                  <div className="btn-tab-actions">
+                    <button className="btn-export" onClick={handleExport}>
+                      <Download size={14} /> Export Excel
+                    </button>
+                    <button className="btn-export" onClick={handleExportPDF}>
+                      <Download size={14} /> Export PDF
+                    </button>
 
-                {/* Main Action Buttons */}
-            {(activeTab === "public" || activeTab === "private" || activeTab === "referred") && (
-            <div className="btn-tab-actions">
-              <button className="btn-export" onClick={handleExport}>
-                <Download size={14} /> Export
-              </button>
-
-              <button className="btn-import" onClick={() => setShowImportModal(true)}>
-                <Upload size={14} /> Import
-              </button>
-            </div>
-            )}
+                  </div>
+                )}
               </>
             )}
           </div>
