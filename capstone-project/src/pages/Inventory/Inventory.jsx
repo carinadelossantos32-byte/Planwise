@@ -808,9 +808,9 @@ async function handleSingleRhuDeduct() {
                 {showRhuAllocate && allocRHU && (
                         <div className="modal-overlay">
                             <div className="modal-content allocate-box rhu-allocate-box">
-                                <div className="modal-header">
+                                <div className="modal-header-inventory">
                                     <h3>Allocate Stock — {allocRHU.name}</h3>
-                                    <p className="modal-subtext">Choose the FP method and quantity to add to this RHU.</p>
+                                    <p className="modal-subtext-inventory">Choose the FP method and quantity to add to this RHU.</p>
                                 </div>
 
                                 <div className="allocate-input-section">
