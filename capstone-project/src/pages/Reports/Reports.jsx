@@ -1,7 +1,7 @@
 import "./reports.css";
 import { barangays } from "../../data/barangays";
 import { familyPlanningMethods } from "../../data/familyPlanningMethods";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FormAAnalytics from "./form-reports/FormAAnalytics";
 import FormBAnalytics from "./form-reports/FormBAnalytics";
 import FormCAnalytics from "./form-reports/FormCAnalytics";
@@ -10,6 +10,7 @@ import ModernShifters from "./additional-reports/ModernShifters";
 import InventoryReport from "./inventory-reports/InventoryReport";
 import { db } from "../../firebase-config";
 import { collection, getDocs } from "firebase/firestore";
+import { RefreshCw } from "lucide-react";
 
 function Reports() {
     const [activeTab, setActiveTab] = useState("client");
@@ -22,6 +23,9 @@ function Reports() {
     const [clients, setClients] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [refreshing, setRefreshing] = useState(false);
+    const [lastUpdated, setLastUpdated] = useState(null);
+    const isMountedRef = useRef(true);
 
     const periods = [
         { value: "all", label: "All Year" },
@@ -51,42 +55,84 @@ function Reports() {
     }, [importedYears]);
 
     useEffect(() => {
-        let isMounted = true;
-
-        const fetchClients = async () => {
-            const collectionNames = ["clients_public", "clients_private", "clients_referred"];
-            const loadedClients = [];
-
-            for (const collectionName of collectionNames) {
-                try {
-                    const snapshot = await getDocs(collection(db, collectionName));
-                    if (!snapshot.empty) {
-                        snapshot.docs.forEach((doc) => {
-                            loadedClients.push({
-                                id: doc.id,
-                                sourceCollection: collectionName,
-                                ...doc.data(),
-                            });
-                        });
-                    }
-                } catch (err) {
-                    console.error(`Unable to load ${collectionName}:`, err);
-                }
-            }
-
-            if (isMounted) {
-                setClients(loadedClients);
-                setError(loadedClients.length ? "" : "No client data found in Firestore.");
-                setLoading(false);
-            }
-        };
-
-        fetchClients();
-
+        isMountedRef.current = true;
         return () => {
-            isMounted = false;
+            isMountedRef.current = false;
         };
     }, []);
+
+    // Loads every client collection from Firestore (used on mount and by Refresh Data)
+    const fetchClients = useCallback(async () => {
+        const collectionNames = ["clients_public", "clients_private", "clients_referred"];
+
+        const results = await Promise.all(
+            collectionNames.map(async (collectionName) => {
+                try {
+                    const snapshot = await getDocs(collection(db, collectionName));
+                    return {
+                        collectionName,
+                        ok: true,
+                        docs: snapshot.docs.map((doc) => ({
+                            id: doc.id,
+                            sourceCollection: collectionName,
+                            ...doc.data(),
+                        })),
+                    };
+                } catch (err) {
+                    console.error(`Unable to load ${collectionName}:`, err);
+                    return { collectionName, ok: false, docs: [] };
+                }
+            })
+        );
+
+        if (!isMountedRef.current) return;
+
+        const loadedClients = results.flatMap((r) => r.docs);
+        const failed = results.filter((r) => !r.ok).map((r) => r.collectionName);
+
+        if (failed.length === results.length) {
+            // Everything failed: keep what is already on screen
+            setError("Unable to load client data. Check your connection and try again.");
+        } else {
+            // A collection that failed keeps its previously loaded records
+            setClients((prev) => [
+                ...loadedClients,
+                ...prev.filter((c) => failed.includes(c.sourceCollection)),
+            ]);
+
+            setError(
+                failed.length
+                    ? `Some data could not be refreshed (${failed.join(", ")}).`
+                    : loadedClients.length
+                        ? ""
+                        : "No client data found in Firestore."
+            );
+
+            setLastUpdated(new Date());
+        }
+
+        setLoading(false);
+    }, []);
+
+    useEffect(() => {
+        fetchClients();
+    }, [fetchClients]);
+
+    const handleRefresh = async () => {
+        if (refreshing) return;
+
+        setRefreshing(true);
+
+        try {
+            // Keep the spinner visible for at least 800ms, like the dashboard
+            await Promise.all([
+                fetchClients(),
+                new Promise((resolve) => setTimeout(resolve, 800)),
+            ]);
+        } finally {
+            if (isMountedRef.current) setRefreshing(false);
+        }
+    };
 
     const filteredClients = useMemo(() => {
 
@@ -404,7 +450,17 @@ function Reports() {
             <div className="reports-container">
                 <h3>Reports & Analytics</h3>
                 <div className="reports-header-actions">
-                    <button className="refresh-btn">⟳ Refresh Data</button>
+                    
+                    <button
+                        type="button"
+                        className="refresh-btn"
+                        onClick={handleRefresh}
+                        disabled={refreshing || loading}
+                        style={{ cursor: refreshing ? "wait" : "pointer" }}
+                    >
+                        <RefreshCw size={14} className={refreshing ? "spin-icon" : ""} />
+                        {refreshing ? "Refreshing..." : "Refresh Data"}
+                    </button>
                 </div>
             </div>
 
