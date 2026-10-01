@@ -4,13 +4,13 @@
 
 :root {
   --ink: #1B1B2F;
-  --ink-soft: #5B5B76;
+  --ink-soft: #3a3a3b;
   --ink-faint: #9494AC;
 
   --bg: #F6F7FB;
   --surface: #FFFFFF;
   --surface-sunken: #F1F1F8;
-  --gray: #969696;
+  --gray: #c1c1c1;
 
   --border: #E4E3F2;
   --border-strong: #D3D2E8;
@@ -334,8 +334,8 @@ body {
 
 .rhu-edit-icon {
   color: var(--primary);
-  width: 22px;
-  height: 22px;
+  width: 17px;
+  height: 17px;
   cursor: pointer;
   border-radius: var(--radius-sm);
   padding: 3px;
@@ -489,6 +489,8 @@ button:hover {
   color: var(--ink-faint);
   font-size: 12px;
 }
+
+
 
 /* ---------- Modals ---------- */
 
@@ -1055,8 +1057,9 @@ input.rhu-stat:focus {
 /* ===== BUTTONS ===== */
 
 .btn-cancel {
-  background-color: transparent;
+  background-color: white;
   color: var(--ink-soft);
+     /* a resting border so hover doesn't shift the size */
   height: 40px;
   padding: 0 20px;
   margin-bottom: 0;
@@ -1064,11 +1067,13 @@ input.rhu-stat:focus {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .btn-cancel:hover {
-  background-color: var(--surface-sunken);
+  background-color: #eef0f8;          /* light tint, not the mid gray */
+  color: var(--ink-soft);             /* pins the text color */
+  border-color: var(--border-strong);
 }
 
 .btn-cancel-large {
@@ -1086,6 +1091,7 @@ input.rhu-stat:focus {
 
 .btn-cancel-large:hover {
   background-color: var(--surface-sunken);
+  color:var(--ink-soft);
 }
 
 .btn-save-changes {
@@ -1293,4 +1299,171 @@ button:focus-visible,
 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
+}
+
+/* ---------- Per-RHU row actions ---------- */
+
+.rhu-table th:last-child { width: 1%; white-space: nowrap; }
+
+.rhu-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.row-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.row-btn svg { width: 13px; height: 13px; }
+
+.row-btn-allocate {
+  background-color: var(--primary-tint);
+  color: var(--primary);
+  
+}
+.row-btn-allocate:hover {
+  background-color: var(--primary);
+  color: var(--surface);
+  border-color: var(--primary);
+}
+
+.row-btn-deduct {
+  background-color: var(--amber-tint);
+  color: var(--amber-hover);
+  border-color: var(--amber-tint);
+}
+.row-btn-deduct:hover {
+  background-color: var(--amber);
+  color: var(--surface);
+  border-color: var(--amber);
+}
+
+/* ---------- Per-RHU allocate modal ---------- */
+
+.rhu-allocate-box {
+  max-width: 50%;
+  width: 92vw;
+}
+
+.rhu-allocate-box .allocate-input-section {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  margin-top: 22px;
+  width: 80%;          
+  max-width: none;      
+  margin-left: 0;
+  margin-right: 0;      
+  box-sizing: border-box;
+}
+
+.rhu-allocate-box .allocate-input-section h3 {
+  text-align: left;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-soft);
+  margin-top: 10px;
+}
+
+.rhu-allocate-box .allocate-input-section h3:first-child { margin-top: 0; }
+
+.rhu-allocate-box .allocate-input {
+  width: 100%;
+  max-width: none;
+}
+
+.allocate-select {
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 36px;
+  
+  background-position: right 12px center;
+}
+
+.rhu-allocate-box .allocate-input-section .error-text {
+  max-width: none;
+  text-align: left;
+  margin-top: 6px;
+}
+
+.rhu-allocate-box .modal-footer {
+  justify-content: flex-end;
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+@media (max-width: 640px) {
+  .rhu-row-actions { flex-wrap: wrap; }
+}
+
+#inventory-matrix-content {
+  display: flex;
+  flex-direction: column;
+  margin: 24px 30px 0;
+  border: 1px solid var(--border);
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  background-color: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 16px;
+}
+
+.matrix-table {
+    white-space: nowrap;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.matrix-table th {
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    padding: 12px 16px;
+}
+
+.matrix-table td {
+    padding: 12px 16px;
+    font-size: 13px;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.font-bold {
+    font-weight: 700;
+    color: #14086d;
+}
+
+.stock-zero {
+    color: #a0aec0;
+}
+
+.stock-active {
+    color: #1b1b2f;
+    font-weight: 600;
+}
+
+.matrix-footer-row {
+    background-color: #f8f9fc;
+    border-top: 2px solid #e2e8f0;
 }

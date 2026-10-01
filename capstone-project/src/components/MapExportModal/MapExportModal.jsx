@@ -65,7 +65,7 @@ export default function MapExportModal({
       onClose();
     } catch (err) {
       console.error("Export Error:", err);
-      alert("Nagka-error sa pag-export ng mapa.");
+      alert("There was an error while exporting the map. Please try again.");
     } finally {
       setIsExporting(false);
     }
@@ -115,13 +115,12 @@ export default function MapExportModal({
 
         <div className="modal-body">
           <div className="form-group">
-            <label>Select Target Barangay:</label>
+            <p>Select Target Barangay:</p>
             <select 
               value={selectedBarangay} 
               onChange={handleBarangayChange}
               className="modal-select"
             >
-              {/* 🌟 DISABLED PLACEHOLDER OPTION */}
               <option value="" disabled hidden>
                 -- Select Barangay --
               </option>

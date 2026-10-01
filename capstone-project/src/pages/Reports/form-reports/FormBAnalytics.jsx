@@ -1,9 +1,15 @@
-import { useMemo, Fragment } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import "./FormBAnalytics.css";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+
+/*
+====================================================
+                    CONSTANTS
+====================================================
+*/
 
 const monthNames = [
     "January",
@@ -20,6 +26,134 @@ const monthNames = [
     "December",
 ];
 
+const traditionalMethods = [
+    "withdrawal",
+    "calendar",
+    "rhythm",
+    "billings",
+    "standard",
+    "days",
+    "lam",
+    "lactational",
+    "bbt",
+    "sympto",
+];
+
+// Excel template layout: JANUARY starts on row 14, Grand Total on row 26.
+// Change these if your template layout differs.
+const TEMPLATE_FIRST_ROW = 14;
+const TEMPLATE_GRAND_ROW = 26;
+
+const IMPORT_STORAGE_KEY = "formB_imported_reports";
+
+const numericKeys = [
+    "unmet",
+    "referred",
+    "traditionalNoShift",
+    "traditionalShift",
+    "traditionalReferred",
+    "traditional",
+    "totalUnmet",
+    "totalReferred",
+];
+
+const createMonthRecord = (month) => ({
+    month,
+    unmet: 0,
+    referred: 0,
+    traditionalNoShift: 0,
+    traditionalShift: 0,
+    traditionalReferred: 0,
+    traditional: 0,
+    totalUnmet: 0,
+    totalReferred: 0,
+});
+
+// A record for every month, all zeros
+const createEmptyMonthly = () => {
+    const monthly = {};
+    monthNames.forEach(m => { monthly[m] = createMonthRecord(m); });
+    return monthly;
+};
+
+// Totals are always derived from the base columns
+const finalizeRecord = (rec) => {
+    rec.totalUnmet = rec.unmet + rec.traditionalNoShift + rec.traditionalShift;
+    rec.totalReferred = rec.referred + rec.traditionalReferred;
+    return rec;
+};
+
+// Adds one month record (src) into another (target)
+function addMonthRecord(target, src) {
+    numericKeys.forEach(key => { target[key] += src[key]; });
+}
+
+// Adds up several month records (used for the grand total)
+function sumMonths(monthly, months) {
+
+    const total = createMonthRecord("Total");
+
+    months.forEach(m => addMonthRecord(total, monthly[m]));
+
+    return total;
+}
+
+// True when a month record has any recorded value
+const monthHasData = (rec) =>
+    rec.unmet > 0 ||
+    rec.referred > 0 ||
+    rec.traditionalNoShift > 0 ||
+    rec.traditionalShift > 0 ||
+    rec.traditionalReferred > 0;
+
+/*
+    Period values match the page's Period filter:
+    "all" | "q1" | "q2" | "q3" | "q4" | "january" ... "december"
+*/
+function periodToMonths(period) {
+
+    const p = String(period ?? "all").toLowerCase();
+
+    const q = /^q([1-4])$/.exec(p);
+    if (q) {
+        const start = (Number(q[1]) - 1) * 3;
+        return monthNames.slice(start, start + 3);
+    }
+
+    const month = monthNames.find(m => m.toLowerCase() === p);
+    return month ? [month] : monthNames;
+}
+
+// Best-fitting period for a list of recorded months
+function monthsToPeriod(months) {
+
+    if (months.length === 1) return months[0].toLowerCase();
+
+    if (months.length > 1) {
+        for (let q = 0; q < 4; q++) {
+            const inQuarter = months.every(m => {
+                const i = monthNames.indexOf(m);
+                return i >= q * 3 && i < q * 3 + 3;
+            });
+            if (inQuarter) return `q${q + 1}`;
+        }
+    }
+
+    return "all";
+}
+
+function periodLabel(period) {
+    const months = periodToMonths(period);
+    if (months.length === 12) return "";
+    if (months.length === 1) return months[0];
+    return `${months[0]} to ${months[months.length - 1]}`;
+}
+
+/*
+====================================================
+                CLIENT FIELD HELPERS
+====================================================
+*/
 
 function getFieldValue(client, keys) {
 
@@ -49,9 +183,6 @@ function getFieldValue(client, keys) {
     return "";
 
 }
-
-
-
 
 function normalize(value) {
 
@@ -105,6 +236,289 @@ function getMonth(client) {
 
 }
 
+// Same date fallbacks the Reports page uses for its filters
+function toDate(value) {
+    if (!value) return null;
+    if (value?.toDate) {
+        const d = value.toDate();
+        return Number.isNaN(d.getTime()) ? null : d;
+    }
+    if (value instanceof Date) {
+        return Number.isNaN(value.getTime()) ? null : value;
+    }
+    if (typeof value === "string" || typeof value === "number") {
+        const d = new Date(value);
+        return Number.isNaN(d.getTime()) ? null : d;
+    }
+    return null;
+}
+
+function getClientDate(client) {
+    const candidates = [
+        client.created_at,
+        client.updated_at,
+        client.date,
+        client.month_of_service,
+        client.service_month,
+        client.report_month,
+    ];
+    for (const value of candidates) {
+        const d = toDate(value);
+        if (d) return d;
+    }
+    return null;
+}
+
+/*
+    Builds the monthly records from client data.
+    includeYear(year) decides which years are counted
+    (year is null when a client has no usable date).
+*/
+function buildMonthlyFromClients(clients, includeYear) {
+
+    const monthly = createEmptyMonthly();
+
+    clients.forEach(client => {
+
+        if (client.is_archived) return;
+
+        const month = getMonth(client);
+
+        if (!month) return;
+
+        const year = getClientDate(client)?.getFullYear() ?? null;
+
+        if (!includeYear(year)) return;
+
+        const row = monthly[month];
+
+        const method = normalize(
+            getFieldValue(client, [
+                "fp_method",
+                "method"
+            ])
+        );
+
+        const shiftOption = normalize(
+            getFieldValue(client, [
+                "with_intention_to_shift",
+                "intention_to_shift"
+            ])
+        );
+
+        const status = normalize(
+            getFieldValue(client, [
+                "status"
+            ])
+        );
+
+        const isTraditional = traditionalMethods.some(item =>
+            method.includes(item)
+        );
+
+        /*
+        ==================================
+        COUPLES WITH UNMET NEED
+        ==================================
+        */
+
+        if (!method && status !== "inactive") {
+            row.unmet++;
+        }
+
+        /*
+        ==================================
+        CLIENTS REFERRED / SERVED
+        ==================================
+        */
+
+        if (client.sourceCollection === "clients_referred") {
+            row.referred++;
+        }
+
+        /*
+        ==================================
+        TRADITIONAL FP USERS
+        ==================================
+        */
+
+        if (isTraditional) {
+
+            row.traditional++;
+
+            // WITHOUT INTENTION
+            if (
+                shiftOption === "no intention" ||
+                shiftOption === "no intention to shift"
+            ) {
+                row.traditionalNoShift++;
+            }
+
+            // WITH INTENTION
+            else if (shiftOption) {
+                row.traditionalShift++;
+            }
+
+            // REFERRED
+            if (client.sourceCollection === "clients_referred") {
+                row.traditionalReferred++;
+            }
+
+        }
+
+    });
+
+    monthNames.forEach(m => finalizeRecord(monthly[m]));
+
+    return monthly;
+}
+
+/*
+====================================================
+                EXCEL IMPORT / TEMPLATE
+====================================================
+*/
+
+// Reads plain text from an ExcelJS cell (handles rich text / formulas)
+function cellToText(cell) {
+    const v = cell.value;
+    if (v == null) return "";
+    if (typeof v === "object") {
+        if (v.richText) return v.richText.map(t => t.text).join("");
+        if ("result" in v) return String(v.result ?? "");
+        if ("text" in v) return String(v.text ?? "");
+    }
+    return String(v);
+}
+
+// Reads a number from an ExcelJS cell (handles formula cells, blanks, "-")
+function cellToNumber(cell) {
+    let v = cell.value;
+    if (v && typeof v === "object" && "result" in v) v = v.result;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+}
+
+/*
+    Parses a filled-in Form B workbook (same column layout as the template:
+    A = month, B = couples with unmet need, C = clients referred / served,
+    D = traditional FP without intention, E = traditional FP with intention,
+    F = traditional FP referred, G/H = totals).
+
+    Rows are found by the month name in column A, not by fixed row numbers,
+    so older reports with a slightly different layout still import.
+    The Grand Total row is skipped and columns G/H are recomputed by the app.
+
+    Returns:
+      monthly - a record for all 12 months
+      months  - the months that actually have recorded data (calendar order).
+                If the file has no data at all, falls back to the months found.
+*/
+async function parseFormBWorkbook(buffer) {
+
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buffer);
+
+    const sheet = workbook.worksheets[0];
+
+    if (!sheet) throw new Error("The file has no worksheet.");
+
+    const monthly = createEmptyMonthly();
+
+    let found = 0;
+    const seen = new Set();
+
+    sheet.eachRow(row => {
+
+        const label = cellToText(row.getCell(1)).trim().toLowerCase();
+        const month = monthNames.find(m => m.toLowerCase() === label);
+
+        if (!month || seen.has(month)) return;
+
+        seen.add(month);
+        found++;
+
+        const num = (col) => cellToNumber(row.getCell(col));
+        const rec = monthly[month];
+
+        rec.unmet = num(2);                  // B
+        rec.referred = num(3);               // C
+        rec.traditionalNoShift = num(4);     // D
+        rec.traditionalShift = num(5);       // E
+        rec.traditionalReferred = num(6);    // F
+        rec.traditional = rec.traditionalNoShift + rec.traditionalShift;
+
+        finalizeRecord(rec);
+
+    });
+
+    if (found === 0) {
+        throw new Error(
+            "No month rows (January to December) were found in column A. " +
+            "Make sure this is a Form B workbook."
+        );
+    }
+
+    // Months that were actually recorded in the file
+    const withData = monthNames.filter(m => seen.has(m) && monthHasData(monthly[m]));
+    const months = withData.length > 0
+        ? withData
+        : monthNames.filter(m => seen.has(m));
+
+    return { monthly, months };
+}
+
+/*
+    Loads the Excel template for a given year.
+    Tries FormB_Template_<year>.xlsx first (for years whose form layout
+    was different), then falls back to the generic FormB_Template.xlsx.
+    When the year is "all", only the generic template is used.
+*/
+async function loadTemplateBuffer(year) {
+
+    const candidates = [
+        ...(year && year !== "all" ? [`/templates/FormB_Template_${year}.xlsx`] : []),
+        "/templates/FormB_Template.xlsx",
+    ];
+
+    for (const url of candidates) {
+        try {
+            const res = await fetch(url);
+            const type = res.headers.get("content-type") || "";
+
+            // Dev servers (Vite / CRA) return index.html with status 200
+            // for missing files, so res.ok alone is not enough.
+            if (res.ok && !type.includes("text/html")) {
+                return await res.arrayBuffer();
+            }
+        } catch {
+            /* try next candidate */
+        }
+    }
+
+    throw new Error("No Form B template found in /templates.");
+}
+
+/*
+====================================================
+                    COMPONENT
+====================================================
+*/
+
+/*
+    Props
+    - clients:                 client records (already narrowed by the page's own filters)
+    - year:                    the year chosen in the page's filter (number or numeric string),
+                               or "all" for every year combined.
+                               Falls back to the current year when not given.
+    - period:                  the page's Period filter ("all" | "q1".."q4" | "january".."december").
+                               Falls back to an internal period when not given.
+    - onYearChange(year):      called after an import so the page's year filter jumps to it
+    - onPeriodChange(period):  called after an import so the page's Period filter follows
+                               the recorded months (a month, a quarter, or "all")
+    - onImportedYearsChange(years): list of imported years, for the page's year options
+    - onImportReport(year, monthly) / onRemoveImport(year): optional, to persist imports
+*/
 function FormBAnalytics({
 
     clients = [],
@@ -113,342 +527,150 @@ function FormBAnalytics({
 
     error = "",
 
+    year: yearProp,
+    period: periodProp,
+    onYearChange,
+    onPeriodChange,
+    onImportedYearsChange,
+    onImportReport,
+    onRemoveImport,
+
 }) {
 
+    // Year comes from the page's filter; internal fallback if none is passed.
+    // "all" means every year is combined.
+    const [internalYear, setInternalYear] = useState(new Date().getFullYear());
+    const isAllYears = String(yearProp) === "all";
+    const parentYear = Number(yearProp);
+    const selectedYear = isAllYears
+        ? "all"
+        : Number.isInteger(parentYear) && parentYear > 0 ? parentYear : internalYear;
+    const yearLabel = isAllYears ? "All Years" : selectedYear;
 
-    const exportOfficialExcel = async () => {
+    // Period comes from the page's filter; internal fallback if none is passed
+    const [internalPeriod, setInternalPeriod] = useState("all");
+    const selectedPeriod = periodProp !== undefined ? periodProp : internalPeriod;
 
+    // Months shown on screen (all 12, a quarter, or a single month)
+    const activeMonths = periodToMonths(selectedPeriod);
+    const isFiltered = activeMonths.length < 12;
+
+    // Short-lived bottom alert shown after an import
+    const [toast, setToast] = useState(null);
+
+    // Imported (older) reports, keyed by year. Kept in localStorage so they
+    // survive a refresh; also reported to the parent via onImportReport.
+    const [importedReports, setImportedReports] = useState(() => {
         try {
-
-            const response = await fetch(
-                "/templates/FormB_Template.xlsx"
-            );
-
-            const buffer = await response.arrayBuffer();
-
-            const workbook = new ExcelJS.Workbook();
-
-            await workbook.xlsx.load(buffer);
-
-            const sheet = workbook.worksheets[0];
-
-            // January starts on row 14
-            let currentRow = 14;
-
-            monthNames.forEach(month => {
-
-                const row = analytics.monthly[month];
-
-                // Month
-                sheet.getCell(`A${currentRow}`).value = month;
-
-                // Couples with unmet need
-                sheet.getCell(`B${currentRow}`).value = row.unmet;
-
-                // Clients referred / served
-                sheet.getCell(`C${currentRow}`).value = row.referred;
-
-                // Traditional FP
-                sheet.getCell(`D${currentRow}`).value = row.traditionalNoShift;
-                sheet.getCell(`E${currentRow}`).value = row.traditionalShift;
-
-                // Traditional FP referred
-                sheet.getCell(`F${currentRow}`).value = row.traditionalReferred;
-
-                // Total unmet need
-                sheet.getCell(`G${currentRow}`).value = row.totalUnmet;
-
-                // Total referred / served
-                sheet.getCell(`H${currentRow}`).value = row.totalReferred;
-
-                currentRow++;
-
-            });
-
-            // Grand Total row
-            const grandRow = 26;
-
-            sheet.getCell(`A${grandRow}`).value = "GRAND TOTAL";
-
-            sheet.getCell(`B${grandRow}`).value =
-                analytics.unmetNeed;
-
-            sheet.getCell(`C${grandRow}`).value =
-                analytics.referredServed;
-
-            sheet.getCell(`D${grandRow}`).value =
-                analytics.traditionalNoShift;
-
-            sheet.getCell(`E${grandRow}`).value =
-                analytics.traditionalShift;
-
-            sheet.getCell(`F${grandRow}`).value =
-                analytics.traditionalReferred;
-
-            sheet.getCell(`G${grandRow}`).value =
-                analytics.unmetNeed +
-                analytics.traditionalNoShift +
-                analytics.traditionalShift;
-
-            sheet.getCell(`H${grandRow}`).value =
-                analytics.referredServed +
-                analytics.traditionalReferred;
-
-            const excelBuffer =
-                await workbook.xlsx.writeBuffer();
-
-            saveAs(
-                new Blob([excelBuffer]),
-                "Official_Form_B_Report.xlsx"
-            );
-
+            return JSON.parse(localStorage.getItem(IMPORT_STORAGE_KEY)) || {};
+        } catch {
+            return {};
         }
-        catch (error) {
+    });
 
-            console.error(error);
+    const [pendingFile, setPendingFile] = useState(null);
+    const [importYear, setImportYear] = useState("");
+    const [importError, setImportError] = useState("");
+    const [importing, setImporting] = useState(false);
+    const fileInputRef = useRef(null);
 
-            alert("Failed to export Form B.");
-
+    useEffect(() => {
+        try {
+            localStorage.setItem(IMPORT_STORAGE_KEY, JSON.stringify(importedReports));
+        } catch {
+            /* storage unavailable */
         }
+    }, [importedReports]);
 
-    };
+    // Hide the import alert after a few seconds
+    useEffect(() => {
+        if (!toast) return;
+        const timer = setTimeout(() => setToast(null), 4000);
+        return () => clearTimeout(timer);
+    }, [toast]);
 
+    // Tell the page which years exist as imported reports, so its filter can list them
+    useEffect(() => {
+        onImportedYearsChange?.(
+            Object.keys(importedReports).map(Number).sort((x, y) => y - x)
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [importedReports]);
+
+    /*
+        Analytics for the selected year and period.
+        - A single year: if a report was imported for that year, it is used
+          instead of the client records.
+        - All years: every imported report, plus client records for each
+          year that has no imported report, summed month by month.
+        Totals follow the period filter.
+    */
     const analytics = useMemo(() => {
 
-        const monthly = {};
+        let monthly;
 
-        monthNames.forEach(month => {
+        if (isAllYears) {
 
-            monthly[month] = {
+            monthly = createEmptyMonthly();
 
-                unmet: 0,
+            Object.values(importedReports).forEach(imported => {
+                monthNames.forEach(m => addMonthRecord(monthly[m], imported[m]));
+            });
 
-                referred: 0,
-
-                traditionalNoShift: 0,
-
-                traditionalShift: 0,
-
-                traditionalReferred: 0,
-
-                traditional: 0,
-
-                totalUnmet: 0,
-
-                totalReferred: 0,
-
-            };
-
-        });
-
-        const traditionalMethods = [
-
-            "withdrawal",
-            "calendar",
-            "rhythm",
-            "billings",
-            "standard",
-            "days",
-            "lam",
-            "lactational",
-            "bbt",
-            "sympto"
-
-        ];
-
-        let unmetNeed = 0;
-
-        let referredServed = 0;
-
-        let traditionalNoShift = 0;
-
-        let traditionalShift = 0;
-
-        let traditionalReferred = 0;
-
-        clients.forEach(client => {
-
-            if (client.is_archived) return;
-
-            const month = getMonth(client);
-
-            if (!month) return;
-
-            const row = monthly[month];
-
-            const method = normalize(
-                getFieldValue(client, [
-                    "fp_method",
-                    "method"
-                ])
+            const fromClients = buildMonthlyFromClients(
+                clients,
+                y => !importedReports[y]
             );
 
-            const shiftOption = normalize(
-                getFieldValue(client, [
-                    "with_intention_to_shift",
-                    "intention_to_shift"
-                ])
-            );
+            monthNames.forEach(m => addMonthRecord(monthly[m], fromClients[m]));
 
-            const status = normalize(
-                getFieldValue(client, [
-                    "status"
-                ])
-            );
+        } else {
 
-            const isTraditional = traditionalMethods.some(item =>
-                method.includes(item)
-            );
+            monthly =
+                importedReports[selectedYear] ||
+                buildMonthlyFromClients(clients, y => y === selectedYear);
 
-            /*
-            ==================================
-            COUPLES WITH UNMET NEED
-            ==================================
-            */
+        }
 
-            if (!method && status !== "inactive") {
-
-                unmetNeed++;
-
-                row.unmet++;
-
-            }
-
-            /*
-            ==================================
-            CLIENTS REFERRED / SERVED
-            ==================================
-            */
-
-            if (client.sourceCollection === "clients_referred") {
-
-                referredServed++;
-
-                row.referred++;
-
-            }
-
-            /*
-            ==================================
-            TRADITIONAL FP USERS
-            ==================================
-            */
-
-            if (isTraditional) {
-
-                row.traditional++;
-
-                /*
-                WITHOUT INTENTION
-                */
-
-                if (
-
-                    shiftOption === "no intention" ||
-
-                    shiftOption === "no intention to shift"
-
-                ) {
-
-                    traditionalNoShift++;
-
-                    row.traditionalNoShift++;
-
-                }
-
-                /*
-                WITH INTENTION
-                */
-
-                else if (shiftOption) {
-
-                    traditionalShift++;
-
-                    row.traditionalShift++;
-
-                }
-
-                /*
-                REFERRED
-                */
-
-                if (client.sourceCollection === "clients_referred") {
-
-                    traditionalReferred++;
-
-                    row.traditionalReferred++;
-
-                }
-
-            }
-
-            row.totalUnmet =
-
-                row.unmet +
-
-                row.traditionalNoShift +
-
-                row.traditionalShift;
-
-            row.totalReferred =
-
-                row.referred +
-
-                row.traditionalReferred;
-
-        });
+        const grand = sumMonths(monthly, activeMonths);
 
         return {
 
             monthly,
 
-            unmetNeed,
+            unmetNeed: grand.unmet,
 
-            referredServed,
+            referredServed: grand.referred,
 
-            traditionalNoShift,
+            traditionalNoShift: grand.traditionalNoShift,
 
-            traditionalShift,
+            traditionalShift: grand.traditionalShift,
 
-            traditionalReferred,
+            traditionalReferred: grand.traditionalReferred,
 
             traditionalUsers:
+                grand.traditionalNoShift +
+                grand.traditionalShift,
 
-                traditionalNoShift +
+            totalUnmet: grand.totalUnmet,
 
-                traditionalShift
+            totalReferred: grand.totalReferred,
 
         };
 
-    }, [clients]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [clients, selectedYear, importedReports, selectedPeriod]);
 
-    if (loading) {
+    // Whole-year totals (used by the exports so the official form stays complete)
+    const yearTotal = sumMonths(analytics.monthly, monthNames);
 
-        return (
+    const hasImported = Object.keys(importedReports).length > 0;
 
-            <div className="form-b-loading">
-
-                Loading Form B...
-
-            </div>
-
-        );
-
-    }
-
-    if (error) {
-
-        return (
-
-            <div className="form-b-loading">
-
-                {error}
-
-            </div>
-
-        );
-
-    }
+    /*
+    ====================================================
+                    PDF EXPORT
+    ====================================================
+    */
 
     const exportPDF = () => {
 
@@ -459,7 +681,7 @@ function FormBAnalytics({
         });
 
         doc.setFontSize(16);
-        doc.text("Official Form B Report", 14, 15);
+        doc.text(`Official Form B Report (CY ${yearLabel})`, 14, 15);
 
         doc.setFontSize(10);
         doc.text(
@@ -512,22 +734,19 @@ function FormBAnalytics({
 
                 "GRAND TOTAL",
 
-                analytics.unmetNeed,
+                yearTotal.unmet,
 
-                analytics.referredServed,
+                yearTotal.referred,
 
-                analytics.traditionalNoShift,
+                yearTotal.traditionalNoShift,
 
-                analytics.traditionalShift,
+                yearTotal.traditionalShift,
 
-                analytics.traditionalReferred,
+                yearTotal.traditionalReferred,
 
-                analytics.unmetNeed +
-                analytics.traditionalNoShift +
-                analytics.traditionalShift,
+                yearTotal.totalUnmet,
 
-                analytics.referredServed +
-                analytics.traditionalReferred,
+                yearTotal.totalReferred,
 
             ]],
 
@@ -564,14 +783,231 @@ function FormBAnalytics({
             },
         });
 
-        doc.save("Official_Form_B_Report.pdf");
+        doc.save(`Official_Form_B_Report_${yearLabel}.pdf`);
     };
 
+    /*
+    ====================================================
+                EXCEL TEMPLATE EXPORT
+    ====================================================
+    */
 
+    const exportOfficialExcel = async () => {
+
+        try {
+
+            const buffer = await loadTemplateBuffer(selectedYear);
+
+            const workbook = new ExcelJS.Workbook();
+
+            await workbook.xlsx.load(buffer);
+
+            const sheet = workbook.worksheets[0];
+
+            // Writes one label + the 7 data values (columns B to H)
+            const writeRow = (rowNumber, label, record) => {
+
+                sheet.getCell(`A${rowNumber}`).value = label;
+
+                sheet.getCell(`B${rowNumber}`).value = record.unmet;
+                sheet.getCell(`C${rowNumber}`).value = record.referred;
+                sheet.getCell(`D${rowNumber}`).value = record.traditionalNoShift;
+                sheet.getCell(`E${rowNumber}`).value = record.traditionalShift;
+                sheet.getCell(`F${rowNumber}`).value = record.traditionalReferred;
+                sheet.getCell(`G${rowNumber}`).value = record.totalUnmet;
+                sheet.getCell(`H${rowNumber}`).value = record.totalReferred;
+
+            };
+
+            let currentRow = TEMPLATE_FIRST_ROW;
+
+            monthNames.forEach(month => {
+                writeRow(currentRow++, month, analytics.monthly[month]);
+            });
+
+            writeRow(TEMPLATE_GRAND_ROW, "GRAND TOTAL", yearTotal);
+
+            const excelBuffer =
+                await workbook.xlsx.writeBuffer();
+
+            saveAs(
+                new Blob([excelBuffer]),
+                `Official_Form_B_Report_${yearLabel}.xlsx`
+            );
+
+        }
+        catch (error) {
+
+            console.error(error);
+
+            alert("Failed to export Form B.");
+
+        }
+
+    };
+
+    /*
+    ====================================================
+                    IMPORT REPORT
+    ====================================================
+    */
+
+    // Step 1: person picks a file -> we ask for the report year
+    const handleFileChosen = (e) => {
+
+        const file = e.target.files?.[0];
+
+        e.target.value = "";   // lets the same file be picked again later
+
+        if (!file) return;
+
+        setImportError("");
+        setImportYear("");   // no default, so the year is always chosen deliberately
+        setPendingFile(file);
+
+    };
+
+    const closeImportModal = () => {
+        if (importing) return;
+        setPendingFile(null);
+        setImportError("");
+    };
+
+    // Step 2: year confirmed -> parse, save, and move the year + period filters
+    const confirmImport = async () => {
+
+        const year = Number(importYear);
+        const maxYear = new Date().getFullYear() + 1;
+
+        if (!Number.isInteger(year) || year < 2000 || year > maxYear) {
+            setImportError(`Enter a valid year between 2000 and ${maxYear}.`);
+            return;
+        }
+
+        const hasClientData = clients.some(c =>
+            getClientDate(c)?.getFullYear() === year
+        );
+
+        if (importedReports[year] || hasClientData) {
+
+            const ok = window.confirm(
+                `${year} already has data. The imported report will be shown ` +
+                `for ${year} instead (your client records are not deleted). Continue?`
+            );
+
+            if (!ok) return;
+
+        }
+
+        try {
+
+            setImporting(true);
+            setImportError("");
+
+            const buffer = await pendingFile.arrayBuffer();
+            const { monthly, months } = await parseFormBWorkbook(buffer);
+
+            setImportedReports(prev => ({ ...prev, [year]: monthly }));
+
+            onImportReport?.(year, monthly);          // optional: save to Firestore etc.
+
+            // Year filter -> the imported year
+            setInternalYear(year);
+            onYearChange?.(year);
+
+            // Period filter -> the recorded month, or the quarter that holds
+            // the recorded months, otherwise the whole year
+            const periodToShow = monthsToPeriod(months);
+            setInternalPeriod(periodToShow);
+            onPeriodChange?.(periodToShow);
+
+            const recorded =
+                months.length === 12 ? "January to December"
+                : months.length <= 3 ? months.join(", ")
+                : `${months[0]} to ${months[months.length - 1]}`;
+
+            setToast({ id: Date.now(), text: `Imported ${year} report (${recorded})` });
+
+            setPendingFile(null);
+
+        } catch (error) {
+
+            console.error(error);
+            setImportError(error.message || "Could not read this file.");
+
+        } finally {
+
+            setImporting(false);
+
+        }
+
+    };
+
+    const removeImportedReport = () => {
+
+        if (!window.confirm(
+            `Remove the imported report for ${selectedYear}? ` +
+            `The page will go back to using client records for that year.`
+        )) return;
+
+        setImportedReports(prev => {
+            const { [selectedYear]: _removed, ...rest } = prev;
+            return rest;
+        });
+
+        onRemoveImport?.(selectedYear);
+
+    };
+
+    if (loading) {
+
+        return (
+
+            <div className="form-b-loading">
+
+                Loading Form B...
+
+            </div>
+
+        );
+
+    }
+
+    /*
+    ====================================================
+                        RENDER
+    ====================================================
+    */
 
     return (
 
         <div className="form-b-container">
+
+            {/* TOP BAR: status on the left, Import on the right */}
+
+            <div className="form-b-topbar"
+            style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "12px",
+                }}>
+
+                <div className="form-b-topbar-status">
+
+                    {error && !hasImported ? error : ""}
+
+                </div>
+
+                <button
+                    type="button"
+                    className="import-btn"
+                    onClick={() => fileInputRef.current?.click()}
+                >
+                    Import Excel
+                </button>
+
+            </div>
 
             {/* ==========================
             KPI CARDS
@@ -622,11 +1058,7 @@ function FormBAnalytics({
                     </small>
 
                     <h2>
-                        {
-                            analytics.unmetNeed +
-                            analytics.traditionalNoShift +
-                            analytics.traditionalShift
-                        }
+                        {analytics.totalUnmet}
                     </h2>
 
                 </div>
@@ -694,23 +1126,12 @@ function FormBAnalytics({
 
                     <div className="summary-row">
                         <span>Total Unmet Need</span>
-                        <strong>
-                            {
-                                analytics.unmetNeed +
-                                analytics.traditionalNoShift +
-                                analytics.traditionalShift
-                            }
-                        </strong>
+                        <strong>{analytics.totalUnmet}</strong>
                     </div>
 
                     <div className="summary-row">
                         <span>Total Clients Referred</span>
-                        <strong>
-                            {
-                                analytics.referredServed +
-                                analytics.traditionalReferred
-                            }
-                        </strong>
+                        <strong>{analytics.totalReferred}</strong>
                     </div>
 
                 </div>
@@ -725,7 +1146,7 @@ function FormBAnalytics({
             <div className="monthly-summary">
 
                 <h3>
-                    Monthly Summary
+                    Monthly Summary ({periodLabel(selectedPeriod) ? `${periodLabel(selectedPeriod)} ` : ""}{yearLabel})
                 </h3>
 
                 <table className="monthly-summary-table">
@@ -756,7 +1177,7 @@ function FormBAnalytics({
 
                     <tbody>
 
-                        {monthNames.map(month => {
+                        {activeMonths.map(month => {
 
                             const row = analytics.monthly[month];
 
@@ -804,20 +1225,9 @@ function FormBAnalytics({
 
                             <th>{analytics.traditionalReferred}</th>
 
-                            <th>
-                                {
-                                    analytics.unmetNeed +
-                                    analytics.traditionalNoShift +
-                                    analytics.traditionalShift
-                                }
-                            </th>
+                            <th>{analytics.totalUnmet}</th>
 
-                            <th>
-                                {
-                                    analytics.referredServed +
-                                    analytics.traditionalReferred
-                                }
-                            </th>
+                            <th>{analytics.totalReferred}</th>
 
                         </tr>
 
@@ -826,10 +1236,6 @@ function FormBAnalytics({
                 </table>
 
             </div>
-
-
-
-
 
 
             {/* ================================
@@ -844,7 +1250,7 @@ function FormBAnalytics({
 
                         <h2>
 
-                            Official Form B Report
+                            Official Form B Report - CY {yearLabel}
 
                         </h2>
 
@@ -857,8 +1263,6 @@ function FormBAnalytics({
                     </div>
 
                     <div className="report-buttons">
-
-
 
                         <button
                             className="pdf-btn"
@@ -968,7 +1372,7 @@ function FormBAnalytics({
 
                             {
 
-                                monthNames.map((month) => {
+                                activeMonths.map((month) => {
 
                                     const row = analytics.monthly[month];
 
@@ -976,67 +1380,21 @@ function FormBAnalytics({
 
                                         <tr key={month}>
 
-                                            <td>
+                                            <td>{month}</td>
 
-                                                {month}
+                                            <td>{row.unmet}</td>
 
-                                            </td>
+                                            <td>{row.referred}</td>
 
-                                            {/* Couples with Unmet Need */}
+                                            <td>{row.traditionalNoShift}</td>
 
-                                            <td>
+                                            <td>{row.traditionalShift}</td>
 
-                                                {row.unmet}
+                                            <td>{row.traditionalReferred}</td>
 
-                                            </td>
+                                            <td>{row.totalUnmet}</td>
 
-                                            {/* Clients Referred / Served */}
-
-                                            <td>
-
-                                                {row.referred}
-
-                                            </td>
-
-                                            {/* Traditional Without Intention */}
-
-                                            <td>
-
-                                                {row.traditionalNoShift}
-
-                                            </td>
-
-                                            {/* Traditional With Intention */}
-
-                                            <td>
-
-                                                {row.traditionalShift}
-
-                                            </td>
-
-                                            {/* Traditional FP Referred */}
-
-                                            <td>
-
-                                                {row.traditionalReferred}
-
-                                            </td>
-
-                                            {/* Total Unmet Need */}
-
-                                            <td>
-
-                                                {row.totalUnmet}
-
-                                            </td>
-
-                                            {/* Total Referred */}
-
-                                            <td>
-
-                                                {row.totalReferred}
-
-                                            </td>
+                                            <td>{row.totalReferred}</td>
 
                                         </tr>
 
@@ -1054,67 +1412,23 @@ function FormBAnalytics({
 
                                 <th className="grand-total-title">
 
-                                    GRAND TOTAL
+                                    {isFiltered ? "TOTAL" : "GRAND TOTAL"}
 
                                 </th>
 
-                                {/* Couples with Unmet Need */}
+                                <th>{analytics.unmetNeed}</th>
 
-                                <th>
+                                <th>{analytics.referredServed}</th>
 
-                                    {analytics.unmetNeed}
+                                <th>{analytics.traditionalNoShift}</th>
 
-                                </th>
+                                <th>{analytics.traditionalShift}</th>
 
-                                {/* Clients Referred / Served */}
+                                <th>{analytics.traditionalReferred}</th>
 
-                                <th>
+                                <th>{analytics.totalUnmet}</th>
 
-                                    {analytics.referredServed}
-
-                                </th>
-
-                                {/* Traditional FP Without Intention */}
-
-                                <th>
-
-                                    {analytics.traditionalNoShift}
-
-                                </th>
-
-                                {/* Traditional FP With Intention */}
-
-                                <th>
-
-                                    {analytics.traditionalShift}
-
-                                </th>
-
-                                {/* Traditional FP Referred / Served */}
-
-                                <th>
-
-                                    {analytics.traditionalReferred}
-
-                                </th>
-
-                                {/* Total Unmet Need */}
-
-                                <th>
-
-                                    {analytics.unmetNeed +
-                                        analytics.traditionalNoShift +
-                                        analytics.traditionalShift}
-
-                                </th>
-
-                                {/* Total Clients Referred / Served */}
-
-                                <th>
-
-                                    {analytics.referredServed}
-
-                                </th>
+                                <th>{analytics.totalReferred}</th>
 
                             </tr>
 
@@ -1125,6 +1439,101 @@ function FormBAnalytics({
                 </div>
 
             </div>
+
+            {/* IMPORT: hidden file picker + year prompt */}
+
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx"
+                style={{ display: "none" }}
+                onChange={handleFileChosen}
+            />
+
+            {pendingFile && (
+                <div className="import-modal-backdrop" onClick={closeImportModal}>
+
+                    <div
+                        className="import-modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="import-title-b"
+                        onClick={e => e.stopPropagation()}
+                    >
+
+                        <h3 id="import-title-b">Import Form B report</h3>
+
+                        <p className="import-file">{pendingFile.name}</p>
+
+                        <label htmlFor="import-year-b">
+                            Which year is this report for?
+                        </label>
+
+                        <input
+                            id="import-year-b"
+                            type="number"
+                            min="2000"
+                            max={new Date().getFullYear() + 1}
+                            value={importYear}
+                            autoFocus
+                            onChange={e => setImportYear(e.target.value)}
+                            onKeyDown={e => { if (e.key === "Enter") confirmImport(); }}
+                        />
+
+                        {importError && (
+                            <p className="import-error" role="alert">{importError}</p>
+                        )}
+
+                        <div className="import-modal-actions">
+
+                            <button
+                                type="button"
+                                onClick={closeImportModal}
+                                disabled={importing}
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                type="button"
+                                className="excel-btn"
+                                onClick={confirmImport}
+                                disabled={importing}
+                            >
+                                {importing ? "Importing..." : "Import"}
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            )}
+
+            {/* IMPORT ALERT: bottom of the screen, disappears by itself */}
+
+            {toast && (
+                <div
+                    role="status"
+                    aria-live="polite"
+                    style={{
+                        position: "fixed",
+                        left: "50%",
+                        bottom: "24px",
+                        transform: "translateX(-50%)",
+                        background: "#1f2937",
+                        color: "#fff",
+                        padding: "12px 20px",
+                        borderRadius: "8px",
+                        boxShadow: "0 6px 20px rgba(0,0,0,0.25)",
+                        fontSize: "14px",
+                        zIndex: 1100,
+                        maxWidth: "90vw",
+                    }}
+                >
+                    {toast.text}
+                </div>
+            )}
 
         </div>
 
