@@ -1,9 +1,13 @@
-import "./ModernFPUsersAnalytics.css";
+import "../report-forms.css";
+import MethodBadges from "../MethodBadges";
 import { useMemo, useState, useEffect, useRef } from "react";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { getClientDate } from "../reportData";
+import ExportConfirmModal from "../ExportConfirmModal";
+import { loadReportLogos, drawReportHeader, reportTableOptions, drawSignatories } from "../reportPdf";
 
 /*
 ====================================================
@@ -108,41 +112,7 @@ function periodLabel(period) {
     return `${months[0]} to ${months[months.length - 1]}`;
 }
 
-function toDate(value) {
-    if (!value) return null;
-    if (value?.toDate) {
-        const d = value.toDate();
-        return Number.isNaN(d.getTime()) ? null : d;
-    }
-    if (value instanceof Date) {
-        return Number.isNaN(value.getTime()) ? null : value;
-    }
-    if (typeof value === "string" || typeof value === "number") {
-        const d = new Date(value);
-        return Number.isNaN(d.getTime()) ? null : d;
-    }
-    return null;
-}
 
-// Same date fields the Reports page filters on first, then extra service-date fields
-function getClientDate(client) {
-    const candidates = [
-        client.created_at,
-        client.updated_at,
-        client.date,
-        client.month_of_service,
-        client.service_month,
-        client.report_month,
-        client.date_of_service,
-        client.service_date,
-        client.fp_date,
-    ];
-    for (const value of candidates) {
-        const d = toDate(value);
-        if (d) return d;
-    }
-    return null;
-}
 
 const methodFields = [
     "fp_method",
@@ -154,7 +124,6 @@ const methodFields = [
     "contraceptive_method",
     "preferred_method",
     "service_method",
-    "intention_to_shift",
     "program",
 ];
 
@@ -380,15 +349,15 @@ async function parseWorkbook(buffer) {
 /*
     Props
     - clients:                 client records (already narrowed by the page's filters)
-    - loading / error:         load state from the page
+    - error:                   load error from the page
     - year / period:           the page's Year and Period filters
     - onYearChange / onPeriodChange:   move the page's filters after an import
     - onImportedYearsChange(years):    imported years, for the Year filter options
     - onImportReport(year, monthly) / onRemoveImport(year): optional, to persist imports
 */
 function ModernFPUsersAnalytics({
+    exportFilters,
     clients = [],
-    loading = false,
     error = "",
     year: yearProp,
     period: periodProp,
@@ -424,6 +393,12 @@ function ModernFPUsersAnalytics({
         }
     });
 
+    // Export waiting for confirmation: "pdf" | "excel" | null
+    const [exportFormat, setExportFormat] = useState(null);
+
+    // Import flow: step 1 = "choose a file" modal, step 2 = "which year" modal
+    const [showImport, setShowImport] = useState(false);
+    const [dragOver, setDragOver] = useState(false);
     const [pendingFile, setPendingFile] = useState(null);
     const [importYear, setImportYear] = useState("");
     const [importError, setImportError] = useState("");
@@ -527,81 +502,46 @@ function ModernFPUsersAnalytics({
     ====================================================
     */
 
-    const exportPDF = () => {
+    // Default export file name (without extension); it can be changed in the confirmation
+    const exportBaseName = `Modern_FP_Users_Report_${yearLabel}`;
+
+    const exportPDF = async (fileName = `${exportBaseName}.pdf`) => {
 
         try {
 
+            const logos = await loadReportLogos();
+
             const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
-            doc.setFont("times", "normal");
-            doc.setFontSize(11);
-            doc.text("Republic of the Philippines", 148, 10, { align: "center" });
-            doc.text("Province of Bulacan", 148, 16, { align: "center" });
-
-            doc.setFont("times", "bold");
-            doc.text("Provincial Social Welfare and Development Office", 148, 22, { align: "center" });
-
-            doc.setFontSize(15);
-            doc.text("Responsible Parenthood and Family Planning (RPFP)", 148, 31, { align: "center" });
-
-            doc.setFontSize(11);
-            doc.text(
+            drawReportHeader(
+                doc,
                 `MODERN FAMILY PLANNING USERS REPORT (CY ${yearLabel}${periodText ? `, ${periodText}` : ""})`,
-                148, 40, { align: "center" }
+                logos
             );
+
+            // Same rows and columns as the on-screen report
+            const body = activeMonths.map(month => [
+                month,
+                ...rowToValues(monthly[month]),
+            ]);
+            const rowKinds = activeMonths.map(() => "month");
+
+            body.push([isFiltered ? "TOTAL" : "GRAND TOTAL", ...rowToValues(totals)]);
+            rowKinds.push("total");
 
             autoTable(doc, {
 
-                startY: 46,
-                theme: "grid",
-                margin: { left: 8, right: 8 },
+                ...reportTableOptions(rowKinds, { firstColumnWidth: 27 }),
 
                 head: [["Month", ...methodHeaders.map(labelOf), "Total"]],
 
-                body: activeMonths.map(month => [month, ...rowToValues(monthly[month])]),
-
-                foot: [[isFiltered ? "TOTAL" : "GRAND TOTAL", ...rowToValues(totals)]],
-
-                styles: {
-                    font: "times",
-                    fontSize: 7,
-                    halign: "center",
-                    valign: "middle",
-                    lineWidth: 0.1,
-                },
-
-                headStyles: {
-                    fillColor: [41, 128, 185],
-                    textColor: 255,
-                    fontStyle: "bold",
-                },
-
-                footStyles: {
-                    fillColor: [230, 230, 230],
-                    textColor: 0,
-                    fontStyle: "bold",
-                },
-
-                columnStyles: {
-                    0: { cellWidth: 27 },
-                    1: { cellWidth: 18 },
-                    2: { cellWidth: 15 },
-                    3: { cellWidth: 15 },
-                    4: { cellWidth: 20 },
-                    5: { cellWidth: 15 },
-                    6: { cellWidth: 18 },
-                    7: { cellWidth: 17 },
-                    8: { cellWidth: 15 },
-                    9: { cellWidth: 15 },
-                    10: { cellWidth: 15 },
-                    11: { cellWidth: 15 },
-                    12: { cellWidth: 15 },
-                    13: { cellWidth: 18 },
-                },
+                body,
 
             });
 
-            doc.save(`Modern_FP_Users_Report_${yearLabel}.pdf`);
+            drawSignatories(doc);
+
+            doc.save(fileName);
 
         } catch (err) {
 
@@ -618,7 +558,7 @@ function ModernFPUsersAnalytics({
     ====================================================
     */
 
-    const exportExcel = async () => {
+    const exportExcel = async (fileName = `${exportBaseName}.xlsx`) => {
 
         try {
 
@@ -660,7 +600,7 @@ function ModernFPUsersAnalytics({
 
             saveAs(
                 new Blob([excelBuffer]),
-                `Modern_FP_Users_Report_${yearLabel}.xlsx`
+                fileName
             );
 
         } catch (err) {
@@ -678,18 +618,50 @@ function ModernFPUsersAnalytics({
     ====================================================
     */
 
+    // Step 1 -> Step 2: a valid .xlsx was picked (or dropped); ask for the report year
+    const acceptFile = (file) => {
+
+        if (!file) return;
+
+        if (!file.name.toLowerCase().endsWith(".xlsx")) {
+            setImportError("Please choose an .xlsx file.");
+            return;
+        }
+
+        setImportError("");
+        setImportYear("");   // no default, so the year is always chosen deliberately
+        setPendingFile(file);
+        setShowImport(false);
+
+    };
+
+    // File explorer result
     const handleFileChosen = (e) => {
 
         const file = e.target.files?.[0];
 
-        e.target.value = "";
+        e.target.value = "";   // lets the same file be picked again later
 
-        if (!file) return;
+        acceptFile(file);
 
+    };
+
+    // Drag and drop result
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setDragOver(false);
+        acceptFile(e.dataTransfer.files?.[0]);
+    };
+
+    const openPicker = () => {
         setImportError("");
-        setImportYear("");
-        setPendingFile(file);
+        setShowImport(true);
+    };
 
+    const closePicker = () => {
+        setShowImport(false);
+        setImportError("");
+        setDragOver(false);
     };
 
     const closeImportModal = () => {
@@ -784,10 +756,6 @@ function ModernFPUsersAnalytics({
 
     };
 
-    if (loading) {
-        return <div className="modernfp-loading">Loading Modern FP Users report...</div>;
-    }
-
     /*
     ====================================================
                         RENDER
@@ -830,15 +798,6 @@ function ModernFPUsersAnalytics({
                     )}
                 </div>
 
-                <button
-                    type="button"
-                    className="import-btn"
-                    style={{ marginLeft: "auto" }}
-                    onClick={() => fileInputRef.current?.click()}
-                >
-                    Import Excel
-                </button>
-
             </div>
 
             {error && !usesImported && (
@@ -861,7 +820,7 @@ function ModernFPUsersAnalytics({
 
                 <div className="modernfp-card green">
                     <small>Most Used Method</small>
-                    <h2>{topMethod}</h2>
+                    <h2><MethodBadges value={topMethod} pillSingle={false} /></h2>
                 </div>
 
             </div>
@@ -932,7 +891,7 @@ function ModernFPUsersAnalytics({
                             <tr key={item.month}>
                                 <td>{item.month}</td>
                                 <td>{item.total}</td>
-                                <td className="highlight-method">{item.topMethod}</td>
+                                <td className="highlight-method"><MethodBadges value={item.topMethod} /></td>
                             </tr>
                         ))}
                     </tbody>
@@ -941,7 +900,7 @@ function ModernFPUsersAnalytics({
                         <tr>
                             <th>TOTAL</th>
                             <th>{totalUsers}</th>
-                            <th>{topMethod}</th>
+                            <th><MethodBadges value={topMethod} /></th>
                         </tr>
                     </tfoot>
 
@@ -962,11 +921,16 @@ function ModernFPUsersAnalytics({
 
                     <div className="modernfp-report-actions">
 
-                        <button type="button" className="export-pdf-btn" onClick={exportPDF}>
+                        <button type="button" className="import-btn" onClick={openPicker}>
+                            Import
+                        </button>
+
+
+                        <button type="button" className="export-pdf-btn" onClick={() => setExportFormat("pdf")}>
                             Export PDF
                         </button>
 
-                        <button type="button" className="export-excel-btn" onClick={exportExcel}>
+                        <button type="button" className="export-excel-btn" onClick={() => setExportFormat("excel")}>
                             Export Excel
                         </button>
 
@@ -993,7 +957,7 @@ function ModernFPUsersAnalytics({
                                 <tr key={month}>
                                     <td>{month}</td>
                                     {rowToValues(monthly[month]).map((value, i) => (
-                                        <td key={i}>{value || ""}</td>
+                                        <td key={i}>{value || 0}</td>
                                     ))}
                                 </tr>
                             ))}
@@ -1023,6 +987,77 @@ function ModernFPUsersAnalytics({
                 style={{ display: "none" }}
                 onChange={handleFileChosen}
             />
+
+            {/* EXPORT: confirm what will be exported */}
+
+            {exportFormat && (
+                <ExportConfirmModal
+                    format={exportFormat}
+                    reportName="Modern FP Users"
+                    filters={exportFilters}
+                    defaultFileName={exportBaseName}
+                    imported={usesImported}
+                    onCancel={() => setExportFormat(null)}
+                    onConfirm={(fileName) => {
+                        const run = exportFormat === "pdf" ? exportPDF : exportExcel;
+                        setExportFormat(null);
+                        run(fileName);
+                    }}
+                />
+            )}
+
+            {/* IMPORT STEP 1: choose a file */}
+
+            {showImport && !pendingFile && (
+                <div className="import-modal-backdrop" onClick={closePicker}>
+
+                    <div
+                        className="import-modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="import-pick-title-mfp"
+                        onClick={e => e.stopPropagation()}
+                    >
+
+                        <h3 id="import-pick-title-mfp">Import Modern FP Users report</h3>
+
+                        <p className="import-hint">
+                            Upload the filled-in Modern FP Users Excel file (.xlsx).
+                        </p>
+
+                        <div
+                            className={`import-dropzone${dragOver ? " is-over" : ""}`}
+                            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                            onDragLeave={() => setDragOver(false)}
+                            onDrop={handleDrop}
+                        >
+                            <strong>Drag and drop your file here</strong>
+                            <span>or</span>
+                            <button
+                                type="button"
+                                className="excel-btn"
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                Choose file
+                            </button>
+                        </div>
+
+                        {importError && (
+                            <p className="import-error" role="alert">{importError}</p>
+                        )}
+
+                        <div className="import-modal-actions">
+                            <button type="button" onClick={closePicker}>
+                                Cancel
+                            </button>
+                        </div>
+
+                    </div>
+
+                </div>
+            )}
+
+            {/* IMPORT STEP 2: which year is this report for */}
 
             {pendingFile && (
                 <div className="import-modal-backdrop" onClick={closeImportModal}>
@@ -1087,24 +1122,7 @@ function ModernFPUsersAnalytics({
             {/* IMPORT ALERT */}
 
             {toast && (
-                <div
-                    role="status"
-                    aria-live="polite"
-                    style={{
-                        position: "fixed",
-                        left: "50%",
-                        bottom: "24px",
-                        transform: "translateX(-50%)",
-                        background: "#1f2937",
-                        color: "#fff",
-                        padding: "12px 20px",
-                        borderRadius: "8px",
-                        boxShadow: "0 6px 20px rgba(0,0,0,0.25)",
-                        fontSize: "14px",
-                        zIndex: 1100,
-                        maxWidth: "90vw",
-                    }}
-                >
+                <div className="import-toast" role="status" aria-live="polite">
                     {toast.text}
                 </div>
             )}

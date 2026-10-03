@@ -7,13 +7,13 @@ import FormBAnalytics from "./form-reports/FormBAnalytics";
 import FormCAnalytics from "./form-reports/FormCAnalytics";
 import ModernFPUsersAnalytics from "./additional-reports/ModernFPUsersAnalytics";
 import ModernShifters from "./additional-reports/ModernShifters";
-import InventoryReport from "./inventory-reports/InventoryReport";
 import { db } from "../../firebase-config";
 import { collection, getDocs } from "firebase/firestore";
 import { RefreshCw } from "lucide-react";
+import ReportSelect from "../../components/ReportSelect/ReportSelect";
+import { getClientDate, isArchived, canonicalMethod } from "./reportData";
 
 function Reports() {
-    const [activeTab, setActiveTab] = useState("client");
     const [period, setPeriod] = useState("all");
     const [year, setYear] = useState(new Date().getFullYear());
     const [importedYears, setImportedYears] = useState([]);
@@ -45,6 +45,19 @@ function Reports() {
         { value: "october", label: "October" },
         { value: "november", label: "November" },
         { value: "december", label: "December" },
+    ];
+
+    const reportTypeOptions = [
+        { value: "form-a", label: "FORM A" },
+        { value: "form-b", label: "FORM B" },
+        { value: "form-c", label: "FORM C" },
+        {
+            group: "Additional Reports",
+            options: [
+                { value: "modern-fp", label: "Modern FP Users" },
+                { value: "modern-shifters", label: "Modern FP Shifters" },
+            ],
+        },
     ];
 
     // 2010-2035, plus any imported year outside that range
@@ -162,68 +175,10 @@ function Reports() {
                 .replace(/[^a-z0-9]+/g, "-")
                 .replace(/(^-|-$)/g, "");
 
-        const parseDate = (value) => {
-
-            if (!value) return null;
-
-            // Firestore Timestamp
-            if (value?.toDate) {
-                const date = value.toDate();
-
-                return Number.isNaN(date.getTime())
-                    ? null
-                    : date;
-            }
-
-            // JavaScript Date
-            if (value instanceof Date) {
-                return Number.isNaN(value.getTime())
-                    ? null
-                    : value;
-            }
-
-            // String / number date
-            if (
-                typeof value === "string" ||
-                typeof value === "number"
-            ) {
-
-                const parsed = new Date(value);
-
-                return Number.isNaN(parsed.getTime())
-                    ? null
-                    : parsed;
-
-            }
-
-            return null;
-        };
-
-        const getClientDate = (client) => {
-
-            const possibleDates = [
-                client.created_at,
-                client.updated_at,
-                client.date,
-                client.month_of_service,
-                client.service_month,
-                client.report_month,
-            ];
-
-            for (const value of possibleDates) {
-
-                const date = parseDate(value);
-
-                if (date) {
-                    return date;
-                }
-
-            }
-
-            return null;
-        };
-
         return clients.filter((client) => {
+
+            // Archived records are never part of a report
+            if (isArchived(client)) return false;
 
             /* =========================
                BARANGAY FILTER
@@ -248,22 +203,20 @@ function Reports() {
                METHOD FILTER
             ========================= */
 
-            const clientMethod = slugify(
-                client.fp_method ||
-                client.FP_method ||
-                client.method ||
-                client.family_planning_method ||
-                client.familyPlanningMethod ||
-                client.intention_to_shift
-            );
+            const selectedMethod = slugify(methodFilter);
 
-            const selectedMethod =
-                slugify(methodFilter);
-
+            // The dropdown lists full names ("Basal Body Temperature (BBT)") while
+            // records hold short ones ("Bbt"), so both are reduced to one name first
             const matchesMethod =
                 selectedMethod === "all" ||
                 !selectedMethod ||
-                clientMethod === selectedMethod;
+                canonicalMethod(
+                    client.fp_method ||
+                    client.FP_method ||
+                    client.method ||
+                    client.family_planning_method ||
+                    client.familyPlanningMethod
+                ) === canonicalMethod(methodFilter);
 
 
             /* =========================
@@ -378,13 +331,57 @@ function Reports() {
         year
     ]);
 
+    const toSlug = (value) => value.toLowerCase().replace(/\s+/g, "-");
+
+    // The four data filters: shown on the page and again in each report's
+    // export confirmation, where they can still be changed before exporting
+    const filterControls = [
+        {
+            key: "barangay",
+            label: "Barangay",
+            value: barangayFilter,
+            onChange: (e) => setBarangayFilter(e.target.value),
+            options: [
+                { value: "all", label: "All Barangays" },
+                ...barangays.map((barangay) => ({ value: toSlug(barangay), label: barangay })),
+            ],
+        },
+        {
+            key: "period",
+            label: "Period",
+            value: period,
+            onChange: (e) => setPeriod(e.target.value),
+            options: periods,
+        },
+        {
+            key: "year",
+            label: "Year",
+            value: year,
+            onChange: (e) => setYear(e.target.value),
+            options: [
+                { value: "all", label: "All Years" },
+                ...years.map((yr) => ({ value: yr, label: yr })),
+            ],
+        },
+        {
+            key: "method",
+            label: "Method",
+            value: methodFilter,
+            onChange: (e) => setMethodFilter(e.target.value),
+            options: [
+                { value: "all", label: "All Methods" },
+                ...familyPlanningMethods.map((method) => ({ value: toSlug(method), label: method })),
+            ],
+        },
+    ];
+
     const renderAnalytics = () => {
         switch (reportType) {
             case "form-b":
                 return (
                     <FormBAnalytics
                         clients={filteredClients}
-                        loading={loading}
+                        exportFilters={filterControls}
                         error={error}
                         year={year}
                         period={period}
@@ -398,7 +395,7 @@ function Reports() {
                 return (
                     <FormCAnalytics
                         clients={filteredClients}
-                        loading={loading}
+                        exportFilters={filterControls}
                         error={error}
                         year={year}
                         period={period}
@@ -415,7 +412,7 @@ function Reports() {
                 return (
                     <ModernFPUsersAnalytics
                         clients={filteredClients}
-                        loading={loading}
+                        exportFilters={filterControls}
                         error={error}
                     />
                 );
@@ -424,7 +421,7 @@ function Reports() {
                 return (
                     <ModernShifters
                         clients={filteredClients}
-                        loading={loading}
+                        exportFilters={filterControls}
                     />
                 );
 
@@ -433,7 +430,7 @@ function Reports() {
                 return (
                     <FormAAnalytics
                         clients={filteredClients}
-                        loading={loading}
+                        exportFilters={filterControls}
                         error={error}
                         year={year}
                         period={period}
@@ -465,114 +462,35 @@ function Reports() {
             </div>
 
             <div className="report-tabs-container">
-                <div className="tabs-header">
-                    <button
-                        className={`tab-btn ${activeTab === "client" ? "active" : ""}`}
-                        onClick={() => setActiveTab("client")}
-                    >
-                        Client Reports
-                    </button>
-
-                    <button
-                        className={`tab-btn ${activeTab === "inventory" ? "active" : ""}`}
-                        onClick={() => setActiveTab("inventory")}
-                    >
-                        Inventory Report
-                    </button>
-                </div>
-
-                {activeTab === "client" && (
-                    <div className="clients-report-content">
-                        <div className="filter-section">
-                            <div>
-                                <p>Report Type</p>
-                                <select
-                                    value={reportType}
-                                    onChange={(e) => setReportType(e.target.value)}
-                                >
-                                    <option value="form-a">FORM A</option>
-                                    <option value="form-b">FORM B</option>
-                                    <option value="form-c">FORM C</option>
-
-
-                                    <optgroup label="Additional Reports">
-                                        <option value="modern-fp">
-                                            Modern FP Users
-                                        </option>
-                                        <option value="modern-shifters">
-                                            Modern FP Shifters
-                                        </option>
-                                    </optgroup>
-                                </select>
-                            </div>
-
-                            <div>
-                                <p>Barangay</p>
-                                <select value={barangayFilter} onChange={(e) => setBarangayFilter(e.target.value)}>
-                                    <option value="all">All Barangays</option>
-                                    {barangays.map((barangay, index) => (
-                                        <option
-                                            key={index}
-                                            value={barangay.toLowerCase().replace(/\s+/g, "-")}
-                                        >
-                                            {barangay}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <p>Period</p>
-                                <select value={period} onChange={(e) => setPeriod(e.target.value)}>
-                                    {periods.map((item) => (
-                                        <option key={item.value} value={item.value}>
-                                            {item.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <p>Year</p>
-                                <select value={year} onChange={(e) => setYear(e.target.value)}>
-                                    <option value="all">All Years</option>
-                                    {years.map((yr) => (
-                                        <option key={yr} value={yr}>
-                                            {yr}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <p>Method</p>
-                                <select value={methodFilter} onChange={(e) => setMethodFilter(e.target.value)}>
-                                    <option value="all">All Methods</option>
-                                    {familyPlanningMethods.map((method, index) => (
-                                        <option
-                                            key={index}
-                                            value={method.toLowerCase().replace(/\s+/g, "-")}
-                                        >
-                                            {method}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                <div className="clients-report-content">
+                    <div className="filter-section">
+                        <div>
+                            <p>Report Type</p>
+                            <ReportSelect
+                                ariaLabel="Report Type"
+                                value={reportType}
+                                onChange={(e) => setReportType(e.target.value)}
+                                options={reportTypeOptions}
+                            />
                         </div>
 
+                        {filterControls.map((control) => (
+                            <div key={control.key}>
+                                <p>{control.label}</p>
+                                <ReportSelect
+                                    ariaLabel={control.label}
+                                    value={control.value}
+                                    onChange={control.onChange}
+                                    options={control.options}
+                                />
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className={`report-stage${loading || refreshing ? " is-loading" : ""}`}>
                         {renderAnalytics()}
                     </div>
-                )}
-
-                {activeTab === "monthly" && (
-                    <div className="monthly-report-content">
-                        <MonthlyReportTable />
-                    </div>
-                )}
-
-                {activeTab === "inventory" && (
-                    <InventoryReport />
-                )}
+                </div>
             </div>
         </>
     );
