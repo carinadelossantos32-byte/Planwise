@@ -1,9 +1,11 @@
 import "./inventory.css"
 import { useEffect, useState } from "react";
 import { db } from "../../firebase-config"
-import { doc, getDoc, getDocs, updateDoc, setDoc, collection,addDoc, increment, serverTimestamp } from "firebase/firestore";
-import { CheckCircle, RefreshCw, Upload, FileText, SquarePen,SquarePlus, SquareMinus } from "lucide-react";
+import { doc, getDoc, getDocs, updateDoc, setDoc, collection,addDoc, increment, serverTimestamp, onSnapshot } from "firebase/firestore";
+import { CheckCircle, RefreshCw, Plus, X, SquarePen,SquarePlus, SquareMinus } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, Cell } from "recharts";
+
+const VISIBLE_LOW_METHODS = 1;
 
 const FP_METHODS = [
     { id: "condom", label: "Condom" },
@@ -62,6 +64,17 @@ function Inventory() {
     const [singleDeductError, setSingleDeductError] = useState("");
 
     const [bulkDeductMethod, setBulkDeductMethod] = useState("");
+
+    const [limitsByMethod, setLimitsByMethod] = useState({});
+    const [lowStockModal, setLowStockModal] = useState(null);
+
+        useEffect(() => {
+            const ref = doc(db, "lowStock", "lowStockLimit");
+            const unsub = onSnapshot(ref, (snap) => {
+                setLimitsByMethod(snap.data()?.limitsByMethod ?? {});
+            });
+            return () => unsub();
+        }, []);
 
     function openRhuAllocate(item) {
     setAllocRHU(item);
@@ -463,6 +476,7 @@ async function handleSingleRhuDeduct() {
         );
     }
 
+    
 
     return (
         <>
@@ -581,16 +595,20 @@ async function handleSingleRhuDeduct() {
                                     animationDuration={300}
                                     animationEasing="ease-out"
                                 >
-                                    {sortedRHUData.map((item) => (
-                                        <Cell
-                                            key={item.id}
-                                            fill={
-                                                item.stock <= lowStockLimit
-                                                    ? "url(#amberGradientVertical)"
-                                                    : "url(#indigoGradientVertical)"
-                                            }
-                                        />
-                                    ))}
+                                    {sortedRHUData.map((item) => {
+                                        const hasLowMethod = FP_METHODS.some((m) => {
+                                            const limit = Number(limitsByMethod?.[m.id] ?? 0);
+                                            const qty = Number(item.stockByMethod?.[m.id] ?? 0);
+                                            return limit > 0 && qty <= limit;
+                                        });
+
+                                        return (
+                                            <Cell
+                                                key={item.id}
+                                                fill={hasLowMethod ? "var(--amber)" : "url(#indigoGradientVertical)"}
+                                            />
+                                        );
+                                    })}
                                     <LabelList
                                         dataKey="stock"
                                         position="top"
@@ -632,7 +650,20 @@ async function handleSingleRhuDeduct() {
                                 const rowTotal = FP_METHODS.reduce(
                                     (sum, m) => sum + Number(item.stockByMethod?.[m.id] ?? 0),
                                     0
+                                    
                                 );
+
+                                 const lowMethods = FP_METHODS
+                                    .map((m) => ({
+                                        id: m.id,
+                                        label: m.label,
+                                        qty: Number(item.stockByMethod?.[m.id] ?? 0),
+                                        limit: Number(limitsByMethod?.[m.id] ?? 0),
+                                    }))
+                                    .filter((m) => m.limit > 0 && m.qty <= m.limit)
+                                    .sort((a, b) => a.qty - b.qty);
+
+                                const hiddenCount = lowMethods.length - VISIBLE_LOW_METHODS;
 
                                 return (
                                     <tr key={item.id}>
@@ -661,6 +692,27 @@ async function handleSingleRhuDeduct() {
                                             <span className={`status-badge ${rowTotal <= lowStockLimit ? "status-low" : "status-sufficient"}`}>
                                                 {rowTotal <= lowStockLimit ? 'Low Stock' : 'Sufficient'}
                                             </span>
+
+                                            {lowMethods.length > 0 && (
+                                                <div className="low-methods">
+                                                    {lowMethods.slice(0, VISIBLE_LOW_METHODS).map((m) => (
+                                                        <span key={m.id} className="low-chip">
+                                                            {m.label} <small>{m.qty} left</small>
+                                                        </span>
+                                                    ))}
+
+                                                    {hiddenCount > 0 && (
+                                                        <button
+                                                            type="button"
+                                                            className="low-more-btn"
+                                                            onClick={() => setLowStockModal({ rhuName: item.name, methods: lowMethods })}
+                                                            title="View all low stock methods"
+                                                        >
+                                                            <Plus size={12} /> {hiddenCount} more
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
                                         </td>
 
                                         <td>
@@ -808,9 +860,9 @@ async function handleSingleRhuDeduct() {
                 {showRhuAllocate && allocRHU && (
                         <div className="modal-overlay">
                             <div className="modal-content allocate-box rhu-allocate-box">
-                                <div className="modal-header">
+                                <div className="modal-header-inventory">
                                     <h3>Allocate Stock — {allocRHU.name}</h3>
-                                    <p className="modal-subtext">Choose the FP method and quantity to add to this RHU.</p>
+                                    <p className="modal-subtext-inventory">Choose the FP method and quantity to add to this RHU.</p>
                                 </div>
 
                                 <div className="allocate-input-section">
@@ -875,9 +927,9 @@ async function handleSingleRhuDeduct() {
             {showRhuDeduct && deductRHU && (
     <div className="modal-overlay">
         <div className="modal-content allocate-box rhu-allocate-box">
-            <div className="modal-header">
+            <div className="modal-header-inventory">
                 <h3>Deduct Stock — {deductRHU.name}</h3>
-                <p className="modal-subtext">Choose the FP method and quantity to deduct from this RHU.</p>
+                <p className="modal-subtext-inventory">Choose the FP method and quantity to deduct from this RHU.</p>
             </div>
 
             <div className="allocate-input-section">
@@ -1142,6 +1194,31 @@ async function handleSingleRhuDeduct() {
                             </button>
                         </div>
 
+                    </div>
+                </div>
+            )}
+
+            {lowStockModal && (
+                <div className="low-modal-overlay" onClick={() => setLowStockModal(null)}>
+                    <div className="low-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+                        <div className="low-modal-header">
+                            <div>
+                                <h4>Low Stock Methods</h4>
+                                <p>{lowStockModal.rhuName}</p>
+                            </div>
+                            <button type="button" className="low-modal-close" onClick={() => setLowStockModal(null)} aria-label="Close">
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <ul className="low-modal-list">
+                            {lowStockModal.methods.map((m) => (
+                                <li key={m.id}>
+                                    <span className="low-modal-name">{m.label}</span>
+                                    <span className="low-chip">{m.qty} left <small>/ min {m.limit}</small></span>
+                                </li>
+                            ))}
+                        </ul>
                     </div>
                 </div>
             )}

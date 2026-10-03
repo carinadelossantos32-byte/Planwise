@@ -90,6 +90,78 @@ const transporter = nodemailer.createTransport({
 // );
 
 const STOCK_FIELD = "stock";
+
+
+async function getAllEmails() {
+  const usersSnap = await admin.firestore().collection("users").get();
+  return usersSnap.docs
+    .map((doc) => {
+      const data = doc.data();
+      if (data && (data.email || data.Email)) return data.email || data.Email;
+      if (doc.id && doc.id.includes("@")) return doc.id;
+      return null;
+    })
+    .filter(Boolean);
+}
+
+async function alertIfLow(rhuRef, rhuId, rhu, methodIds, limitsByMethod) {
+  const stock = rhu.stockByMethod || {};
+  const notified = rhu.lowStockNotifiedByMethod || {};
+  const rhuName = rhu.name || rhuId;
+  const updates = {};
+  let allEmails = null;
+
+  for (const methodId of methodIds) {
+    const limit = limitsByMethod[methodId];
+    if (limit === undefined || limit === null || limit === "") continue;
+    const qty = stock[methodId];
+    if (qty === undefined) continue;
+
+    const isLow = Number(qty) <= Number(limit);
+    const alreadyNotified = notified[methodId] === true;
+    console.log(`${rhuId}/${methodId}: qty=${qty} limit=${limit} isLow=${isLow} notified=${alreadyNotified}`);
+
+    if (isLow && !alreadyNotified) {
+      if (allEmails === null) allEmails = await getAllEmails();
+      if (allEmails.length === 0) {
+        console.log("No recipient emails found in users collection.");
+        continue;
+      }
+
+      const label = METHOD_LABELS[methodId] || methodId;
+      const subject = `Low Stock Alert: ${label} at ${rhuName}`;
+      const text = `${rhuName} is low on ${label}.\n\nRemaining: ${qty}\nLimit: ${limit}`;
+
+      const results = await Promise.allSettled(
+        allEmails.map((email) =>
+          transporter.sendMail({
+            from: `"PlanWise System" <${process.env.BREVO_FROM_EMAIL}>`,
+            to: email,
+            subject,
+            text,
+          })
+        )
+      );
+
+      results.forEach((r, i) => {
+        if (r.status === "rejected") {
+          console.error(`Failed for ${allEmails[i]} (${rhuId}/${methodId}):`, r.reason);
+        } else {
+          console.log(`Sent to ${allEmails[i]} (${rhuId}/${methodId}):`, r.value.accepted);
+        }
+      });
+
+      const anySent = results.some(
+        (r) => r.status === "fulfilled" && r.value.accepted && r.value.accepted.length > 0
+      );
+      if (anySent) updates[`lowStockNotifiedByMethod.${methodId}`] = true;
+    } else if (!isLow && alreadyNotified) {
+      updates[`lowStockNotifiedByMethod.${methodId}`] = false;
+    }
+  }
+
+  if (Object.keys(updates).length > 0) await rhuRef.update(updates);
+}
  
 const METHOD_LABELS = {
   condom: "Condom",
@@ -106,56 +178,150 @@ const METHOD_LABELS = {
   lam: "Lactational Amenorrhea Method (LAM)",
 };
  
+// exports.checkLowStock = onDocumentUpdated(
+//   { document: "rhu/{rhuId}", region: "asia-southeast1" },
+//   async (event) => {
+//     const { rhuId } = event.params;
+//     const before = event.data.before.data();
+//     const after = event.data.after.data();
+ 
+//     const beforeStock = before.stockByMethod || {};
+//     const afterStock = after.stockByMethod || {};
+//     console.log(`Function triggered for ${rhuId}`);
+ 
+//     // Settings saved by the LowStockSettings page
+//     const settingsSnap = await admin.firestore().doc("lowStock/lowStockLimit").get();
+//     if (!settingsSnap.exists) return null;
+ 
+//     const { enabled = true, limitsByMethod = {} } = settingsSnap.data();
+//     if (!enabled) {
+//       console.log("Alerts are turned off in settings.");
+//       return null;
+//     }
+ 
+//     const notified = after.lowStockNotifiedByMethod || {};
+//     const newlyLow = [];
+//     const updates = {};
+ 
+//     for (const [methodId, qty] of Object.entries(afterStock)) {
+//       if (beforeStock[methodId] === qty) continue; // this method didn't change
+//       console.log(`${rhuId}/${methodId}: ${beforeStock[methodId]} -> ${qty}`);
+ 
+//       const limit = limitsByMethod[methodId];
+//       if (limit === undefined || limit === null || limit === "") {
+//         console.log(`No limit set for method "${methodId}"`);
+//         continue;
+//       }
+ 
+//       const isNowLow = Number(qty) <= Number(limit);
+//       const wasAlreadyNotified = notified[methodId] === true;
+//       console.log(`limit: ${limit} isNowLow: ${isNowLow} wasAlreadyNotified: ${wasAlreadyNotified}`);
+ 
+//       if (isNowLow && !wasAlreadyNotified) {
+//         newlyLow.push({ methodId, qty, limit });
+//         updates[`lowStockNotifiedByMethod.${methodId}`] = true;
+//       } else if (!isNowLow && wasAlreadyNotified) {
+//         updates[`lowStockNotifiedByMethod.${methodId}`] = false; // restocked
+//       }
+//     }
+ 
+//     if (newlyLow.length > 0) {
+//       const rhuName = after.name || rhuId;
+ 
+//       const usersSnap = await admin.firestore().collection("users").get();
+//       const allEmails = usersSnap.docs
+//         .map((doc) => {
+//           const data = doc.data();
+//           if (data && (data.email || data.Email)) return data.email || data.Email;
+//           if (doc.id && doc.id.includes("@")) return doc.id;
+//           return null;
+//         })
+//         .filter(Boolean);
+//       console.log("Recipients found:", allEmails.length);
+ 
+//       if (allEmails.length > 0) {
+//         const lines = newlyLow.map(
+//           (m) => `- ${METHOD_LABELS[m.methodId] || m.methodId}: ${m.qty} left (limit: ${m.limit})`
+//         );
+//         const subjectMethods = newlyLow
+//           .map((m) => METHOD_LABELS[m.methodId] || m.methodId)
+//           .join(", ");
+ 
+//         try {
+//           const info = await transporter.sendMail({
+//             from: `"PlanWise System" <${process.env.BREVO_FROM_EMAIL}>`,
+//             to: process.env.BREVO_FROM_EMAIL,
+//             bcc: allEmails.join(","), // keeps recipients' addresses private
+//             subject: `Low Stock Alert: ${subjectMethods} at ${rhuName}`,
+//             text: `${rhuName} has low stock:\n\n${lines.join("\n")}`,
+//           });
+//           console.log("Brevo accepted:", info.accepted);
+//           console.log("Brevo rejected:", info.rejected);
+//           console.log("Server response:", info.response);
+//           console.log(`Low stock email sent for ${rhuName}`);
+//         } catch (err) {
+//           console.error("Failed to send email:", err);
+//         }
+//       } else {
+//         console.log("No recipient emails found in users collection.");
+//       }
+//     }
+ 
+//     if (Object.keys(updates).length > 0) {
+//       return event.data.after.ref.update(updates);
+//     }
+//     return null;
+//   }
+// );
+
 exports.checkLowStock = onDocumentUpdated(
   { document: "rhu/{rhuId}", region: "asia-southeast1" },
   async (event) => {
     const { rhuId } = event.params;
     const before = event.data.before.data();
     const after = event.data.after.data();
- 
+
     const beforeStock = before.stockByMethod || {};
     const afterStock = after.stockByMethod || {};
+    const rhuName = after.name || rhuId;
     console.log(`Function triggered for ${rhuId}`);
- 
+
     // Settings saved by the LowStockSettings page
     const settingsSnap = await admin.firestore().doc("lowStock/lowStockLimit").get();
     if (!settingsSnap.exists) return null;
- 
+
     const { enabled = true, limitsByMethod = {} } = settingsSnap.data();
     if (!enabled) {
       console.log("Alerts are turned off in settings.");
       return null;
     }
- 
+
     const notified = after.lowStockNotifiedByMethod || {};
     const newlyLow = [];
     const updates = {};
- 
+
     for (const [methodId, qty] of Object.entries(afterStock)) {
       if (beforeStock[methodId] === qty) continue; // this method didn't change
       console.log(`${rhuId}/${methodId}: ${beforeStock[methodId]} -> ${qty}`);
- 
+
       const limit = limitsByMethod[methodId];
       if (limit === undefined || limit === null || limit === "") {
         console.log(`No limit set for method "${methodId}"`);
         continue;
       }
- 
+
       const isNowLow = Number(qty) <= Number(limit);
       const wasAlreadyNotified = notified[methodId] === true;
       console.log(`limit: ${limit} isNowLow: ${isNowLow} wasAlreadyNotified: ${wasAlreadyNotified}`);
- 
+
       if (isNowLow && !wasAlreadyNotified) {
         newlyLow.push({ methodId, qty, limit });
-        updates[`lowStockNotifiedByMethod.${methodId}`] = true;
       } else if (!isNowLow && wasAlreadyNotified) {
         updates[`lowStockNotifiedByMethod.${methodId}`] = false; // restocked
       }
     }
- 
+
     if (newlyLow.length > 0) {
-      const rhuName = after.name || rhuId;
- 
       const usersSnap = await admin.firestore().collection("users").get();
       const allEmails = usersSnap.docs
         .map((doc) => {
@@ -166,35 +332,46 @@ exports.checkLowStock = onDocumentUpdated(
         })
         .filter(Boolean);
       console.log("Recipients found:", allEmails.length);
- 
+
       if (allEmails.length > 0) {
-        const lines = newlyLow.map(
-          (m) => `- ${METHOD_LABELS[m.methodId] || m.methodId}: ${m.qty} left (limit: ${m.limit})`
-        );
-        const subjectMethods = newlyLow
-          .map((m) => METHOD_LABELS[m.methodId] || m.methodId)
-          .join(", ");
- 
-        try {
-          const info = await transporter.sendMail({
-            from: `"PlanWise System" <${process.env.BREVO_FROM_EMAIL}>`,
-            to: process.env.BREVO_FROM_EMAIL,
-            bcc: allEmails.join(","), // keeps recipients' addresses private
-            subject: `Low Stock Alert: ${subjectMethods} at ${rhuName}`,
-            text: `${rhuName} has low stock:\n\n${lines.join("\n")}`,
+        for (const m of newlyLow) {
+          const label = METHOD_LABELS[m.methodId] || m.methodId;
+          const subject = `Low Stock Alert: ${label} at ${rhuName}`;
+          const text = `${rhuName} is low on ${label}.\n\nRemaining: ${m.qty}\nLimit: ${m.limit}`;
+
+          // Send to each user's own email
+          const results = await Promise.allSettled(
+            allEmails.map((email) =>
+              transporter.sendMail({
+                from: `"PlanWise System" <${process.env.BREVO_FROM_EMAIL}>`,
+                to: email,
+                subject,
+                text,
+              })
+            )
+          );
+
+          results.forEach((r, i) => {
+            if (r.status === "rejected") {
+              console.error(`Failed for ${allEmails[i]} (${rhuId}/${m.methodId}):`, r.reason);
+            } else {
+              console.log(`Sent to ${allEmails[i]} (${rhuId}/${m.methodId}):`, r.value.accepted);
+            }
           });
-          console.log("Brevo accepted:", info.accepted);
-          console.log("Brevo rejected:", info.rejected);
-          console.log("Server response:", info.response);
-          console.log(`Low stock email sent for ${rhuName}`);
-        } catch (err) {
-          console.error("Failed to send email:", err);
+
+          // Flag only if at least one email was accepted
+          const anySent = results.some(
+            (r) => r.status === "fulfilled" && r.value.accepted && r.value.accepted.length > 0
+          );
+          if (anySent) {
+            updates[`lowStockNotifiedByMethod.${m.methodId}`] = true;
+          }
         }
       } else {
         console.log("No recipient emails found in users collection.");
       }
     }
- 
+
     if (Object.keys(updates).length > 0) {
       return event.data.after.ref.update(updates);
     }
