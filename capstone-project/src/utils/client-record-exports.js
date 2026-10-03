@@ -4,6 +4,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "../firebase-config";
+import { drawReportHeader, drawSignatories, loadReportLogos, reportTableOptions } from "../pages/Reports/reportPdf.js";
 
 const PDF_ROWS_PER_PAGE = 10;
 const FORM1_COLUMN_WIDTHS = [
@@ -340,9 +341,9 @@ function drawForm1Footer(pdf) {
   pdf.text(warning, pageWidth / 2, warningY, { align: "center", maxWidth: pageWidth - 24 });
 
   const signers = [
-    { title: "Prepared by:", caption: "Name/Signature of RPM Team Member/s" },
-    { title: "Reviewed by:", caption: "Name & Signature" },
-    { title: "Approved by:", caption: "Name & Signature of Provincial / City / Municipal Population Officer" },
+    { title: "Prepared by:", caption: "Signature over Printed Name" },
+    { title: "Reviewed by:", caption: "Signature over Printed Name" },
+    { title: "Approved by:", caption: "Signature over Printed Name" },
   ];
   const blockWidth = (pageWidth - 24) / signers.length;
   const signerTitleY = warningY + 7;
@@ -383,6 +384,80 @@ const EXPORT_CONFIG = {
     writeRows: writeReferredRows,
   },
 };
+
+const CLIENT_REPORT_EXPORTS = {
+  private: {
+    title: "Family Planning Users Served by Private Institutions, Clinics, Hospitals, and Lying-In Facilities",
+    filename: "FP_User_Private",
+    headers: [
+      "No.",
+      "Name",
+      "Age",
+      "Birthday",
+      "Barangay",
+      "Family Planning Method",
+      "FP Issued By (Name of Clinic, Hospital, Lying-In)",
+    ],
+    rows: (client, index) => [
+      index + 1,
+      client.name || "-",
+      client.age || "-",
+      client.birthdate || "-",
+      client.barangay || "-",
+      client.fp_method || "-",
+      client.fp_issued_by || "-",
+    ],
+  },
+  referred: {
+    title: "Referred and Served User",
+    filename: "Referred_and_Served",
+    headers: [
+      "No.",
+      "Client",
+      "Address",
+      "FP Method",
+      "Facility",
+      "Facility Address",
+      "Referred By",
+      "Volunteer Contact",
+      "Date",
+    ],
+    rows: (client, index) => [
+      index + 1,
+      client.name || "-",
+      client.address || "-",
+      client.fp_method || "-",
+      client.facility_name || "-",
+      client.facility_address || "-",
+      client.referred_by || "-",
+      client.volunteer_contact || "-",
+      client.date || "-",
+    ],
+  },
+};
+
+async function exportClientRecordsReportPDF(activeTab, clients, fileName) {
+  const config = CLIENT_REPORT_EXPORTS[activeTab];
+  const logos = await loadReportLogos();
+  const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  const rows = clients.map((client, index) => config.rows(client, index));
+  const rowKinds = rows.map(() => "month");
+  const firstColumnWidth = activeTab === "private" ? 10 : 9;
+
+  autoTable(pdf, {
+    ...reportTableOptions(rowKinds, {
+      fontSize: activeTab === "private" ? 7 : 6,
+      cellPadding: 1.4,
+      firstColumnWidth,
+    }),
+    head: [config.headers],
+    body: rows,
+    didDrawPage: () => drawReportHeader(pdf, config.title, logos),
+  });
+
+  drawSignatories(pdf);
+  pdf.save(fileName || `${config.filename}-${new Date().toISOString().slice(0, 10)}.pdf`);
+}
 
 const thin = { style: "thin" };
 const border = { top: thin, bottom: thin, left: thin, right: thin };
@@ -523,7 +598,7 @@ function writeReferredRows(sheet, filteredClients) {
   });
 }
 
-export async function exportClientRecordsExcel(activeTab, filteredClients) {
+export async function exportClientRecordsExcel(activeTab, filteredClients, fileName) {
   const config = EXPORT_CONFIG[activeTab];
   if (!config) return;
 
@@ -535,16 +610,26 @@ export async function exportClientRecordsExcel(activeTab, filteredClients) {
     const sheet = workbook.getWorksheet(1);
     config.writeRows(sheet, filteredClients);
     const buffer = await workbook.xlsx.writeBuffer();
-    saveAs(new Blob([buffer]), config.filename);
+    saveAs(new Blob([buffer]), fileName || config.filename);
   } catch (error) {
     console.error("Export failed:", error);
     alert(`Could not export. Make sure '${config.template.replace("/", "")}' is in your public folder!`);
   }
 }
 
-export async function exportClientRecordsPDF(activeTab, filteredClients) {
+export async function exportClientRecordsPDF(activeTab, filteredClients, fileName) {
   if (filteredClients.length === 0) {
     alert("There are no records to export.");
+    return;
+  }
+
+  if (CLIENT_REPORT_EXPORTS[activeTab]) {
+    try {
+      await exportClientRecordsReportPDF(activeTab, filteredClients, fileName);
+    } catch (error) {
+      console.error("Client records PDF export failed:", error);
+      alert("Could not export the PDF. Please try again.");
+    }
     return;
   }
 
@@ -898,7 +983,7 @@ export async function exportClientRecordsPDF(activeTab, filteredClients) {
       );
     }
 
-    pdf.save(`${exportConfig.filename}-${new Date().toISOString().slice(0, 10)}.pdf`);
+    pdf.save(fileName || `${exportConfig.filename}-${new Date().toISOString().slice(0, 10)}.pdf`);
   } catch (error) {
     console.error("PDF export failed:", error);
     alert("Could not export the PDF. Please try again.");

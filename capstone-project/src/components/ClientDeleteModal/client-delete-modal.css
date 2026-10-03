@@ -13,8 +13,8 @@
 .modal-delete {
   background: #fff;
   border-radius: 16px;
-  min-height: 420px;
-  max-width: 550px;
+  min-height: 300px;
+  max-width: 400px;
   padding: 52px 38px;
   display: flex;
   flex-direction: column;

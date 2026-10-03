@@ -2,6 +2,7 @@ import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { drawReportHeader, drawSignatories, loadReportLogos, reportTableOptions } from "../pages/Reports/reportPdf.js";
 
 function getInventoryMatrix(rhuData, fpMethods) {
   const methods = fpMethods.map(({ id, label }) => ({ id, label }));
@@ -31,36 +32,35 @@ function hasInventoryRows(rows) {
   return false;
 }
 
-export function exportInventoryPDF(rhuData, fpMethods) {
+export async function exportInventoryPDF(rhuData, fpMethods) {
   const { methods, rows, methodTotals, grandTotal } = getInventoryMatrix(rhuData, fpMethods);
   if (!hasInventoryRows(rows)) return;
 
   try {
+    const logos = await loadReportLogos();
     const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-    const pageCenter = pdf.internal.pageSize.getWidth() / 2;
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(16);
-    pdf.text("Inventory Stocks Matrix by FP Method", pageCenter, 16, { align: "center" });
-    pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(9);
-    pdf.text(`Generated ${new Date().toLocaleString()}`, pageCenter, 23, { align: "center" });
+    const body = [
+      ...rows.map(({ name, methodStocks, total }) => [name, ...methodStocks, total]),
+      ["GRAND TOTAL", ...methodTotals, grandTotal],
+    ];
+    const rowKinds = [...rows.map(() => "month"), "total"];
 
     autoTable(pdf, {
-      startY: 29,
+      ...reportTableOptions(rowKinds, {
+        fontSize: 5,
+        cellPadding: 1.1,
+        firstColumnWidth: 24,
+      }),
       head: [["RHU", ...methods.map(({ label }) => label), "TOTAL"]],
-      body: rows.map(({ name, methodStocks, total }) => [
-        name,
-        ...methodStocks,
-        total,
-      ]),
-      foot: [["TOTAL", ...methodTotals, grandTotal]],
-      theme: "grid",
-      styles: { fontSize: 7, halign: "center", valign: "middle" },
-      headStyles: { fillColor: [20, 8, 109], textColor: 255, fontStyle: "bold" },
-      footStyles: { fillColor: [230, 234, 245], textColor: 20, fontStyle: "bold" },
-      columnStyles: { 0: { halign: "left", cellWidth: 35 } },
+      body,
+      didDrawPage: () => drawReportHeader(
+        pdf,
+        "INVENTORY STOCKS MATRIX BY FP METHOD",
+        logos
+      ),
     });
 
+    drawSignatories(pdf);
     pdf.save("Inventory_Stocks_Matrix.pdf");
   } catch (error) {
     console.error("Failed to export inventory PDF:", error);
