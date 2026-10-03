@@ -1411,6 +1411,41 @@ button:focus-visible,
 @media (max-width: 640px) {
   .rhu-row-actions { flex-wrap: wrap; }
 }
+.matrix-header {
+  display: grid;
+  grid-template-columns:  1fr 1fr;
+  align-items: center;
+}
+
+.matrix-export-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.matrix-btn-excel{
+  background-color: #188038;
+  color: white;
+  height: 44px;
+  padding: 0 14px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  box-sizing: border-box;
+}
+
+.matrix-btn-pdf{
+  background-color: #C62828;
+  color: white;
+  height: 44px;
+  padding: 0 14px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  box-sizing: border-box;
+}
+
 
 #inventory-matrix-content {
   display: flex;

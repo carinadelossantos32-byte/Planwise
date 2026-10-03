@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   collection,
   onSnapshot,
@@ -30,6 +30,82 @@ import ClientViewModalReferred from "../../components/ClientViewModalReferred/Cl
 import KoboSyncModal from "../../components/KoboSyncModal/KoboSyncModal";
 import { PUBLIC_FORM_CONFIG, PRIVATE_FORM_CONFIG } from "../../utils/kobo-form-configs.js";
 import { exportClientRecordsExcel, exportClientRecordsPDF } from "../../utils/client-record-exports.js";
+import ExportConfirmModal from "../Reports/ExportConfirmModal.jsx";
+import { barangays } from "../../data/barangays.js";
+import { familyPlanningMethods } from "../../data/familyPlanningMethods.js";
+import { canonicalMethod, getClientDate } from "../Reports/reportData.js";
+
+const EXPORT_PERIODS = [
+  { value: "all", label: "All Periods" },
+  { value: "q1", label: "Q1 (Jan - Mar)" },
+  { value: "q2", label: "Q2 (Apr - Jun)" },
+  { value: "q3", label: "Q3 (Jul - Sep)" },
+  { value: "q4", label: "Q4 (Oct - Dec)" },
+  { value: "january", label: "January" },
+  { value: "february", label: "February" },
+  { value: "march", label: "March" },
+  { value: "april", label: "April" },
+  { value: "may", label: "May" },
+  { value: "june", label: "June" },
+  { value: "july", label: "July" },
+  { value: "august", label: "August" },
+  { value: "september", label: "September" },
+  { value: "october", label: "October" },
+  { value: "november", label: "November" },
+  { value: "december", label: "December" },
+];
+const EXPORT_MONTHS = [
+  "january", "february", "march", "april", "may", "june",
+  "july", "august", "september", "october", "november", "december",
+];
+
+const slugify = (value) =>
+  String(value ?? "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
+function matchesExportFilters(client, filters) {
+  const clientDate = getClientDate(client);
+  if (filters.year !== "all" && (!clientDate || clientDate.getFullYear() !== Number(filters.year))) {
+    return false;
+  }
+
+  if (filters.period !== "all") {
+    if (!clientDate) return false;
+    const month = clientDate.getMonth();
+    const quarter = Math.floor(month / 3) + 1;
+    if (filters.period.startsWith("q")) {
+      if (quarter !== Number(filters.period.slice(1))) return false;
+    } else if (month !== EXPORT_MONTHS.indexOf(filters.period)) {
+      return false;
+    }
+  }
+
+  if (filters.barangay !== "all") {
+    const barangay = slugify(filters.barangay);
+    const clientBarangay = slugify(
+      client.barangay || client.barangay_name || client.barangayName
+    );
+    const address = slugify(client.address);
+    if (
+      clientBarangay !== barangay &&
+      !`-${address}-`.includes(`-${barangay}-`)
+    ) {
+      return false;
+    }
+  }
+
+  if (filters.method !== "all") {
+    const method = canonicalMethod(
+      client.fp_method ||
+      client.FP_method ||
+      client.method ||
+      client.family_planning_method ||
+      client.familyPlanningMethod
+    );
+    if (method !== canonicalMethod(filters.method)) return false;
+  }
+
+  return true;
+}
 
 function ClientRecords() {
 
@@ -50,6 +126,14 @@ function ClientRecords() {
   const [showKoboSyncModal, setShowKoboSyncModal] = useState(false);
   const [syncConfig, setSyncConfig] = useState(null);
   const [selectedClient, setSelectedClient] = useState(null);
+  const [exportFormat, setExportFormat] = useState(null);
+  const [exportSnapshot, setExportSnapshot] = useState(null);
+  const [exportFilters, setExportFilters] = useState({
+    year: "all",
+    period: "all",
+    barangay: "all",
+    method: "all",
+  });
 
   // Form state
   const [formData, setFormData] = useState({
@@ -161,12 +245,21 @@ function ClientRecords() {
     }
   };
 
-  const handleExport = async () => {
-    await exportClientRecordsExcel(activeTab, filteredClients);
+  const handleExport = (format) => {
+    setExportFilters({ year: "all", period: "all", barangay: "all", method: "all" });
+    setExportSnapshot({ activeTab, clients: filteredClients });
+    setExportFormat(format);
   };
 
-  const handleExportPDF = async () => {
-    await exportClientRecordsPDF(activeTab, filteredClients);
+  const handleConfirmExport = (fileName) => {
+    if (!exportSnapshot || !exportFormat) return;
+
+    const { activeTab: tab, clients: sourceClients } = exportSnapshot;
+    const records = sourceClients.filter((client) => matchesExportFilters(client, exportFilters));
+    const exportFunction = exportFormat === "pdf" ? exportClientRecordsPDF : exportClientRecordsExcel;
+    setExportFormat(null);
+    setExportSnapshot(null);
+    exportFunction(tab, records, fileName);
   };
 
   const resetForm = () => {
@@ -239,22 +332,97 @@ function ClientRecords() {
       ? client.fp_method?.toLowerCase() === filterMethod.toLowerCase()
       : true;
 
+    const createdAt = client.created_at;
+    const createdDate = createdAt
+      ? typeof createdAt.toDate === "function"
+        ? createdAt.toDate()
+        : new Date(createdAt)
+      : null;
+    const now = new Date();
+    const isNewThisMonth = Boolean(
+      createdDate &&
+      !Number.isNaN(createdDate.getTime()) &&
+      createdDate.getMonth() === now.getMonth() &&
+      createdDate.getFullYear() === now.getFullYear()
+    );
+
     // 3. Category dropdown filter (Public tab)
-const matchesCategory =
+    const matchesCategory =
       filterCategory === "fp_users"
         ? Boolean(client.fp_method && client.fp_method.trim() !== "")
         : filterCategory === "unmet_needs"
           ? (
-              Boolean(client.type && client.type.trim() !== "") &&
-              !client.status?.toLowerCase().includes("pregnant") &&
-              !client.reason?.toLowerCase().includes("achieving")
-            )
+            Boolean(client.type && client.type.trim() !== "") &&
+            !client.status?.toLowerCase().includes("pregnant") &&
+            !client.reason?.toLowerCase().includes("achieving")
+          )
           : filterCategory === "intention_to_shift"
             ? Boolean(client.intention_to_shift && client.intention_to_shift.trim() !== "")
-            : true;
+            : filterCategory === "new_this_month"
+              ? isNewThisMonth
+              : true;
 
     return matchesSearch && matchesMethod && matchesCategory;
   });
+
+  const exportYears = useMemo(() => {
+    const years = new Set([new Date().getFullYear()]);
+    clients.forEach((client) => {
+      const date = getClientDate(client);
+      if (date) years.add(date.getFullYear());
+    });
+    return [
+      { value: "all", label: "All Years" },
+      ...[...years].sort((a, b) => a - b).map((year) => ({ value: String(year), label: String(year) })),
+    ];
+  }, [clients]);
+
+  const exportFilterControls = [
+    {
+      key: "year",
+      label: "Year",
+      value: exportFilters.year,
+      onChange: (event) => setExportFilters((current) => ({ ...current, year: event.target.value })),
+      options: exportYears,
+    },
+    {
+      key: "period",
+      label: "Period",
+      value: exportFilters.period,
+      onChange: (event) => setExportFilters((current) => ({ ...current, period: event.target.value })),
+      options: EXPORT_PERIODS,
+    },
+    {
+      key: "barangay",
+      label: "Barangay",
+      value: exportFilters.barangay,
+      onChange: (event) => setExportFilters((current) => ({ ...current, barangay: event.target.value })),
+      options: [
+        { value: "all", label: "All Barangays" },
+        ...barangays.map((barangay) => ({ value: slugify(barangay), label: barangay })),
+      ],
+    },
+    {
+      key: "method",
+      label: "Method",
+      value: exportFilters.method,
+      onChange: (event) => setExportFilters((current) => ({ ...current, method: event.target.value })),
+      options: [
+        { value: "all", label: "All Methods" },
+        ...familyPlanningMethods.map((method) => ({ value: method, label: method })),
+      ],
+    },
+  ];
+
+  const exportBaseName = useMemo(() => {
+    if (!exportSnapshot) return "Client_Records";
+    const segments = ["Client_Records", exportSnapshot.activeTab];
+    if (exportFilters.year !== "all") segments.push(exportFilters.year);
+    if (exportFilters.period !== "all") segments.push(exportFilters.period.toUpperCase());
+    if (exportFilters.barangay !== "all") segments.push(exportFilters.barangay);
+    if (exportFilters.method !== "all") segments.push(slugify(exportFilters.method));
+    return segments.join("_");
+  }, [exportFilters, exportSnapshot]);
 
   return (
     <>
@@ -336,6 +504,7 @@ const matchesCategory =
                     <option value="fp_users">FP Users</option>
                     <option value="unmet_needs">Unmet Needs</option>
                     <option value="intention_to_shift">Intention to Shift</option>
+                    <option value="new_this_month">New this Month</option>
                   </select>
                 )}
 
@@ -363,10 +532,10 @@ const matchesCategory =
 
                 {(activeTab === "public" || activeTab === "private" || activeTab === "referred") && (
                   <div className="btn-tab-actions">
-                    <button className="btn-export" onClick={handleExport}>
+                    <button className="btn-export" onClick={() => handleExport("excel")}>
                       <Download size={14} /> Export Excel
                     </button>
-                    <button className="btn-export" onClick={handleExportPDF}>
+                    <button className="btn-export" onClick={() => handleExport("pdf")}>
                       <Download size={14} /> Export PDF
                     </button>
 
@@ -507,6 +676,26 @@ const matchesCategory =
           onClose={() => setShowKoboSyncModal(false)}
           onSuccess={fetchClients}
           config={syncConfig}
+        />
+      )}
+
+      {exportFormat && exportSnapshot && (
+        <ExportConfirmModal
+          format={exportFormat}
+          reportName={
+            exportSnapshot.activeTab === "public"
+              ? "FP Public Client Records"
+              : exportSnapshot.activeTab === "private"
+                ? "FP Private Client Records"
+                : "Referred and Served Client Records"
+          }
+          filters={exportFilterControls}
+          defaultFileName={exportBaseName}
+          onCancel={() => {
+            setExportFormat(null);
+            setExportSnapshot(null);
+          }}
+          onConfirm={handleConfirmExport}
         />
       )}
     </>
