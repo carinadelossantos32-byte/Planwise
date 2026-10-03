@@ -2,7 +2,7 @@
 .modal-overlay-delete {
   position: fixed;
   inset: 0;
-  background: rgba(27, 27, 27, 0.644);
+  background: rgba(15, 23, 42, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -13,15 +13,16 @@
 .modal-delete {
   background: #fff;
   border-radius: 16px;
-  width: 90%;
-  max-width: 350px;
-  padding: 32px 28px 24px;
+  min-height: 420px;
+  max-width: 550px;
+  padding: 52px 38px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   position: relative;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  gap: 10px;
 }
 
 /* CLOSE BUTTON */

@@ -98,13 +98,13 @@ function ClientTablePrivate({ clients, loading, onView, onEdit, onDelete, isArch
                                                     </button>
                                                 ) : (
                                                     <>
-                                                        <button className="action-btn view" onClick={() => onView(client)}>
+                                                        <button className="action-btn view" onClick={() => onView(client)} title="View">
                                                             <Eye size={15} strokeWidth={1.5} />
                                                         </button>
-                                                        <button className="action-btn edit" onClick={() => onEdit(client)}>
+                                                        <button className="action-btn edit" onClick={() => onEdit(client)} title="Edit">
                                                             <SquarePen size={15} strokeWidth={1.5} />
                                                         </button>
-                                                        <button className="action-btn delete" onClick={() => onDelete(client)}>
+                                                        <button className="action-btn delete" onClick={() => onDelete(client)} title="Delete">
                                                             <Trash2 size={15} strokeWidth={1.5} />
                                                         </button>
                                                     </>

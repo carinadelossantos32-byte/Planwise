@@ -689,9 +689,7 @@ async function handleSingleRhuDeduct() {
                                         </td>
 
                                         <td>
-                                            <span className={`status-badge ${rowTotal <= lowStockLimit ? "status-low" : "status-sufficient"}`}>
-                                                {rowTotal <= lowStockLimit ? 'Low Stock' : 'Sufficient'}
-                                            </span>
+                                            
 
                                             {lowMethods.length > 0 && (
                                                 <div className="low-methods">
@@ -1082,7 +1080,7 @@ async function handleSingleRhuDeduct() {
            {showDeductModal && (
     <div className="modal-overlay">
         <div className="modal-content deduct-box ">
-            <div className="modal-header">
+            <div className="modal-header-inventory">
                 <div className="allocate-input-section">
                     <h3>FP Method:</h3>
                     <select
@@ -1097,7 +1095,7 @@ async function handleSingleRhuDeduct() {
                     </select>
                 </div>
                 <h3>Deduct Stock</h3>
-                <p className="modal-subtext">Enter deduction quantities for each health unit below</p>
+                <p className="modal-subtext-inventory">Enter deduction quantities for each health unit below</p>
             </div>
 
             <div className="modal-table-wrapper">

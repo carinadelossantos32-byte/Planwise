@@ -1167,3 +1167,154 @@ td:first-child {
         min-width: 700px;
     }
 }
+
+
+/* ---------- Top bar ---------- */
+
+.form-a-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.form-a-topbar-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.import-btn {
+    background: #6b7280;
+    color: #fff;
+    border: 0;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.import-btn:hover {
+    background: #4b5563;
+}
+
+.imported-badge {
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: #fff2cc;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.remove-import-btn {
+    background: none;
+    border: 0;
+    padding: 0;
+    color: #b91c1c;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.import-btn:focus-visible,
+.remove-import-btn:focus-visible,
+.import-modal-actions button:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}
+
+/* ---------- Year prompt ---------- */
+
+.import-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.import-modal {
+    box-sizing: border-box;
+    background: #fff;
+    padding: 24px;
+    border-radius: 10px;
+    width: min(420px, 92vw);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.import-modal h3 {
+    margin: 0;
+}
+
+.import-modal input[type="number"] {
+    padding: 8px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 16px;
+}
+
+.import-file {
+    margin: 0;
+    color: #6b7280;
+    font-size: 13px;
+    word-break: break-all;
+}
+
+.import-error {
+    margin: 0;
+    color: #b91c1c;
+    font-size: 14px;
+}
+
+.import-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+/* Cancel button only; the Import button keeps the shared .excel-btn style */
+.import-modal-actions button:not(.excel-btn) {
+    padding: 8px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+}
+
+.import-modal-actions button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ---------- Import alert (bottom of the screen) ---------- */
+
+.import-toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    max-width: 90vw;
+    padding: 12px 20px;
+    border-radius: 8px;
+    background: #1f2937;
+    color: #fff;
+    font-size: 14px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    z-index: 1100;
+    animation: import-toast-in 0.2s ease-out;
+}
+
+@keyframes import-toast-in {
+    from { opacity: 0; transform: translate(-50%, 8px); }
+    to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .import-toast { animation: none; }
+}

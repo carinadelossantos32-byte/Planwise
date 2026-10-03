@@ -33,7 +33,7 @@
 /* Header, Body, Footer structures */
 .modal-header {
   padding: 10px 20px;
-  background: #f8f9fa;
+  background: #091F7A;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -68,7 +68,7 @@
 .summary-table thead tr {
   background-color: #091F7A; 
   color: #ffffff;
-  text-align: left;
+  text-align: center;
 }
 
 .summary-table th, 
@@ -106,6 +106,10 @@
   padding: 24px;
   max-height: 70vh;
   overflow-y: auto;
+}
+
+.response-text {
+  text-transform: capitalize;
 }
 
 #signature {

@@ -45,6 +45,7 @@ div.modal-header h3 {
   display: flex;
   align-items: center;
   gap: 10px;
+  color: white;
 }
 
 div.modal-header button.close-btn {
@@ -71,10 +72,20 @@ div.modal-header button.close-btn {
   margin-bottom: 5px;
 }
 
-.form-group label {
+.form-group p {
     display: block;
+    font-size: 0.95rem;
     font-family: 'Segoe UI', system-ui, sans-serif;
     font-weight: 500;
+    margin-bottom: 5px;
+}
+
+.form-group small {
+    display: block;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-top: 5px;
 }
 
 .modal-select {

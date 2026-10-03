@@ -9,21 +9,23 @@ import {
   LogOut,
   FileText,
 } from "lucide-react";
-import { auth, signOut } from "../../firebase-config";
-
-const allNavItems = [
-  { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-  { label: "Client Records", icon: Users, path: "/client-records" },
-  { label: "GIS Map", icon: Map, path: "/gis-map" },
-  { label: "Inventory", icon: FileText, path: "/inventory", hideForRole: "cpd" },
-  { label: "Reports", icon: FileBarChart2, path: "/reports" },
-];
+import { auth } from "../../firebase-config.js";
+import { signOut } from "firebase/auth";
 
 export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const savedUserRole = (localStorage.getItem("userRole") || "").toLowerCase();
+  const savedUserRole = (localStorage.getItem("userRole") || "cpd").toLowerCase();
+  const dashboardPath = `/dashboard/${savedUserRole === "health" ? "health" : "cpd"}`;
+
+  const allNavItems = [
+    { label: "Dashboard", icon: LayoutDashboard, path: dashboardPath },
+    { label: "Client Records", icon: Users, path: "/client-records" },
+    { label: "GIS Map", icon: Map, path: "/gis-map" },
+    { label: "Inventory", icon: FileText, path: "/inventory", hideForRole: "cpd" },
+    { label: "Reports", icon: FileBarChart2, path: "/reports" },
+  ];
 
   const isCpdUser = () => {
     if (savedUserRole === "cpd") return true;
@@ -48,6 +50,7 @@ export default function Sidebar() {
     try {
       await signOut(auth);
       localStorage.removeItem("userRole");
+      localStorage.removeItem("userEmail");
       navigate("/login", { replace: true });
     } catch (error) {
       console.error("Logout error:", error);
@@ -64,7 +67,9 @@ export default function Sidebar() {
             className="logo"
             onError={(e) => {
               e.target.style.display = "none";
-              e.target.nextSibling.style.display = "flex";
+              if (e.target.nextSibling) {
+                e.target.nextSibling.style.display = "flex";
+              }
             }}
           />
           <div className="logo-fallback">

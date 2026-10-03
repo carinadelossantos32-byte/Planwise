@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@rolldown/binding-win32-x64-msvc": "^1.2.11",
+    "@turf/turf": "^7.4.0",
     "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",
     "firebase": "^12.13.0",

@@ -1,4 +1,5 @@
 import { initializeApp } from "firebase/app";
+import { getFunctions } from "firebase/functions";
 import { getFirestore, doc, getDoc, collection, onSnapshot } from "firebase/firestore";
 import { 
   getAuth, 
@@ -22,6 +23,7 @@ const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const storage = getStorage(app);
+export const functions = getFunctions(app, "asia-southeast1");
 
 export { 
   signInWithEmailAndPassword, 

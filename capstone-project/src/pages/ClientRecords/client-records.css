@@ -95,6 +95,8 @@
   margin-left: auto;
 }
 
+
+
 .btn-export,
 .btn-import {
   display: inline-flex;
@@ -102,7 +104,7 @@
   gap: 6px;
   padding: 10px 54px;
   border-radius: 8px;
-  background: #5fc92e;
+  background: #09197A;
   font-size: 14px;
   font-weight: 400;
   color: #ffffff;
@@ -110,10 +112,13 @@
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-.btn-export:hover,
-.btn-import:hover {
-   background-color: #59da5096;
-  color: #086308;
+.btn-import{
+  background: #70c947;
+}
+
+.btn-export:hover{
+   background-color: #9cc4ff;
+  color: #09197A;
   border: none;
 }
 
@@ -133,8 +138,13 @@
   transition: background 0.15s ease;
 }
 
+.btn-add-client{
+  background: #5bc42b;
+}
+
 .btn-add-client:hover,
-.btn-sync-client:hover {
+.btn-sync-client:hover,
+.btn-import:hover {
   background-color: #59da5096;
   color: #086308;
 
