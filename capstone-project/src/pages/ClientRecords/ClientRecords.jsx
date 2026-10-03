@@ -239,19 +239,35 @@ function ClientRecords() {
       ? client.fp_method?.toLowerCase() === filterMethod.toLowerCase()
       : true;
 
+    const createdAt = client.created_at;
+    const createdDate = createdAt
+      ? typeof createdAt.toDate === "function"
+        ? createdAt.toDate()
+        : new Date(createdAt)
+      : null;
+    const now = new Date();
+    const isNewThisMonth = Boolean(
+      createdDate &&
+      !Number.isNaN(createdDate.getTime()) &&
+      createdDate.getMonth() === now.getMonth() &&
+      createdDate.getFullYear() === now.getFullYear()
+    );
+
     // 3. Category dropdown filter (Public tab)
-const matchesCategory =
+    const matchesCategory =
       filterCategory === "fp_users"
         ? Boolean(client.fp_method && client.fp_method.trim() !== "")
         : filterCategory === "unmet_needs"
           ? (
-              Boolean(client.type && client.type.trim() !== "") &&
-              !client.status?.toLowerCase().includes("pregnant") &&
-              !client.reason?.toLowerCase().includes("achieving")
-            )
+            Boolean(client.type && client.type.trim() !== "") &&
+            !client.status?.toLowerCase().includes("pregnant") &&
+            !client.reason?.toLowerCase().includes("achieving")
+          )
           : filterCategory === "intention_to_shift"
             ? Boolean(client.intention_to_shift && client.intention_to_shift.trim() !== "")
-            : true;
+            : filterCategory === "new_this_month"
+              ? isNewThisMonth
+              : true;
 
     return matchesSearch && matchesMethod && matchesCategory;
   });
@@ -336,6 +352,7 @@ const matchesCategory =
                     <option value="fp_users">FP Users</option>
                     <option value="unmet_needs">Unmet Needs</option>
                     <option value="intention_to_shift">Intention to Shift</option>
+                    <option value="new_this_month">New this Month</option>
                   </select>
                 )}
 
