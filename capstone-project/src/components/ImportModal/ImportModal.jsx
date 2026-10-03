@@ -2,9 +2,18 @@ import { useState } from "react";
 import * as XLSX from "xlsx";
 import { collection, writeBatch, doc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebase-config";
-import { Upload, AlertCircle, CheckCircle } from "lucide-react";
+import { Upload, AlertCircle, CheckCircle, MapPin } from "lucide-react";
 import "./import-modal.css";
 import { findDuplicate } from "../../utils/checkDuplicates";
+import {
+  extractLocationFromAddress,
+  MALOLOS_BARANGAY_LIST,
+  getCoordinatesByBarangay,
+} from "../../utils/geoHelper";
+
+// ─── FILE LIMIT CONSTANTS ─────────────────────────────────────────
+const MAX_FILE_SIZE_MB = 5;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 // ─── CODE MAPS ────────────────────────────────────────────────────
 const CIVIL_STATUS_MAP = {
@@ -60,8 +69,6 @@ const REASON_MAP = {
 };
 
 // ─── HELPERS ──────────────────────────────────────────────────────
-
-// Safely extract primitive string values from raw cell data or formula objects
 const sanitizeCell = (val) => {
   if (val === null || val === undefined) return "";
   if (typeof val === "object") {
@@ -87,29 +94,46 @@ const excelDateToString = (serial) => {
   return date.toISOString().split("T")[0];
 };
 
-// Check for summary/total headers that should be ignored
+const readColumnValue = (row, columnName) => {
+  const normalizedColumnName = columnName.replace(/\s+/g, " ").trim().toLowerCase();
+  const entry = Object.entries(row).find(
+    ([key]) => key.replace(/\s+/g, " ").trim().toLowerCase() === normalizedColumnName
+  );
+  return entry?.[1] ?? "";
+};
+
+const normalizeImportedDate = (value) => typeof value === "number"
+  ? excelDateToString(value)
+  : sanitizeCell(value);
+
 const isSummaryRow = (name) => {
   const clean = name.toUpperCase().trim();
   const summaryKeywords = [
-    "MSTR/NSV", "CONDOM", "NFP-LAM", "METHODS", "NFP-STM", 
+    "MSTR/NSV", "CONDOM", "NFP-LAM", "METHODS", "NFP-STM",
     "PILLS-COC", "TOTAL", "GRAND TOTAL", "SUM(", "SUBTOTAL"
   ];
-  return summaryKeywords.some(keyword => clean.includes(keyword));
+  return summaryKeywords.some((keyword) => clean.includes(keyword));
 };
 
-// ─── PARSERS ──────────────────────────────────────────────────────
-
-// Public FP — paired husband/wife rows
+// ─── PARSER PARA SA RPFP FORM 1 ───────────────────────────────────
 const parsePublicRows = (rows) => {
   const clients = [];
   let i = 0;
+
   while (i < rows.length) {
     const row = rows[i];
     const husbandName = sanitizeCell(row["Name"]);
 
-    // Skip empty or summary/total rows
-    if (!husbandName || husbandName === "-1" || isSummaryRow(husbandName)) {
-      i++; continue;
+    // 1. Skip empty rows, code indicator rows (-1, -2, etc.), and repeated header titles
+    if (
+      !husbandName ||
+      husbandName === "-1" ||
+      husbandName.startsWith("-") ||
+      husbandName.toLowerCase() === "name" ||
+      isSummaryRow(husbandName)
+    ) {
+      i++;
+      continue;
     }
 
     const nextRow = rows[i + 1] || {};
@@ -119,6 +143,25 @@ const parsePublicRows = (rows) => {
 
     const rawBirthdateMale = row["Birthdate / Age"];
     const rawBirthdateFemale = wifeRow["Birthdate / Age"];
+
+    // 2. Extract address from either husband or wife row
+    const rawAddress = sanitizeCell(
+      row["Address& Contact Number"] ||
+      row["Address & Contact Number"] ||
+      row["Address"] ||
+      wifeRow["Address& Contact Number"] ||
+      wifeRow["Address"]
+    );
+    const loc = extractLocationFromAddress(rawAddress);
+
+    // 3. Extract number of children
+    const rawChildren = sanitizeCell(row["No. of Children"] || wifeRow["No. of Children"]);
+    const parsedChildren = rawChildren && !isNaN(Number(rawChildren))
+      ? String(Math.round(Number(rawChildren)))
+      : "";
+
+    // 4. Check for participant signature value in the template
+    const rawSignature = sanitizeCell(row["PARTICIPANT'S SIGNATURE"] || wifeRow["PARTICIPANT'S SIGNATURE"]);
 
     const client = {
       name: husbandName,
@@ -133,92 +176,90 @@ const parsePublicRows = (rows) => {
           ? excelDateToString(rawBirthdateFemale)
           : sanitizeCell(rawBirthdateFemale)
         : "",
-      address: sanitizeCell(row["Address& Contact Number"]),
-      barangay: sanitizeCell(row["Barangay"]),
+      address: rawAddress,
+      barangay: loc.barangay,
+      latitude: loc.latitude,
+      longitude: loc.longitude,
       educational_attainment_male: decode(EDUCATION_MAP, row["Highest Educational Attainment"]),
       educational_attainment_female: isWifeRow ? decode(EDUCATION_MAP, wifeRow["Highest Educational Attainment"]) : "",
-      no_of_children: sanitizeCell(row["No. of Children"]) ? String(Math.round(Number(sanitizeCell(row["No. of Children"])))) : "",
+      no_of_children: parsedChildren,
       fp_method: decode(METHOD_MAP, row["Method Used"]),
       intention_to_shift: decode(METHOD_MAP, row["Intention to shift to other FP Method"]),
       type: decode(TYPE_MAP, row["Type"]),
       status: decode(STATUS_MAP, row["Status"]),
       reason: decode(REASON_MAP, row["Reason for Intending to use FP Method"]),
+      signature_status: rawSignature ? "imported" : "none",
     };
 
+    // Validation checks
     client._errors = [];
     if (!client.name) client._errors.push("Missing husband name");
     if (!client.civil_status_male) client._errors.push("Missing civil status");
     if (!client.birthdate_male) client._errors.push("Missing male birthdate");
-    if (!client.fp_method) client._errors.push("Missing FP method");
+    if (!loc.isMatched || client.barangay === "Unassigned") {
+      client._errors.push("Barangay not detected");
+    }
 
     clients.push(client);
     i += isWifeRow ? 2 : 1;
   }
+
   return clients;
 };
 
-// Template columns: Name | Age | Birthday | Barangay | Family Planning Method | Fp issued by
-const parsePrivateRows = (rows) => {
-  const clients = [];
-  rows.forEach((row) => {
-    const rawName = row["Name:             "] || row["Name"] || row["Name:"] || "";
-    const name = sanitizeCell(rawName);
-
-    if (!name || isSummaryRow(name)) return;
-
+const parsePrivateRows = (rows) => rows
+  .map((row) => {
     const client = {
-      name: name,
-      age: sanitizeCell(row["Age:"]),
-      birthdate: sanitizeCell(row["Birthday:"]),
-      barangay: sanitizeCell(row["Barangay:"]),
-      fp_method: sanitizeCell(row["Family Planning Method"]),
-      fp_issued_by: sanitizeCell(row["Fp issued by: (Name of Clinic, Hospitals, Lying Inn)"]),
+      name: sanitizeCell(readColumnValue(row, "Name:")),
+      age: sanitizeCell(readColumnValue(row, "Age:")),
+      birthdate: normalizeImportedDate(readColumnValue(row, "Birthday:")),
+      barangay: sanitizeCell(readColumnValue(row, "Barangay:")),
+      fp_method: sanitizeCell(readColumnValue(row, "Family Planning Method")),
+      fp_issued_by: sanitizeCell(readColumnValue(row, "Fp issued by: (Name of Clinic, Hospitals, Lying Inn)")),
     };
 
+    if (!client.name && !client.age && !client.birthdate && !client.barangay && !client.fp_method && !client.fp_issued_by) {
+      return null;
+    }
+
     client._errors = [];
-    if (!client.name) client._errors.push("Missing name");
+    if (!client.name) client._errors.push("Missing client name");
     if (!client.fp_method) client._errors.push("Missing FP method");
+    return client;
+  })
+  .filter(Boolean);
 
-    clients.push(client);
-  });
-  return clients;
-};
-
-const parseReferredRows = (rows) => {
-  const clients = [];
-  rows.forEach((row) => {
-    const name = sanitizeCell(row["Name"]);
-
-    if (!name || isSummaryRow(name)) return;
-
+const parseReferredRows = (rows) => rows
+  .map((row) => {
     const client = {
-      name: name,
-      address: sanitizeCell(row["Address"]),
-      fp_method: sanitizeCell(row["FP Method"]),
-      facility_name: sanitizeCell(row["Name of Health Service Facility"]),
-      facility_address: sanitizeCell(row["Address of Health Service Facility"]),
-      referred_by: sanitizeCell(row["Referred By"]),
-      volunteer_contact: sanitizeCell(row["Contact No. Volunteer"]),
-      date: sanitizeCell(row["Date"]),
+      name: sanitizeCell(readColumnValue(row, "Name")),
+      address: sanitizeCell(readColumnValue(row, "Address")),
+      fp_method: sanitizeCell(readColumnValue(row, "FP Method")),
+      facility_name: sanitizeCell(readColumnValue(row, "Name of Health Service Facility")),
+      facility_address: sanitizeCell(readColumnValue(row, "Address of Health Service Facility")),
+      referred_by: sanitizeCell(readColumnValue(row, "Referred By")),
+      volunteer_contact: sanitizeCell(readColumnValue(row, "Contact No. Volunteer")),
+      date: normalizeImportedDate(readColumnValue(row, "Date")),
     };
 
+    if (!client.name && !client.address && !client.fp_method && !client.facility_name && !client.facility_address && !client.referred_by && !client.volunteer_contact && !client.date) {
+      return null;
+    }
+
     client._errors = [];
-    if (!client.name) client._errors.push("Missing name");
-    if (!client.address) client._errors.push("Missing address");
-    if (!client.date) client._errors.push("Missing date");
+    if (!client.name) client._errors.push("Missing client name");
+    if (!client.fp_method) client._errors.push("Missing FP method");
+    return client;
+  })
+  .filter(Boolean);
 
-    clients.push(client);
-  });
-  return clients;
-};
-
-// ─── CONFIG per tab ───────────────────────────────────────────────
 const TAB_CONFIG = {
   public: {
     label: "RPFP Form 1",
-    template: "/RPFP_Form_1_Template.xlsx",
-    templateName: "RPFP_Form_1_Template.xlsx",
-    headerRow: 1,
+    recordNoun: "couples",
+    template: "/RPFP_Form1_Template.xlsx",
+    templateName: "RPFP_Form1_Template.xlsx",
+    headerRow: 6, // Row 7 sa Excel
     parseRows: parsePublicRows,
     previewCols: [
       { label: "#", key: "_index" },
@@ -229,44 +270,46 @@ const TAB_CONFIG = {
       { label: "Birthdate (M)", key: "birthdate_male" },
       { label: "Birthdate (F)", key: "birthdate_female" },
       { label: "Address", key: "address" },
-      { label: "Education (M)", key: "educational_attainment_male" },
-      { label: "Education (F)", key: "educational_attainment_female" },
+      { label: "Barangay", key: "barangay" },
+      { label: "Coordinates", key: "_coords" },
+      { label: "Educational Attainment (M)", key: "educational_attainment_male" },
+      { label: "Educational Attainment (F)", key: "educational_attainment_female" },
       { label: "Children", key: "no_of_children" },
       { label: "FP Method", key: "fp_method" },
-      { label: "Shift To", key: "intention_to_shift" },
+      { label: "Intention to Shift", key: "intention_to_shift" },
       { label: "Type", key: "type" },
       { label: "Status", key: "status" },
       { label: "Reason", key: "reason" },
     ],
   },
   private: {
-    label: "Private FP Template",
+    label: "Private Client Records",
+    recordNoun: "clients",
     template: "/Private_Template.xlsx",
     templateName: "Private_Template.xlsx",
     headerRow: 5,
     parseRows: parsePrivateRows,
     previewCols: [
-      { label: "#", key: "_index" },
       { label: "Name", key: "name" },
       { label: "Age", key: "age" },
       { label: "Birthday", key: "birthdate" },
       { label: "Barangay", key: "barangay" },
-      { label: "FP Method", key: "fp_method" },
-      { label: "Issued By", key: "fp_issued_by" },
+      { label: "Family Planning Method", key: "fp_method" },
+      { label: "FP Issued By", key: "fp_issued_by" },
     ],
   },
   referred: {
-    label: "Referred & Served Template",
+    label: "Referred & Served Records",
+    recordNoun: "referrals",
     template: "/Export_Template_Referred.xlsx",
-    templateName: "Referred_Template.xlsx",
+    templateName: "Export_Template_Referred.xlsx",
     headerRow: 3,
     parseRows: parseReferredRows,
     previewCols: [
-      { label: "#", key: "_index" },
       { label: "Name", key: "name" },
       { label: "Address", key: "address" },
       { label: "FP Method", key: "fp_method" },
-      { label: "Facility Name", key: "facility_name" },
+      { label: "Health Service Facility", key: "facility_name" },
       { label: "Facility Address", key: "facility_address" },
       { label: "Referred By", key: "referred_by" },
       { label: "Volunteer Contact", key: "volunteer_contact" },
@@ -275,7 +318,6 @@ const TAB_CONFIG = {
   },
 };
 
-// ─── COMPONENT ────────────────────────────────────────────────────
 function ImportModal({ onClose, collectionName, onSuccess, tabType = "public" }) {
   const config = TAB_CONFIG[tabType] ?? TAB_CONFIG.public;
 
@@ -285,9 +327,16 @@ function ImportModal({ onClose, collectionName, onSuccess, tabType = "public" })
   const [savedCount, setSavedCount] = useState(0);
   const [duplicates, setDuplicates] = useState([]);
 
+  // File Upload Handler na may Size Check (5MB)
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      alert(`The selected file is too large (${(file.size / (1024 * 1024)).toFixed(2)} MB). Maximum allowed size is ${MAX_FILE_SIZE_MB} MB.`);
+      e.target.value = "";
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = async (event) => {
@@ -295,17 +344,18 @@ function ImportModal({ onClose, collectionName, onSuccess, tabType = "public" })
         const data = new Uint8Array(event.target.result);
         const workbook = XLSX.read(data, { type: "array" });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
+
         const rows = XLSX.utils.sheet_to_json(sheet, {
-          range: config.headerRow, defval: "",
+          range: config.headerRow,
+          defval: "",
         });
 
         const clients = config.parseRows(rows);
         if (clients.length === 0) {
-          alert("No records found. Make sure you're using the correct template.");
+          alert("No valid records found in template.");
           return;
         }
 
-        // Check duplicates against Firestore
         setStep("checking");
         const dupResults = [];
         for (let i = 0; i < clients.length; i++) {
@@ -319,31 +369,68 @@ function ImportModal({ onClose, collectionName, onSuccess, tabType = "public" })
 
         setParsedClients(clients);
         setDuplicates(dupResults);
-        setErrorCount(clients.filter(c => c._errors.length > 0).length);
+        setErrorCount(clients.filter((c) => c._errors.length > 0).length);
         setStep("preview");
       } catch (err) {
         console.error("File parse error:", err);
-        alert("Could not read this file.");
+        alert("Failed to parse file. Please verify structure.");
         setStep("upload");
       }
     };
     reader.readAsArrayBuffer(file);
   };
 
+  // Dropdown Change Handler
+  const handleBarangayChange = (index, selectedBarangay) => {
+    const updated = [...parsedClients];
+    const client = updated[index];
+
+    client.barangay = selectedBarangay;
+
+    const coords = getCoordinatesByBarangay(selectedBarangay);
+    client.latitude = coords.latitude;
+    client.longitude = coords.longitude;
+
+    if (selectedBarangay !== "Unassigned") {
+      client._errors = client._errors.filter((err) => err !== "Barangay not detected");
+    } else if (!client._errors.includes("Barangay not detected")) {
+      client._errors.push("Barangay not detected");
+    }
+
+    setParsedClients(updated);
+    setErrorCount(updated.filter((c) => c._errors.length > 0).length);
+  };
+
+  const handleSkipRecord = (indexToRemove) => {
+    const updatedClients = parsedClients.filter((_, idx) => idx !== indexToRemove);
+
+    const updatedDuplicates = duplicates
+      .filter((d) => d.index !== indexToRemove)
+      .map((d) => {
+        if (d.index > indexToRemove) {
+          return { ...d, index: d.index - 1 };
+        }
+        return d;
+      });
+
+    setParsedClients(updatedClients);
+    setDuplicates(updatedDuplicates);
+    setErrorCount(updatedClients.filter((c) => c._errors.length > 0).length);
+  };
+
   const handleSave = async () => {
     setStep("saving");
     try {
-      const toSave = parsedClients.filter(c => !c._skip);
+      const toSave = parsedClients.filter((c) => !c._skip);
       const chunkSize = 500;
       let saved = 0;
 
       for (let i = 0; i < toSave.length; i += chunkSize) {
         const batch = writeBatch(db);
-        toSave.slice(i, i + chunkSize).forEach(client => {
+        toSave.slice(i, i + chunkSize).forEach((client) => {
           const { _errors, _isDuplicate, _existingRecord, _skip, _overwrite, ...clean } = client;
 
           if (_overwrite && _existingRecord?.id) {
-            // Update the existing doc instead of creating a new one
             const ref = doc(db, collectionName, _existingRecord.id);
             batch.set(ref, { ...clean, updated_at: serverTimestamp() }, { merge: true });
           } else {
@@ -361,27 +448,31 @@ function ImportModal({ onClose, collectionName, onSuccess, tabType = "public" })
       }
 
       setStep("done");
-      setTimeout(() => { onSuccess(); onClose(); }, 1500);
+      setTimeout(() => {
+        onSuccess();
+        onClose();
+      }, 1500);
     } catch (err) {
       console.error("Import error:", err);
-      alert("Something went wrong. Please try again.");
+      alert("Something went wrong saving the records.");
       setStep("preview");
     }
   };
 
   const handleReupload = () => {
-    setParsedClients([]); setErrorCount(0); setSavedCount(0); setStep("upload");
+    setParsedClients([]);
+    setErrorCount(0);
+    setSavedCount(0);
+    setStep("upload");
   };
 
   return (
     <div className="modal-overlay-import">
       <div className="modal-import">
-
-        {/* HEADER */}
         <div className="modal-header-import">
           <h2>
             {step === "upload" && `Import — ${config.label}`}
-            {step === "preview" && `Preview — ${parsedClients.length} records found`}
+            {step === "preview" && `Preview — ${parsedClients.length} ${config.recordNoun} found`}
             {step === "saving" && "Saving to database..."}
             {step === "done" && "Import Complete"}
           </h2>
@@ -390,12 +481,13 @@ function ImportModal({ onClose, collectionName, onSuccess, tabType = "public" })
           )}
         </div>
 
-        {/* UPLOAD */}
         {step === "upload" && (
           <div className="import-upload-area">
             <Upload size={36} color="#6366f1" />
             <p>Upload your {config.label} Excel file</p>
-            <span className="import-note">Accepts .xlsx and .xls files</span>
+            <span className="import-note">
+              Accepts .xlsx and .xls files (Max: <strong>{MAX_FILE_SIZE_MB}MB</strong>)
+            </span>
             <a
               href={config.template}
               download={config.templateName}
@@ -404,22 +496,20 @@ function ImportModal({ onClose, collectionName, onSuccess, tabType = "public" })
             >
               Don't have the template? Download it here.
             </a>
-            <label className="btn-choose-file">
+            <label className="btn-choose-file" style={{ marginTop: "12px" }}>
               Choose File
               <input type="file" accept=".xlsx,.xls" onChange={handleFileUpload} style={{ display: "none" }} />
             </label>
           </div>
         )}
 
-        {/* PREVIEW */}
         {step === "preview" && (
           <>
             {duplicates.length > 0 && (
               <div className="import-warning" style={{ background: "#fef9c3", borderColor: "#ca8a04" }}>
                 <AlertCircle size={16} />
                 <span>
-                  {duplicates.length} possible duplicate(s) found.
-                  Review them below before saving.
+                  {duplicates.length} duplicate record(s) detected. Choose to Skip or Overwrite.
                 </span>
               </div>
             )}
@@ -427,7 +517,11 @@ function ImportModal({ onClose, collectionName, onSuccess, tabType = "public" })
             {errorCount > 0 && (
               <div className="import-warning">
                 <AlertCircle size={16} />
-                <span>{errorCount} record(s) have missing required fields.</span>
+                <span>
+                  {tabType === "public"
+                    ? `${errorCount} record(s) need attention. Assign a Barangay using the dropdown.`
+                    : `${errorCount} record(s) have missing required fields. Review the flagged rows.`}
+                </span>
               </div>
             )}
 
@@ -435,8 +529,10 @@ function ImportModal({ onClose, collectionName, onSuccess, tabType = "public" })
               <table className="import-preview-table">
                 <thead>
                   <tr>
-                    {config.previewCols.map(col => <th key={col.key}>{col.label}</th>)}
-                    <th>Issues</th>
+                    {config.previewCols.map((col) => (
+                      <th key={col.key}>{col.label}</th>
+                    ))}
+                    <th>Status</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -450,30 +546,67 @@ function ImportModal({ onClose, collectionName, onSuccess, tabType = "public" })
                             client._isDuplicate ? "row-duplicate" : ""
                         }
                       >
-                        {config.previewCols.map(col => (
-                          <td key={col.key}>
-                            {col.key === "_index" ? index + 1 : client[col.key] || "—"}
-                          </td>
-                        ))}
+                        {config.previewCols.map((col) => {
+                          if (col.key === "_index") return <td key={col.key}>{index + 1}</td>;
+
+                          if (col.key === "barangay" && tabType === "public") {
+                            const isUnassigned = client.barangay === "Unassigned";
+                            return (
+                              <td key={col.key}>
+                                <select
+                                  value={client.barangay}
+                                  onChange={(e) => handleBarangayChange(index, e.target.value)}
+                                  style={{
+                                    padding: "4px 8px",
+                                    fontSize: "12px",
+                                    borderRadius: "4px",
+                                    border: isUnassigned ? "1.5px solid #ef4444" : "1px solid #d1d5db",
+                                    backgroundColor: isUnassigned ? "#fef2f2" : "#ffffff",
+                                    color: isUnassigned ? "#b91c1c" : "#1f2937",
+                                    fontWeight: isUnassigned ? "600" : "normal",
+                                    outline: "none",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  <option value="Unassigned">-- Select Barangay --</option>
+                                  {MALOLOS_BARANGAY_LIST.map((bgy) => (
+                                    <option key={bgy.name} value={bgy.name}>
+                                      {bgy.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </td>
+                            );
+                          }
+
+                          if (col.key === "_coords") {
+                            return (
+                              <td key={col.key} style={{ fontSize: "11px", color: "#6b7280", whiteSpace: "nowrap" }}>
+                                <MapPin size={12} style={{ display: "inline", marginRight: 2 }} />
+                                {client.latitude ? `${client.latitude.toFixed(4)}, ${client.longitude.toFixed(4)}` : "—"}
+                              </td>
+                            );
+                          }
+
+                          return <td key={col.key}>{client[col.key] || "—"}</td>;
+                        })}
+
                         <td>
-                          {client._errors.length > 0
-                            ? <span className="error-badge">{client._errors.join(", ")}</span>
-                            : client._isDuplicate
-                              ? <span className="duplicate-badge">Duplicate</span>
-                              : <span className="ok-badge">OK</span>}
+                          {client._errors.length > 0 ? (
+                            <span className="error-badge">{client._errors.join(", ")}</span>
+                          ) : client._isDuplicate ? (
+                            <span className="duplicate-badge">Duplicate</span>
+                          ) : (
+                            <span className="ok-badge">OK</span>
+                          )}
                         </td>
+
                         <td>
                           {client._isDuplicate && (
                             <div style={{ display: "flex", gap: 6 }}>
                               <button
                                 className="btn-skip-dup"
-                                onClick={() => {
-                                  const updated = [...parsedClients];
-                                  updated[index]._skip = true;
-                                  updated[index]._isDuplicate = false;
-                                  setParsedClients(updated);
-                                  setDuplicates(duplicates.filter(d => d.index !== index));
-                                }}
+                                onClick={() => handleSkipRecord(index)}
                               >
                                 Skip
                               </button>
@@ -484,7 +617,7 @@ function ImportModal({ onClose, collectionName, onSuccess, tabType = "public" })
                                   updated[index]._overwrite = true;
                                   updated[index]._isDuplicate = false;
                                   setParsedClients(updated);
-                                  setDuplicates(duplicates.filter(d => d.index !== index));
+                                  setDuplicates(duplicates.filter((d) => d.index !== index));
                                 }}
                               >
                                 Overwrite
@@ -493,44 +626,6 @@ function ImportModal({ onClose, collectionName, onSuccess, tabType = "public" })
                           )}
                         </td>
                       </tr>
-
-                      {/* Side-by-side comparison row */}
-                      {client._isDuplicate && client._existingRecord && (
-                        <tr key={`dup-${index}`} className="row-duplicate-detail">
-                          <td colSpan={config.previewCols.length + 2}>
-                            <div className="dup-comparison">
-                              <div className="dup-side incoming">
-                                <strong>⬆ Incoming (from file)</strong>
-                                {config.previewCols
-                                  .filter(c => c.key !== "_index")
-                                  .map(col => (
-                                    <div key={col.key} className={
-                                      client[col.key] !== client._existingRecord[col.key]
-                                        ? "dup-field changed" : "dup-field"
-                                    }>
-                                      <span className="dup-label">{col.label}:</span>
-                                      <span>{client[col.key] || "—"}</span>
-                                    </div>
-                                  ))}
-                              </div>
-                              <div className="dup-side existing">
-                                <strong>📁 Existing (in database)</strong>
-                                {config.previewCols
-                                  .filter(c => c.key !== "_index")
-                                  .map(col => (
-                                    <div key={col.key} className={
-                                      client[col.key] !== client._existingRecord[col.key]
-                                        ? "dup-field changed" : "dup-field"
-                                    }>
-                                      <span className="dup-label">{col.label}:</span>
-                                      <span>{client._existingRecord[col.key] || "—"}</span>
-                                    </div>
-                                  ))}
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
                     </>
                   ))}
                 </tbody>
@@ -538,7 +633,7 @@ function ImportModal({ onClose, collectionName, onSuccess, tabType = "public" })
             </div>
 
             <div className="modal-btn-import">
-              <button className="btn-reupload" onClick={handleReupload}>Re - Upload</button>
+              <button className="btn-reupload" onClick={handleReupload}>Re-Upload</button>
               <button className="btn-cancel-import" onClick={onClose}>Cancel</button>
               <button
                 className="btn-confirm-import"
@@ -549,13 +644,19 @@ function ImportModal({ onClose, collectionName, onSuccess, tabType = "public" })
                   ? `Resolve ${duplicates.length} duplicate(s) first`
                   : errorCount > 0
                     ? `Fix ${errorCount} error(s) before saving`
-                    : `Confirm & Save ${parsedClients.filter(c => !c._skip).length} Records`}
+                    : `Confirm & Save ${parsedClients.filter((c) => !c._skip).length} Records`}
               </button>
             </div>
           </>
         )}
 
-        {/* SAVING */}
+        {step === "checking" && (
+          <div className="import-status">
+            <div className="import-spinner" />
+            <p>Geocoding addresses & checking duplicates...</p>
+          </div>
+        )}
+
         {step === "saving" && (
           <div className="import-status">
             <div className="import-spinner" />
@@ -563,17 +664,10 @@ function ImportModal({ onClose, collectionName, onSuccess, tabType = "public" })
           </div>
         )}
 
-        {/* DONE */}
         {step === "done" && (
           <div className="import-status">
             <CheckCircle size={40} color="#16a34a" />
-            <p>{parsedClients.length} records saved successfully!</p>
-          </div>
-        )}
-        {step === "checking" && (
-          <div className="import-status">
-            <div className="import-spinner" />
-            <p>Checking for duplicates...</p>
+            <p>{parsedClients.length} records imported successfully!</p>
           </div>
         )}
       </div>

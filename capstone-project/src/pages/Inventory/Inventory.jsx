@@ -808,9 +808,9 @@ async function handleSingleRhuDeduct() {
                 {showRhuAllocate && allocRHU && (
                         <div className="modal-overlay">
                             <div className="modal-content allocate-box rhu-allocate-box">
-                                <div className="modal-header">
+                                <div className="modal-header-inventory">
                                     <h3>Allocate Stock — {allocRHU.name}</h3>
-                                    <p className="modal-subtext">Choose the FP method and quantity to add to this RHU.</p>
+                                    <p className="modal-subtext-inventory">Choose the FP method and quantity to add to this RHU.</p>
                                 </div>
 
                                 <div className="allocate-input-section">
@@ -875,9 +875,9 @@ async function handleSingleRhuDeduct() {
             {showRhuDeduct && deductRHU && (
     <div className="modal-overlay">
         <div className="modal-content allocate-box rhu-allocate-box">
-            <div className="modal-header">
+            <div className="modal-header-inventory">
                 <h3>Deduct Stock — {deductRHU.name}</h3>
-                <p className="modal-subtext">Choose the FP method and quantity to deduct from this RHU.</p>
+                <p className="modal-subtext-inventory">Choose the FP method and quantity to deduct from this RHU.</p>
             </div>
 
             <div className="allocate-input-section">
@@ -1030,7 +1030,7 @@ async function handleSingleRhuDeduct() {
            {showDeductModal && (
     <div className="modal-overlay">
         <div className="modal-content deduct-box ">
-            <div className="modal-header">
+            <div className="modal-header-inventory">
                 <div className="allocate-input-section">
                     <h3>FP Method:</h3>
                     <select
@@ -1045,7 +1045,7 @@ async function handleSingleRhuDeduct() {
                     </select>
                 </div>
                 <h3>Deduct Stock</h3>
-                <p className="modal-subtext">Enter deduction quantities for each health unit below</p>
+                <p className="modal-subtext-inventory">Enter deduction quantities for each health unit below</p>
             </div>
 
             <div className="modal-table-wrapper">

@@ -12,8 +12,8 @@
 
 .cfpr-modal {
   width: 100%;
-  max-width: 850px;
-  max-height: 600px;
+  max-width: 1100px;
+  max-height: 775px;
   background: #ffffff;
   border-radius: 14px;
   box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
@@ -32,14 +32,14 @@
 
 .cfpr-title {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   color: #14243e;
 }
 
 .cfpr-subtitle {
   margin: 6px 0 0;
-  font-size: 12.5px;
+  font-size: 14.5px;
   color: #6b7280;
   line-height: 1.5;
 }
@@ -69,7 +69,7 @@
 
 .cfpr-section-title {
   margin: 0 0 14px;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -86,7 +86,7 @@
 
 .cfpr-paired-label {
   display: block;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: #374151;
   margin-bottom: 6px;
@@ -100,7 +100,7 @@
 
 .cfpr-tag {
   display: inline-block;
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -144,7 +144,7 @@
   font-size: 13px;
   font-weight: 600;
   color: #374151;
-  margin-bottom: 6px;
+  margin-bottom: 10px;
 }
 
 .cfpr-searching {
@@ -159,8 +159,8 @@
 .cfpr-select {
   width: 100%;
   box-sizing: border-box;
-  padding: 9px 11px;
-  font-size: 14px;
+  padding: 13px 11px;
+  font-size: 15px;
   color: #1f2937;
   background: #ffffff;
   border: 1px solid #d1d5db;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router'; 
 import './Login.css'; 
 import logoImg from '../../assets/malolos-logo.png'; 
@@ -13,6 +13,13 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   
+  const [failedAttempts, setFailedAttempts] = useState(() => {
+    return parseInt(localStorage.getItem('loginFailedAttempts') || '0', 10);
+  });
+  const [isLockedOut, setIsLockedOut] = useState(() => {
+    return localStorage.getItem('loginIsLocked') === 'true';
+  });
+
   const [resetEmail, setResetEmail] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
@@ -21,6 +28,16 @@ const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isLockedOut) {
+      setErrorMessage("Too many failed attempts (3/3). Your account is temporarily locked. Please reset your password.");
+      const lockedEmail = localStorage.getItem('lockedUserEmail');
+      if (lockedEmail) {
+        setEmail(lockedEmail);
+      }
+    }
+  }, [isLockedOut]);
 
   const getEmailErrorHint = (val) => {
     if (!val) return '';
@@ -48,7 +65,7 @@ const Login = () => {
     setModalMessage('');
     setModalError(false);
     setIsSent(false);
-    setResetEmail('');
+    setResetEmail(email.trim());
     setIsSubmitting(false);
   };
 
@@ -65,45 +82,75 @@ const Login = () => {
     e.preventDefault(); 
     setErrorMessage(''); 
 
+    if (isLockedOut) {
+      setErrorMessage("Account is locked due to 3 failed attempts. Please use Forgot Password to reset your password.");
+      setShowModal(true);
+      return;
+    }
+
     const cleanEmail = email.trim().toLowerCase();
 
     try {
+      const userDocRef = doc(db, "users", cleanEmail);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (!userDocSnap.exists()) {
+        setErrorMessage("This email address is not registered in our system.");
+        return;
+      }
+
       const userCredential = await signInWithEmailAndPassword(auth, cleanEmail, password);
       const user = userCredential.user;
 
-      const userDocRef = doc(db, "users", user.email);
-      const userDocSnap = await getDoc(userDocRef);
+      const userData = userDocSnap.data();
+      const userRole = userData.role; 
 
-      if (userDocSnap.exists()) {
-        const userData = userDocSnap.data();
-        const userRole = userData.role; 
+      setFailedAttempts(0);
+      setIsLockedOut(false);
+      localStorage.removeItem('loginFailedAttempts');
+      localStorage.removeItem('loginIsLocked');
+      localStorage.removeItem('lockedUserEmail');
 
-        localStorage.setItem('userRole', userRole);
-        localStorage.setItem('userEmail', user.email);
+      localStorage.setItem('userRole', userRole);
+      localStorage.setItem('userEmail', user.email);
 
-        if (userRole === 'cpd') {
-          navigate('/dashboard/cpd', { replace: true }); 
-        } else if (userRole === 'health') {
-          navigate('/dashboard/health', { replace: true });
-        } else {
-          setErrorMessage("Account role not recognized. Please contact system admin.");
-        }
+      if (userRole === 'cpd') {
+        navigate('/dashboard/cpd', { replace: true }); 
+      } else if (userRole === 'health') {
+        navigate('/dashboard/health', { replace: true });
       } else {
-        setErrorMessage("User profile data not found in system directory.");
+        setErrorMessage("Account role not recognized. Please contact system admin.");
       }
       
     } catch (error) {
       console.error("Auth error:", error.code);
+
       if (
         error.code === 'auth/invalid-credential' || 
-        error.code === 'auth/user-not-found' || 
         error.code === 'auth/wrong-password'
       ) {
-        setErrorMessage("Incorrect email address or password. Please try again.");
+        const newAttempts = failedAttempts + 1;
+        setFailedAttempts(newAttempts);
+        localStorage.setItem('loginFailedAttempts', newAttempts.toString());
+
+        if (newAttempts >= 3) {
+          setIsLockedOut(true);
+          localStorage.setItem('loginIsLocked', 'true');
+          localStorage.setItem('lockedUserEmail', cleanEmail);
+          setErrorMessage("Too many failed attempts (3/3). Your account is temporarily locked. Please reset your password.");
+          setResetEmail(cleanEmail);
+          setShowModal(true);
+        } else {
+          setErrorMessage(`Incorrect password. Attempt ${newAttempts} of 3.`);
+        }
       } else if (error.code === 'auth/invalid-email') {
         setErrorMessage("Please enter a valid email address format.");
       } else if (error.code === 'auth/too-many-requests') {
-        setErrorMessage("Too many failed attempts. Please try again later.");
+        setIsLockedOut(true);
+        localStorage.setItem('loginIsLocked', 'true');
+        localStorage.setItem('lockedUserEmail', cleanEmail);
+        setErrorMessage("Too many failed attempts. Please reset your password to continue.");
+        setShowModal(true);
       } else {
         setErrorMessage("An unexpected network error occurred.");
       }
@@ -141,7 +188,14 @@ const Login = () => {
       await sendPasswordResetEmail(auth, cleanResetEmail);
       setModalError(false);
       setIsSent(true); 
-      setModalMessage(`Instructions have been sent to ${cleanResetEmail}. Please check your inbox or spam folder.`);
+      setModalMessage(`Instructions have been sent to ${cleanResetEmail}. Check your inbox or spam folder.`);
+      
+      // Unlock account and clear stored attempt records once reset email is issued
+      setFailedAttempts(0);
+      setIsLockedOut(false);
+      localStorage.removeItem('loginFailedAttempts');
+      localStorage.removeItem('loginIsLocked');
+      localStorage.removeItem('lockedUserEmail');
     } catch (error) {
       console.error("Reset error:", error.code);
       setModalError(true);
@@ -176,6 +230,7 @@ const Login = () => {
                 placeholder="Email Address" 
                 value={email} 
                 onChange={(e) => setEmail(e.target.value)} 
+                disabled={isLockedOut}
                 required 
               />
               {emailHint && (
@@ -198,6 +253,7 @@ const Login = () => {
                 placeholder="Password" 
                 value={password} 
                 onChange={(e) => setPassword(e.target.value)} 
+                disabled={isLockedOut}
                 required 
                 style={{ width: '100%', paddingRight: '44px', boxSizing: 'border-box' }}
               />
@@ -223,12 +279,44 @@ const Login = () => {
               </button>
             </div>
 
-            {errorMessage && <div className="login-error">{errorMessage}</div>}
-            <button type="submit" className="login-btn">Log In</button>
+            {errorMessage && (
+              <div 
+                className="login-error" 
+                style={{ 
+                  color: '#EF4444', 
+                  fontSize: '13px', 
+                  marginTop: '8px', 
+                  textAlign: 'left',
+                  lineHeight: '1.4'
+                }}
+              >
+                {errorMessage}
+              </div>
+            )}
+
+            <button 
+              type="submit" 
+              className="login-btn"
+              disabled={isLockedOut}
+              style={{
+                opacity: isLockedOut ? 0.6 : 1,
+                cursor: isLockedOut ? 'not-allowed' : 'pointer'
+              }}
+            >
+              {isLockedOut ? "Account Locked" : "Log In"}
+            </button>
           </form>
           
-          <button type="button" className="login-forgot" onClick={handleOpenModal}>
-            Forgot Password?
+          <button 
+            type="button" 
+            className="login-forgot" 
+            onClick={handleOpenModal}
+            style={{
+              fontWeight: isLockedOut ? 700 : 500,
+              color: isLockedOut ? '#F59E0B' : undefined
+            }}
+          >
+            Forgot Password? {isLockedOut && " (Required to unlock)"}
           </button>
         </div>
         
@@ -306,7 +394,9 @@ const Login = () => {
             <p style={{ color: '#64748B', fontSize: '13.5px', lineHeight: 1.5, margin: '0 0 22px 0', textAlign: 'left', fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
               {isSent 
                 ? "Check your email for the password reset instructions." 
-                : "Enter your registered email address below, and we'll send you instructions to reset your password."}
+                : isLockedOut 
+                  ? "Your account was locked due to 3 failed attempts. Enter your email to reset your password and unlock access."
+                  : "Enter your registered email address below, and we'll send you instructions to reset your password."}
             </p>
             
             <form onSubmit={handleForgotPasswordSubmit} noValidate>

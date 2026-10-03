@@ -14,7 +14,7 @@
   background: #ffffff;
   border-radius: 15px;
   width: 90%;
-  max-width: 900px;
+  max-width: 1000px;
   max-height: 80vh;
   display: flex;
   flex-direction: column;
@@ -71,7 +71,7 @@
 .form-group-referred {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 1px;
 }
 
 .form-group-referred label {
@@ -87,7 +87,7 @@
   padding: 12px 10px;
   border: 1px solid #c7c8ca;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 15px;
   color: #3b3b3b;
   background: #fafafa;
   outline: none;

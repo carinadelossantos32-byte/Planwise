@@ -341,3 +341,133 @@
   color: #4b5563;
   font-weight: 500;
 }
+
+/* =========================================
+   SIGNATURE CELL STYLES
+   ========================================= */
+
+.sig-cell-attached {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.sig-thumbnail {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  background-color: #ffffff;
+  padding: 2px;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.sig-cell-attached:hover .sig-thumbnail {
+  transform: scale(1.05);
+  border-color: #cbd5e1;
+}
+
+.sig-status-attached {
+  font-size: 12px;
+  color: #16a34a;
+  font-weight: 500;
+}
+
+.sig-cell-syncing {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #d97706;
+}
+
+.sig-status-syncing {
+  font-size: 12px;
+  font-style: italic;
+}
+
+.sig-cell-failed {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #b91c1c;
+}
+
+.sig-status-failed {
+  font-size: 12px;
+}
+
+.sig-cell-none {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #9ca3af;
+}
+
+.sig-status-none {
+  font-size: 12px;
+}
+
+/* =========================================
+   SIGNATURE LIGHTBOX MODAL
+   ========================================= */
+
+.sig-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.sig-modal-content {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  max-width: 420px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.sig-modal-title {
+  margin: 0 0 14px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.sig-modal-image-box {
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.sig-modal-image {
+  max-width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}
+
+.sig-modal-close-btn {
+  margin-top: 16px;
+  padding: 8px 24px;
+  background-color: #3b82f6;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sig-modal-close-btn:hover {
+  background-color: #2563eb;
+}
