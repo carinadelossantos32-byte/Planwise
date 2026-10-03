@@ -4,8 +4,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
-  padding: 23px 20px;
+  margin-bottom: 20px;
+  padding: 20px 40px;
   background-color: #ffffff;
   border-radius: 8px;
 }
@@ -68,38 +68,6 @@
   margin-right: 20px;
   background-color: white;
   border-radius: 8px;
-}
-
-.tabs-header {
-  display: flex;
-  gap: 40px;
-  border-bottom: 2px solid #e5e7eb;
-  padding: 0 20px;
-}
-
-.tab-btn {
-  background: none;
-  border: none;
-  padding: 16px 10px;
-  font-size: 15px;
-  font-weight: 600;
-  color: #9ca3af;
-  cursor: pointer;
-  border-bottom: 3px solid transparent;
-  transition: all 0.3s ease;
-  position: relative;
-  bottom: -2px;
-}
-
-.tab-btn.active {
-  color: #6366f1;
-  border-bottom-color: #6366f1;
-}
-
-.tab-btn:hover {
-  color: #6366f1;
-  background-color: #f4f5f5;
-  border-radius: 8px 8px 0 0;
 }
 
 .clients-report-content {
@@ -474,11 +442,6 @@
 }
 
 /* Monthly Report Content */
-.monthly-report-content {
-  padding: 30px 20px;
-  background-color: #f8f9fa;
-}
-
 /* Refresh button - copied from the dashboard's #refresh-button style.
    Replaces any existing .refresh-btn rules in reports.css.
    The var() fallbacks are the dashboard's colors, so it looks the same
@@ -530,4 +493,58 @@
 .last-updated {
   font-size: 12px;
   color: var(--ink-faint, #9494AC);
+}
+/* ===========================
+   LOADING
+   Report layouts render straight away; while .is-loading their values
+   stay hidden, then fade in once the data arrives.
+=========================== */
+
+.report-stage.is-loading {
+  animation: report-stage-pulse 1.6s ease-in-out infinite;
+}
+
+/* !important: Form C resets animations on everything inside it */
+.report-stage:not(.is-loading) :is(
+  [class*="-card"] h2,
+  .analytics-card > span,
+  strong,
+  .progress-fill,
+  .method-progress-fill,
+  tbody td:not(:first-child),
+  tbody th:not(:first-child),
+  tfoot :is(td, th):not(:first-child)
+) {
+  animation: report-value-in 0.45s ease backwards !important;
+}
+
+.report-stage.is-loading :is(
+  [class*="-card"] h2,
+  .analytics-card > span,
+  strong,
+  .progress-fill,
+  .method-progress-fill,
+  tbody td:not(:first-child),
+  tbody th:not(:first-child),
+  tfoot :is(td, th):not(:first-child)
+) {
+  opacity: 0;
+  animation: none !important;
+  transition: opacity 0.2s ease;
+}
+
+@keyframes report-value-in {
+  from { opacity: 0; }
+}
+
+@keyframes report-stage-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .report-stage.is-loading,
+  .report-stage:not(.is-loading) * {
+    animation: none !important;
+  }
 }

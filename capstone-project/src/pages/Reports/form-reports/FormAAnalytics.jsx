@@ -5,6 +5,9 @@ import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { getClientDate } from "../reportData";
+import ExportConfirmModal from "../ExportConfirmModal";
+import { loadReportLogos, drawReportHeader, reportTableOptions, drawSignatories } from "../reportPdf";
 
 /*
 ====================================================
@@ -50,6 +53,7 @@ const createCategoryObject = () => ({
 });
 
 const sumValues = (obj) => Object.values(obj).reduce((a, b) => a + b, 0);
+
 
 function classifyClass(value) {
 
@@ -108,38 +112,7 @@ function periodLabel(period) {
     return `${months[0]} to ${months[months.length - 1]}`;
 }
 
-// Same date fallbacks the Reports page uses for its filters
-function toDate(value) {
-    if (!value) return null;
-    if (value?.toDate) {
-        const d = value.toDate();
-        return Number.isNaN(d.getTime()) ? null : d;
-    }
-    if (value instanceof Date) {
-        return Number.isNaN(value.getTime()) ? null : value;
-    }
-    if (typeof value === "string" || typeof value === "number") {
-        const d = new Date(value);
-        return Number.isNaN(d.getTime()) ? null : d;
-    }
-    return null;
-}
 
-function getClientDate(client) {
-    const candidates = [
-        client.created_at,
-        client.updated_at,
-        client.date,
-        client.month_of_service,
-        client.service_month,
-        client.report_month,
-    ];
-    for (const value of candidates) {
-        const d = toDate(value);
-        if (d) return d;
-    }
-    return null;
-}
 
 const createMonthRecord = (month) => ({
     month,
@@ -187,6 +160,11 @@ function buildMonthlyFromClients(clients, includeYear) {
     const monthly = createEmptyMonthly();
 
     clients.forEach(client => {
+
+        // Form A is about the RPFP classes, which only the couple (public)
+        // records come from. Private-institution and referred clients did
+        // not attend a class, so they are not counted here.
+        if (client.sourceCollection && client.sourceCollection !== "clients_public") return;
 
         const date = getClientDate(client);
 
@@ -477,8 +455,8 @@ function ProgressPanel({ title, counts, fillClass = "" }) {
     - onImportReport(year, monthly) / onRemoveImport(year): optional, to persist imports
 */
 function FormAAnalytics({
+    exportFilters,
     clients = [],
-    loading,
     year: yearProp,
     period: periodProp,
     onYearChange,
@@ -519,6 +497,12 @@ function FormAAnalytics({
         }
     });
 
+    // Export waiting for confirmation: "pdf" | "excel" | null
+    const [exportFormat, setExportFormat] = useState(null);
+
+    // Import flow: step 1 = "choose a file" modal, step 2 = "which year" modal
+    const [showImport, setShowImport] = useState(false);
+    const [dragOver, setDragOver] = useState(false);
     const [pendingFile, setPendingFile] = useState(null);
     const [importYear, setImportYear] = useState("");
     const [importError, setImportError] = useState("");
@@ -624,101 +608,79 @@ function FormAAnalytics({
         });
     };
 
-    const exportPDF = () => {
+    // Default export file name (without extension); it can be changed in the confirmation
+    const exportBaseName = `Official_Form_A_Report_${yearLabel}`;
+
+    const exportPDF = async (fileName = `${exportBaseName}.pdf`) => {
+
+        const logos = await loadReportLogos();
 
         const doc = new jsPDF("landscape", "mm", "a4");
 
-
-
-        doc.setFont("times", "normal");
-        doc.setFontSize(11);
-        doc.text("Republic of the Philippines", 148, 10, { align: "center" });
-        doc.text("Province of Bulacan", 148, 16, { align: "center" });
-
-        doc.setFont("times", "bold");
-        doc.text("Provincial Social Welfare and Development Office", 148, 22, { align: "center" });
-
-        doc.setFontSize(15);
-        doc.text("Responsible Parenthood and Family Planning (RPFP)", 148, 31, { align: "center" });
-
-        doc.setFontSize(11);
-        doc.text(
+        drawReportHeader(
+            doc,
             `FORM A - Family Planning Classes and Individuals Reached (CY ${yearLabel})`,
-            148, 40, { align: "center" }
+            logos
         );
 
-        doc.setFont("times", "normal");
-        doc.setFontSize(9);
-        doc.text(
-            `Date Created: ${getExportDate()}`,
-            148, 46,
-            { align: "center" }
-        );
+        // Same table as the on-screen Official Form A Report:
+        // grouped three-row header, tinted sub-totals, navy grand total
+        const toCells = (record) => rowToValues(record);
 
         const body = [];
+        const rowKinds = [];
 
         monthNames.forEach(month => {
 
-            body.push([month, ...rowToValues(analytics.monthly[month])]);
+            body.push([month, ...toCells(analytics.monthly[month])]);
+            rowKinds.push("month");
 
             if (quarterMonths[month]) {
                 body.push([
-                    "SUBTOTAL",
-                    ...rowToValues(sumMonths(analytics.monthly, quarterMonths[month])),
+                    "Sub-total",
+                    ...toCells(sumMonths(analytics.monthly, quarterMonths[month])),
                 ]);
+                rowKinds.push("subtotal");
             }
 
         });
 
-        body.push(["GRAND TOTAL", ...rowToValues(yearTotal)]);
+        body.push(["Grand Total", ...toCells(yearTotal)]);
+        rowKinds.push("total");
+
+        const span = (content, rowSpan, colSpan = 1) => ({ content, rowSpan, colSpan });
 
         autoTable(doc, {
 
-            startY: 52,
-            theme: "grid",
-            margin: { left: 8, right: 8 },
+            ...reportTableOptions(rowKinds, { fontSize: 6, cellPadding: 1.4 }),
 
-            styles: {
-                fontSize: 5,
-                halign: "center",
-                valign: "middle",
-            },
-
-            headStyles: {
-                fillColor: [0, 112, 192],
-                textColor: 255,
-                fontStyle: "bold",
-            },
-
-            head: [[
-                "Month",
-                "4Ps", "Non-4Ps", "USAPAN", "PMOC", "House", "Profiled", "Others", "Total",
-                "Target",
-                "4Ps", "Non-4Ps", "USAPAN", "PMOC", "House", "Profiled", "Others", "Total",
-                "Male", "Female", "Solo", "Couple",
-            ]],
+            head: [
+                [
+                    span("Month", 3),
+                    span("No. of Classes Held", 1, 7),
+                    span("TOTAL", 3),
+                    span("No. of Target Couples", 3),
+                    span("No. of Individuals Reached", 1, 7),
+                    span("TOTAL", 3),
+                    span("Solo / Couple", 1, 4),
+                ],
+                [
+                    ...categories.map(cat => span(cat, 2)),
+                    ...categories.map(cat => span(cat, 2)),
+                    span("Solo", 1, 2),
+                    span("TOTAL SOLO", 2),
+                    span("TOTAL COUPLE", 2),
+                ],
+                ["Male", "Female"],
+            ],
 
             body,
 
-            didParseCell(data) {
-
-                const text = data.row.raw?.[0];
-
-                if (text === "SUBTOTAL") {
-                    data.cell.styles.fillColor = [255, 242, 204];
-                    data.cell.styles.fontStyle = "bold";
-                }
-
-                if (text === "GRAND TOTAL") {
-                    data.cell.styles.fillColor = [184, 204, 228];
-                    data.cell.styles.fontStyle = "bold";
-                }
-
-            },
-
         });
 
-        doc.save(`Official_Form_A_Report_${yearLabel}.pdf`);
+        drawSignatories(doc);
+
+        doc.save(fileName);
 
     };
 
@@ -728,7 +690,7 @@ function FormAAnalytics({
     ====================================================
     */
 
-    const exportOfficialExcel = async () => {
+    const exportOfficialExcel = async (fileName = `${exportBaseName}.xlsx`) => {
 
         try {
 
@@ -777,7 +739,7 @@ function FormAAnalytics({
 
             saveAs(
                 new Blob([excelBuffer]),
-                `Official_Form_A_Report_${yearLabel}.xlsx`
+                fileName
             );
 
         } catch (error) {
@@ -795,21 +757,50 @@ function FormAAnalytics({
     ====================================================
     */
 
-    const isImported = !!importedReports[selectedYear];
+    // Step 1 -> Step 2: a valid .xlsx was picked (or dropped); ask for the report year
+    const acceptFile = (file) => {
 
-    // Step 1: person picks a file -> we ask for the report year
+        if (!file) return;
+
+        if (!file.name.toLowerCase().endsWith(".xlsx")) {
+            setImportError("Please choose an .xlsx file.");
+            return;
+        }
+
+        setImportError("");
+        setImportYear("");   // no default, so the year is always chosen deliberately
+        setPendingFile(file);
+        setShowImport(false);
+
+    };
+
+    // File explorer result
     const handleFileChosen = (e) => {
 
         const file = e.target.files?.[0];
 
         e.target.value = "";   // lets the same file be picked again later
 
-        if (!file) return;
+        acceptFile(file);
 
+    };
+
+    // Drag and drop result
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setDragOver(false);
+        acceptFile(e.dataTransfer.files?.[0]);
+    };
+
+    const openPicker = () => {
         setImportError("");
-        setImportYear("");   // no default, so the year is always chosen deliberately
-        setPendingFile(file);
+        setShowImport(true);
+    };
 
+    const closePicker = () => {
+        setShowImport(false);
+        setImportError("");
+        setDragOver(false);
     };
 
     const closeImportModal = () => {
@@ -888,6 +879,8 @@ function FormAAnalytics({
 
     };
 
+    // Kept for pages that want a "remove imported report" control
+    // eslint-disable-next-line no-unused-vars
     const removeImportedReport = () => {
 
         if (!window.confirm(
@@ -904,14 +897,6 @@ function FormAAnalytics({
 
     };
 
-    if (loading) {
-        return (
-            <div className="form-a-loading">
-                Loading Form A Analytics...
-            </div>
-        );
-    }
-
     // Renders the 21 data cells of a row as <td> or <th>
     const renderCells = (record, Tag, keyPrefix) =>
         rowToValues(record).map((value, i) => (
@@ -927,26 +912,6 @@ function FormAAnalytics({
     return (
 
         <div className="form-a-container">
-
-            {/* TOP BAR: status on the left, Import on the right */}
-
-            <div className="form-a-topbar">
-
-                <div className="form-a-topbar-status">
-
-
-
-                </div>
-
-                <button
-                    type="button"
-                    className="import-btn"
-                    onClick={() => fileInputRef.current?.click()}
-                >
-                    Import Excel
-                </button>
-
-            </div>
 
             {/* KPI CARDS */}
 
@@ -1037,7 +1002,7 @@ function FormAAnalytics({
                             <th>Male Solo</th>
                             <th>Female Solo</th>
                             <th>Total Solo</th>
-                            <th>Couple Attendees</th>
+                            <th>Total Couple Attendees</th>
                         </tr>
                     </thead>
 
@@ -1086,11 +1051,19 @@ function FormAAnalytics({
 
                     <div className="report-buttons">
 
-                        <button className="pdf-btn" onClick={exportPDF}>
+                        <button
+                            type="button"
+                            className="import-btn"
+                            onClick={openPicker}
+                        >
+                            Import
+                        </button>
+
+                        <button className="pdf-btn" onClick={() => setExportFormat("pdf")}>
                             Export PDF
                         </button>
 
-                        <button className="excel-btn" onClick={exportOfficialExcel}>
+                        <button className="excel-btn" onClick={() => setExportFormat("excel")}>
                             Export Excel
                         </button>
 
@@ -1181,7 +1154,7 @@ function FormAAnalytics({
 
             </div>
 
-            {/* IMPORT: hidden file picker + year prompt */}
+            {/* IMPORT: hidden file input (opened by the "Choose file" button) */}
 
             <input
                 ref={fileInputRef}
@@ -1190,6 +1163,77 @@ function FormAAnalytics({
                 style={{ display: "none" }}
                 onChange={handleFileChosen}
             />
+
+            {/* EXPORT: confirm what will be exported */}
+
+            {exportFormat && (
+                <ExportConfirmModal
+                    format={exportFormat}
+                    reportName="Form A"
+                    filters={exportFilters}
+                    defaultFileName={exportBaseName}
+                    imported={isAllYears ? Object.keys(importedReports).length > 0 : !!importedReports[selectedYear]}
+                    onCancel={() => setExportFormat(null)}
+                    onConfirm={(fileName) => {
+                        const run = exportFormat === "pdf" ? exportPDF : exportOfficialExcel;
+                        setExportFormat(null);
+                        run(fileName);
+                    }}
+                />
+            )}
+
+            {/* IMPORT STEP 1: choose a file */}
+
+            {showImport && !pendingFile && (
+                <div className="import-modal-backdrop" onClick={closePicker}>
+
+                    <div
+                        className="import-modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="import-pick-title"
+                        onClick={e => e.stopPropagation()}
+                    >
+
+                        <h3 id="import-pick-title">Import Form A report</h3>
+
+                        <p className="import-hint">
+                            Upload the filled-in Form A Excel file (.xlsx).
+                        </p>
+
+                        <div
+                            className={`import-dropzone${dragOver ? " is-over" : ""}`}
+                            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                            onDragLeave={() => setDragOver(false)}
+                            onDrop={handleDrop}
+                        >
+                            <strong>Drag and drop your file here</strong>
+                            <span>or</span>
+                            <button
+                                type="button"
+                                className="excel-btn"
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                Choose file
+                            </button>
+                        </div>
+
+                        {importError && (
+                            <p className="import-error" role="alert">{importError}</p>
+                        )}
+
+                        <div className="import-modal-actions">
+                            <button type="button" onClick={closePicker}>
+                                Cancel
+                            </button>
+                        </div>
+
+                    </div>
+
+                </div>
+            )}
+
+            {/* IMPORT STEP 2: which year is this report for */}
 
             {pendingFile && (
                 <div className="import-modal-backdrop" onClick={closeImportModal}>
@@ -1254,24 +1298,7 @@ function FormAAnalytics({
             {/* IMPORT ALERT: bottom of the screen, disappears by itself */}
 
             {toast && (
-                <div
-                    role="status"
-                    aria-live="polite"
-                    style={{
-                        position: "fixed",
-                        left: "50%",
-                        bottom: "24px",
-                        transform: "translateX(-50%)",
-                        background: "#1f2937",
-                        color: "#fff",
-                        padding: "12px 20px",
-                        borderRadius: "8px",
-                        boxShadow: "0 6px 20px rgba(0,0,0,0.25)",
-                        fontSize: "14px",
-                        zIndex: 1100,
-                        maxWidth: "90vw",
-                    }}
-                >
+                <div className="import-toast" role="status" aria-live="polite">
                     {toast.text}
                 </div>
             )}

@@ -1,9 +1,13 @@
-import "./ModernShifters.css";
+import "../report-forms.css";
+import MethodBadges from "../MethodBadges";
 import { useMemo, useState, useEffect, useRef } from "react";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { getClientDate, canonicalMethod } from "../reportData";
+import ExportConfirmModal from "../ExportConfirmModal";
+import { loadReportLogos, drawReportHeader, reportTableOptions, drawSignatories } from "../reportPdf";
 
 /*
 ====================================================
@@ -37,31 +41,15 @@ const TEMPLATE_GRAND_ROW = 25;
 
 const IMPORT_STORAGE_KEY = "modernShifters_imported_reports";
 
-const methodMap = {
-    condom: "Condom",
-    pills: "Pills",
-    injectable: "Injectable",
-    iud: "IUD",
-    implant: "Implant",
-    subdermal: "Implant",
-    nsv: "NSV",
-    vasectomy: "NSV",
-    btl: "BTL",
-    "tubal ligation": "BTL",
-    ccm: "CCM",
-    bbt: "BBT",
-    stm: "STM",
-    "sympto-thermal": "STM",
-    "sympto thermal": "STM",
-    sdm: "SDM",
-    lam: "LAM",
-};
+// This report's column names for the shared method names
+const reportKeys = { Vasectomy: "NSV", "Tubal Ligation": "BTL", CMM: "CCM" };
 
+// Any spelling of a modern FP method -> this report's column name ("" if not one)
 function normalizeMethod(value) {
-    if (!value) return "";
-    const normalized = value.toString().trim().toLowerCase();
-    return methodMap[normalized] || value.toString().trim();
+    const name = canonicalMethod(value);
+    return reportKeys[name] || name;
 }
+
 
 function displayMethod(method) {
     switch (method) {
@@ -106,10 +94,15 @@ function sumMonths(monthly, months) {
 
 const monthHasData = (rec) => rec.total > 0;
 
-// Most preferred method of a record ("-" when empty)
+// Most preferred method(s) of a record, as display names ("-" when empty).
+// Methods tied for the highest count are all listed, comma-separated.
 function topMethodOf(record) {
-    const best = Object.entries(record.counts).sort((a, b) => b[1] - a[1])[0];
-    return best && best[1] > 0 ? best[0] : "-";
+    const highest = Math.max(0, ...Object.values(record.counts));
+    if (highest === 0) return "-";
+    return Object.entries(record.counts)
+        .filter(([, count]) => count === highest)
+        .map(([method]) => displayMethod(method))
+        .join(", ");
 }
 
 /*
@@ -152,48 +145,20 @@ function periodLabel(period) {
     return `${months[0]} to ${months[months.length - 1]}`;
 }
 
-// Same date fallbacks the other report pages use
-function toDate(value) {
-    if (!value) return null;
-    if (value?.toDate) {
-        const d = value.toDate();
-        return Number.isNaN(d.getTime()) ? null : d;
-    }
-    if (value instanceof Date) {
-        return Number.isNaN(value.getTime()) ? null : value;
-    }
-    if (typeof value === "string" || typeof value === "number") {
-        const d = new Date(value);
-        return Number.isNaN(d.getTime()) ? null : d;
-    }
-    return null;
-}
 
-function getClientDate(client) {
-    const candidates = [
-        client.created_at,
-        client.updated_at,
-        client.date,
-        client.month_of_service,
-        client.service_month,
-        client.report_month,
-    ];
-    for (const value of candidates) {
-        const d = toDate(value);
-        if (d) return d;
-    }
-    return null;
-}
 
 // Modern FP user who intends to shift to another modern method
 function getShiftMethod(client) {
-    if (!client.fp_method) return null;
 
     const current = normalizeMethod(client.fp_method);
-    const shift = normalizeMethod(client.intention_to_shift);
 
-    if (!current || !shift) return null;
-    if (!methods.includes(current) || !methods.includes(shift)) return null;
+    // public records store it in intention_to_shift, referred ones in with_intention_to_shift
+    const shift = normalizeMethod(
+        client.intention_to_shift || client.with_intention_to_shift
+    );
+
+    // "No Intention", a blank, or the method they already use is not a shift
+    if (!current || !shift || shift === current) return null;
 
     return shift;
 }
@@ -227,7 +192,7 @@ function buildMonthlyFromClients(clients, includeYear) {
 // Counts all modern FP users (not only shifters) in the chosen years / months
 function countModernUsers(clients, includeYear, months) {
     return clients.filter(client => {
-        if (!client.fp_method || client.fp_method === "") return false;
+        if (!normalizeMethod(client.fp_method)) return false;
 
         const date = getClientDate(client);
         if (!date || !includeYear(date.getFullYear())) return false;
@@ -359,8 +324,8 @@ async function loadTemplateBuffer(year) {
     - onImportReport(year, monthly) / onRemoveImport(year): optional persistence
 */
 function ModernShifters({
+    exportFilters,
     clients = [],
-    loading,
     year: yearProp,
     period: periodProp,
     onYearChange,
@@ -394,6 +359,12 @@ function ModernShifters({
         }
     });
 
+    // Export waiting for confirmation: "pdf" | "excel" | null
+    const [exportFormat, setExportFormat] = useState(null);
+
+    // Import flow: step 1 = "choose a file" modal, step 2 = "which year" modal
+    const [showImport, setShowImport] = useState(false);
+    const [dragOver, setDragOver] = useState(false);
     const [pendingFile, setPendingFile] = useState(null);
     const [importYear, setImportYear] = useState("");
     const [importError, setImportError] = useState("");
@@ -484,64 +455,45 @@ function ModernShifters({
     ====================================================
     */
 
-    const exportModernShiftersPDF = () => {
+    // Default export file name (without extension); it can be changed in the confirmation
+    const exportBaseName = `Modern_FP_Shifters_Report_${yearLabel}`;
+
+    const exportModernShiftersPDF = async (fileName = `${exportBaseName}.pdf`) => {
 
         try {
 
+            const logos = await loadReportLogos();
+
             const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
-            doc.setFont("times", "normal");
-            doc.setFontSize(11);
-            doc.text("Republic of the Philippines", 148, 10, { align: "center" });
-            doc.text("Province of Bulacan", 148, 16, { align: "center" });
-
-            doc.setFont("times", "bold");
-            doc.text("Provincial Social Welfare and Development Office", 148, 22, { align: "center" });
-
-            doc.setFontSize(15);
-            doc.text("Responsible Parenthood and Family Planning (RPFP)", 148, 31, { align: "center" });
-
-            doc.setFontSize(11);
-            doc.text(
+            drawReportHeader(
+                doc,
                 `MODERN FP USER WITH INTENTION TO SHIFT TO OTHER MODERN FP METHOD (CY ${yearLabel})`,
-                148, 40, { align: "center" }
+                logos
             );
 
+            // Same columns as the on-screen report
+            const toCells = (record) => rowToValues(record).map(value => value || 0);
+
+            const body = monthNames.map(month => [month, ...toCells(analytics.monthly[month])]);
+            const rowKinds = monthNames.map(() => "month");
+
+            body.push(["GRAND TOTAL", ...toCells(yearTotal)]);
+            rowKinds.push("total");
+
             autoTable(doc, {
-                startY: 46,
-                theme: "grid",
-                margin: { left: 8, right: 8 },
 
-                styles: {
-                    font: "times",
-                    fontSize: 7,
-                    halign: "center",
-                    valign: "middle",
-                    lineWidth: 0.1,
-                },
-
-                headStyles: {
-                    fillColor: [0, 166, 81],
-                    textColor: 255,
-                    fontStyle: "bold",
-                    fontSize: 7,
-                },
-
-                footStyles: {
-                    fillColor: [38, 90, 200],
-                    textColor: 255,
-                    fontStyle: "bold",
-                    fontSize: 7,
-                },
+                ...reportTableOptions(rowKinds, { firstColumnWidth: 27 }),
 
                 head: [["Month", ...methods, "Total"]],
 
-                body: monthNames.map(month => [month, ...rowToValues(analytics.monthly[month])]),
+                body,
 
-                foot: [["GRAND TOTAL", ...rowToValues(yearTotal)]],
             });
 
-            doc.save(`Modern_FP_Shifters_Report_${yearLabel}.pdf`);
+            drawSignatories(doc);
+
+            doc.save(fileName);
 
         } catch (error) {
             console.error("Failed to export Modern FP Shifters PDF:", error);
@@ -556,7 +508,7 @@ function ModernShifters({
     ====================================================
     */
 
-    const exportModernShiftersExcel = async () => {
+    const exportModernShiftersExcel = async (fileName = `${exportBaseName}.xlsx`) => {
 
         try {
 
@@ -584,7 +536,7 @@ function ModernShifters({
 
             saveAs(
                 new Blob([excelBuffer]),
-                `Modern_FP_Shifters_Report_${yearLabel}.xlsx`
+                fileName
             );
 
         } catch (error) {
@@ -600,18 +552,50 @@ function ModernShifters({
     ====================================================
     */
 
+    // Step 1 -> Step 2: a valid .xlsx was picked (or dropped); ask for the report year
+    const acceptFile = (file) => {
+
+        if (!file) return;
+
+        if (!file.name.toLowerCase().endsWith(".xlsx")) {
+            setImportError("Please choose an .xlsx file.");
+            return;
+        }
+
+        setImportError("");
+        setImportYear("");   // no default, so the year is always chosen deliberately
+        setPendingFile(file);
+        setShowImport(false);
+
+    };
+
+    // File explorer result
     const handleFileChosen = (e) => {
 
         const file = e.target.files?.[0];
 
         e.target.value = "";   // lets the same file be picked again later
 
-        if (!file) return;
+        acceptFile(file);
 
+    };
+
+    // Drag and drop result
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setDragOver(false);
+        acceptFile(e.dataTransfer.files?.[0]);
+    };
+
+    const openPicker = () => {
         setImportError("");
-        setImportYear("");
-        setPendingFile(file);
+        setShowImport(true);
+    };
 
+    const closePicker = () => {
+        setShowImport(false);
+        setImportError("");
+        setDragOver(false);
     };
 
     const closeImportModal = () => {
@@ -702,14 +686,6 @@ function ModernShifters({
 
     };
 
-    if (loading) {
-        return (
-            <div className="analytics-loading">
-                Loading analytics...
-            </div>
-        );
-    }
-
     const renderMethodRow = (label, key) => (
         <div className="method-row" key={key}>
             <span>{label}</span>
@@ -745,14 +721,6 @@ function ModernShifters({
 
                 <div className="shifters-topbar-status" />
 
-                <button
-                    type="button"
-                    className="import-btn"
-                    onClick={() => fileInputRef.current?.click()}
-                >
-                    Import Excel
-                </button>
-
             </div>
 
             {/* KPI CARDS */}
@@ -771,7 +739,7 @@ function ModernShifters({
 
                 <div className="analytics-card green">
                     <h4>Most Preferred Method</h4>
-                    <span>{displayMethod(mostPreferredMethod)}</span>
+                    <span><MethodBadges value={mostPreferredMethod} pillSingle={false} /></span>
                 </div>
 
             </div>
@@ -829,7 +797,7 @@ function ModernShifters({
                                     <td>{month}</td>
                                     <td>{row.total}</td>
                                     <td className="highlight-method">
-                                        {displayMethod(topMethodOf(row))}
+                                        <MethodBadges value={topMethodOf(row)} />
                                     </td>
                                 </tr>
                             );
@@ -840,7 +808,7 @@ function ModernShifters({
                         <tr>
                             <th>TOTAL</th>
                             <th>{totalShifters}</th>
-                            <th>{displayMethod(mostPreferredMethod)}</th>
+                            <th><MethodBadges value={mostPreferredMethod} /></th>
                         </tr>
                     </tfoot>
 
@@ -863,11 +831,16 @@ function ModernShifters({
 
                     <div className="report-buttons">
 
-                        <button type="button" className="pdf-btn" onClick={exportModernShiftersPDF}>
+                        <button type="button" className="import-btn" onClick={openPicker}>
+                            Import
+                        </button>
+
+
+                        <button type="button" className="pdf-btn" onClick={() => setExportFormat("pdf")}>
                             Export PDF
                         </button>
 
-                        <button type="button" className="excel-btn" onClick={exportModernShiftersExcel}>
+                        <button type="button" className="excel-btn" onClick={() => setExportFormat("excel")}>
                             Export Excel
                         </button>
 
@@ -894,9 +867,9 @@ function ModernShifters({
                                     <tr key={month}>
                                         <td>{month}</td>
                                         {methods.map(method => (
-                                            <td key={method}>{row.counts[method] || ""}</td>
+                                            <td key={method}>{row.counts[method] || 0}</td>
                                         ))}
-                                        <td>{row.total || ""}</td>
+                                        <td>{row.total || 0}</td>
                                     </tr>
                                 );
                             })}
@@ -908,7 +881,7 @@ function ModernShifters({
                                     {isFiltered ? "TOTAL" : "GRAND TOTAL"}
                                 </th>
                                 {methods.map(method => (
-                                    <th key={method}>{grandTotal.counts[method] || ""}</th>
+                                    <th key={method}>{grandTotal.counts[method] || 0}</th>
                                 ))}
                                 <th>{totalShifters}</th>
                             </tr>
@@ -929,6 +902,77 @@ function ModernShifters({
                 style={{ display: "none" }}
                 onChange={handleFileChosen}
             />
+
+            {/* EXPORT: confirm what will be exported */}
+
+            {exportFormat && (
+                <ExportConfirmModal
+                    format={exportFormat}
+                    reportName="Modern FP Shifters"
+                    filters={exportFilters}
+                    defaultFileName={exportBaseName}
+                    imported={isAllYears ? Object.keys(importedReports).length > 0 : !!importedReports[selectedYear]}
+                    onCancel={() => setExportFormat(null)}
+                    onConfirm={(fileName) => {
+                        const run = exportFormat === "pdf" ? exportModernShiftersPDF : exportModernShiftersExcel;
+                        setExportFormat(null);
+                        run(fileName);
+                    }}
+                />
+            )}
+
+            {/* IMPORT STEP 1: choose a file */}
+
+            {showImport && !pendingFile && (
+                <div className="import-modal-backdrop" onClick={closePicker}>
+
+                    <div
+                        className="import-modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="import-pick-title-shifters"
+                        onClick={e => e.stopPropagation()}
+                    >
+
+                        <h3 id="import-pick-title-shifters">Import Modern FP Shifters report</h3>
+
+                        <p className="import-hint">
+                            Upload the filled-in Modern FP Shifters Excel file (.xlsx).
+                        </p>
+
+                        <div
+                            className={`import-dropzone${dragOver ? " is-over" : ""}`}
+                            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                            onDragLeave={() => setDragOver(false)}
+                            onDrop={handleDrop}
+                        >
+                            <strong>Drag and drop your file here</strong>
+                            <span>or</span>
+                            <button
+                                type="button"
+                                className="excel-btn"
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                Choose file
+                            </button>
+                        </div>
+
+                        {importError && (
+                            <p className="import-error" role="alert">{importError}</p>
+                        )}
+
+                        <div className="import-modal-actions">
+                            <button type="button" onClick={closePicker}>
+                                Cancel
+                            </button>
+                        </div>
+
+                    </div>
+
+                </div>
+            )}
+
+            {/* IMPORT STEP 2: which year is this report for */}
 
             {pendingFile && (
                 <div className="import-modal-backdrop" onClick={closeImportModal}>
@@ -989,24 +1033,7 @@ function ModernShifters({
             {/* IMPORT ALERT */}
 
             {toast && (
-                <div
-                    role="status"
-                    aria-live="polite"
-                    style={{
-                        position: "fixed",
-                        left: "50%",
-                        bottom: "24px",
-                        transform: "translateX(-50%)",
-                        background: "#1f2937",
-                        color: "#fff",
-                        padding: "12px 20px",
-                        borderRadius: "8px",
-                        boxShadow: "0 6px 20px rgba(0,0,0,0.25)",
-                        fontSize: "14px",
-                        zIndex: 1100,
-                        maxWidth: "90vw",
-                    }}
-                >
+                <div className="import-toast" role="status" aria-live="polite">
                     {toast.text}
                 </div>
             )}

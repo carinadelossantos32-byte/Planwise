@@ -1,10 +1,14 @@
 import { useMemo, useState, useEffect, useRef } from "react";
-import "./FormCAnalytics.css";
+import "../report-forms.css";
+import MethodBadges from "../MethodBadges";
 
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { getClientDate, isArchived } from "../reportData";
+import ExportConfirmModal from "../ExportConfirmModal";
+import { loadReportLogos, drawReportHeader, reportTableOptions, drawSignatories } from "../reportPdf";
 
 /*
 ====================================================
@@ -114,38 +118,7 @@ function periodLabel(period) {
     return `${months[0]} to ${months[months.length - 1]}`;
 }
 
-// Same date fallbacks the Reports page uses for its filters
-function toDate(value) {
-    if (!value) return null;
-    if (value?.toDate) {
-        const d = value.toDate();
-        return Number.isNaN(d.getTime()) ? null : d;
-    }
-    if (value instanceof Date) {
-        return Number.isNaN(value.getTime()) ? null : value;
-    }
-    if (typeof value === "string" || typeof value === "number") {
-        const d = new Date(value);
-        return Number.isNaN(d.getTime()) ? null : d;
-    }
-    return null;
-}
 
-function getClientDate(client) {
-    const candidates = [
-        client.created_at,
-        client.updated_at,
-        client.date,
-        client.month_of_service,
-        client.service_month,
-        client.report_month,
-    ];
-    for (const value of candidates) {
-        const d = toDate(value);
-        if (d) return d;
-    }
-    return null;
-}
 
 // Same method fields the Reports page uses for its Method filter
 function getMethodText(client) {
@@ -157,7 +130,6 @@ function getMethodText(client) {
         client?.familyPlanningMethod,
         client?.preferred_method,
         client?.service_method,
-        client?.intention_to_shift,
     ];
     for (const value of candidates) {
         if (typeof value === "string" && value.trim()) return value.trim();
@@ -189,9 +161,6 @@ function getMethod(client) {
     return "";
 }
 
-function isArchived(client) {
-    return client?.is_archived === true || client?.archived === true;
-}
 
 const sumMethods = (rec) =>
     formColumns.reduce((sum, name) => sum + (rec?.[name] || 0), 0);
@@ -253,6 +222,9 @@ function buildMonthlyFromClients(clients, includeYear) {
 
         if (isArchived(client)) return;
 
+        // Form C covers the Referred & Served list only
+        if (client.sourceCollection !== "clients_referred") return;
+
         const date = getClientDate(client);
 
         if (!date || !includeYear(date.getFullYear())) return;
@@ -261,15 +233,16 @@ function buildMonthlyFromClients(clients, includeYear) {
 
         row.total++;
 
-        if (client.sourceCollection === "clients_referred") {
-            row.referred++;
-        } else {
-            row.unmetNeed++;
-        }
-
         const method = getMethod(client);
 
-        if (method) row[method]++;
+        if (method) {
+            // served with a modern FP method
+            row.referred++;
+            row[method]++;
+        } else {
+            // referred, but no modern FP method is recorded yet
+            row.unmetNeed++;
+        }
 
     });
 
@@ -399,7 +372,7 @@ async function parseFormCWorkbook(buffer) {
 /*
     Props
     - clients:                 client records (already narrowed by the page's filters)
-    - loading / error:         load state from the page
+    - error:                   load error from the page
     - year:                    page's Year filter (number / numeric string / "all")
     - period:                  page's Period filter ("all" | "q1".."q4" | "january".."december")
     - onYearChange(year):      called after an import so the Year filter jumps to it
@@ -408,8 +381,8 @@ async function parseFormCWorkbook(buffer) {
     - onImportReport(year, monthly) / onRemoveImport(year): optional, to persist imports
 */
 function FormCAnalytics({
+    exportFilters,
     clients = [],
-    loading = false,
     error = "",
     year: yearProp,
     period: periodProp,
@@ -448,6 +421,12 @@ function FormCAnalytics({
         }
     });
 
+    // Export waiting for confirmation: "pdf" | "excel" | null
+    const [exportFormat, setExportFormat] = useState(null);
+
+    // Import flow: step 1 = "choose a file" modal, step 2 = "which year" modal
+    const [showImport, setShowImport] = useState(false);
+    const [dragOver, setDragOver] = useState(false);
     const [pendingFile, setPendingFile] = useState(null);
     const [importYear, setImportYear] = useState("");
     const [importError, setImportError] = useState("");
@@ -567,88 +546,49 @@ function FormCAnalytics({
     ====================================================
     */
 
-    const exportPDF = () => {
+    // Default export file name (without extension); it can be changed in the confirmation
+    const exportBaseName = `Official_Form_C_Report_${yearLabel}`;
+
+    const exportPDF = async (fileName = `${exportBaseName}.pdf`) => {
 
         try {
 
+            const logos = await loadReportLogos();
+
             const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
-            doc.setFont("times", "normal");
-            doc.setFontSize(11);
-            doc.text("Republic of the Philippines", 148, 10, { align: "center" });
-            doc.text("Province of Bulacan", 148, 16, { align: "center" });
-
-            doc.setFont("times", "bold");
-            doc.text("Provincial Social Welfare and Development Office", 148, 22, { align: "center" });
-
-            doc.setFontSize(15);
-            doc.text("Responsible Parenthood and Family Planning (RPFP)", 148, 31, { align: "center" });
-
-            doc.setFontSize(11);
-            doc.text(
+            drawReportHeader(
+                doc,
                 `FORM C - Individuals Referred and Served with Unmet Need for Modern Family Planning (CY ${yearLabel}${periodText ? `, ${periodText}` : ""})`,
-                148, 40, { align: "center" }
+                logos
             );
+
+            // Same rows and columns as the on-screen Official Form C Report
+            const body = activeMonths.map(month => [
+                month,
+                ...rowToValues(analytics.monthly[month]),
+            ]);
+            const rowKinds = activeMonths.map(() => "month");
+
+            body.push([
+                isFiltered ? "TOTAL" : "GRAND TOTAL",
+                ...rowToValues(analytics.totals),
+            ]);
+            rowKinds.push("total");
 
             autoTable(doc, {
 
-                startY: 46,
-                theme: "grid",
-                margin: { left: 8, right: 8 },
-
-                styles: {
-                    font: "times",
-                    fontSize: 7,
-                    halign: "center",
-                    valign: "middle",
-                    cellPadding: 2,
-                    lineWidth: 0.1,
-                },
+                ...reportTableOptions(rowKinds, { firstColumnWidth: 27 }),
 
                 head: [["Month", ...formColumns, "Total"]],
 
-                body: activeMonths.map(month => [
-                    month,
-                    ...rowToValues(analytics.monthly[month]),
-                ]),
-
-                foot: [[
-                    isFiltered ? "TOTAL" : "GRAND TOTAL",
-                    ...rowToValues(analytics.totals),
-                ]],
-
-                headStyles: {
-                    fillColor: [41, 128, 185],
-                    textColor: 255,
-                    fontStyle: "bold",
-                },
-
-                footStyles: {
-                    fillColor: [230, 230, 230],
-                    textColor: 0,
-                    fontStyle: "bold",
-                },
-
-                columnStyles: {
-                    0: { cellWidth: 25 },
-                    1: { cellWidth: 17 },
-                    2: { cellWidth: 15 },
-                    3: { cellWidth: 15 },
-                    4: { cellWidth: 19 },
-                    5: { cellWidth: 15 },
-                    6: { cellWidth: 15 },
-                    7: { cellWidth: 17 },
-                    8: { cellWidth: 15 },
-                    9: { cellWidth: 15 },
-                    10: { cellWidth: 15 },
-                    11: { cellWidth: 15 },
-                    12: { cellWidth: 15 },
-                    13: { cellWidth: 17 },
-                },
+                body,
 
             });
 
-            doc.save(`Official_Form_C_Report_${yearLabel}.pdf`);
+            drawSignatories(doc);
+
+            doc.save(fileName);
 
         } catch (err) {
 
@@ -665,7 +605,7 @@ function FormCAnalytics({
     ====================================================
     */
 
-    const exportOfficialExcel = async () => {
+    const exportOfficialExcel = async (fileName = `${exportBaseName}.xlsx`) => {
 
         try {
 
@@ -707,7 +647,7 @@ function FormCAnalytics({
 
             saveAs(
                 new Blob([excelBuffer]),
-                `Official_Form_C_Report_${yearLabel}.xlsx`
+                fileName
             );
 
         } catch (err) {
@@ -726,18 +666,50 @@ function FormCAnalytics({
     */
 
     // Step 1: person picks a file -> we ask for the report year
+    // Step 1 -> Step 2: a valid .xlsx was picked (or dropped); ask for the report year
+    const acceptFile = (file) => {
+
+        if (!file) return;
+
+        if (!file.name.toLowerCase().endsWith(".xlsx")) {
+            setImportError("Please choose an .xlsx file.");
+            return;
+        }
+
+        setImportError("");
+        setImportYear("");   // no default, so the year is always chosen deliberately
+        setPendingFile(file);
+        setShowImport(false);
+
+    };
+
+    // File explorer result
     const handleFileChosen = (e) => {
 
         const file = e.target.files?.[0];
 
         e.target.value = "";   // lets the same file be picked again later
 
-        if (!file) return;
+        acceptFile(file);
 
+    };
+
+    // Drag and drop result
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setDragOver(false);
+        acceptFile(e.dataTransfer.files?.[0]);
+    };
+
+    const openPicker = () => {
         setImportError("");
-        setImportYear("");
-        setPendingFile(file);
+        setShowImport(true);
+    };
 
+    const closePicker = () => {
+        setShowImport(false);
+        setImportError("");
+        setDragOver(false);
     };
 
     const closeImportModal = () => {
@@ -834,10 +806,6 @@ function FormCAnalytics({
 
     };
 
-    if (loading) {
-        return <div className="form-c-loading">Loading Form C...</div>;
-    }
-
     /*
     ====================================================
                         RENDER
@@ -878,14 +846,6 @@ function FormCAnalytics({
                         </>
                     )}
                 </div>
-
-                <button
-                    type="button"
-                    className="import-btn"
-                    onClick={() => fileInputRef.current?.click()}
-                >
-                    Import Excel
-                </button>
 
             </div>
 
@@ -973,7 +933,7 @@ function FormCAnalytics({
                             <th>Month</th>
                             <th>Unmet Need</th>
                             <th>Referred &amp; Served</th>
-                            <th>Top FP Method</th>
+                            <th>Top Method</th>
                             <th>Total Clients</th>
                         </tr>
                     </thead>
@@ -984,7 +944,7 @@ function FormCAnalytics({
                                 <td>{row.month}</td>
                                 <td>{row.unmetNeed}</td>
                                 <td>{row.referred}</td>
-                                <td className="highlight-method">{row.topMethod}</td>
+                                <td className="highlight-method"><MethodBadges value={row.topMethod} /></td>
                                 <td>{row.total}</td>
                             </tr>
                         ))}
@@ -995,7 +955,7 @@ function FormCAnalytics({
                             <th>TOTAL</th>
                             <th>{analytics.totalUnmetNeed}</th>
                             <th>{analytics.totalReferredServed}</th>
-                            <th>{topMethods(analytics.totals)}</th>
+                            <th><MethodBadges value={topMethods(analytics.totals)} /></th>
                             <th>{analytics.totalRecords}</th>
                         </tr>
                     </tfoot>
@@ -1017,11 +977,16 @@ function FormCAnalytics({
 
                     <div className="report-buttons">
 
-                        <button type="button" className="pdf-btn" onClick={exportPDF}>
+                        <button type="button" className="import-btn" onClick={openPicker}>
+                            Import
+                        </button>
+
+
+                        <button type="button" className="pdf-btn" onClick={() => setExportFormat("pdf")}>
                             Export PDF
                         </button>
 
-                        <button type="button" className="excel-btn" onClick={exportOfficialExcel}>
+                        <button type="button" className="excel-btn" onClick={() => setExportFormat("excel")}>
                             Export Excel
                         </button>
 
@@ -1080,6 +1045,77 @@ function FormCAnalytics({
                 style={{ display: "none" }}
                 onChange={handleFileChosen}
             />
+
+            {/* EXPORT: confirm what will be exported */}
+
+            {exportFormat && (
+                <ExportConfirmModal
+                    format={exportFormat}
+                    reportName="Form C"
+                    filters={exportFilters}
+                    defaultFileName={exportBaseName}
+                    imported={usesImported}
+                    onCancel={() => setExportFormat(null)}
+                    onConfirm={(fileName) => {
+                        const run = exportFormat === "pdf" ? exportPDF : exportOfficialExcel;
+                        setExportFormat(null);
+                        run(fileName);
+                    }}
+                />
+            )}
+
+            {/* IMPORT STEP 1: choose a file */}
+
+            {showImport && !pendingFile && (
+                <div className="import-modal-backdrop" onClick={closePicker}>
+
+                    <div
+                        className="import-modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="import-pick-title-c"
+                        onClick={e => e.stopPropagation()}
+                    >
+
+                        <h3 id="import-pick-title-c">Import Form C report</h3>
+
+                        <p className="import-hint">
+                            Upload the filled-in Form C Excel file (.xlsx).
+                        </p>
+
+                        <div
+                            className={`import-dropzone${dragOver ? " is-over" : ""}`}
+                            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                            onDragLeave={() => setDragOver(false)}
+                            onDrop={handleDrop}
+                        >
+                            <strong>Drag and drop your file here</strong>
+                            <span>or</span>
+                            <button
+                                type="button"
+                                className="excel-btn"
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                Choose file
+                            </button>
+                        </div>
+
+                        {importError && (
+                            <p className="import-error" role="alert">{importError}</p>
+                        )}
+
+                        <div className="import-modal-actions">
+                            <button type="button" onClick={closePicker}>
+                                Cancel
+                            </button>
+                        </div>
+
+                    </div>
+
+                </div>
+            )}
+
+            {/* IMPORT STEP 2: which year is this report for */}
 
             {pendingFile && (
                 <div className="import-modal-backdrop" onClick={closeImportModal}>
@@ -1144,24 +1180,7 @@ function FormCAnalytics({
             {/* IMPORT ALERT */}
 
             {toast && (
-                <div
-                    role="status"
-                    aria-live="polite"
-                    style={{
-                        position: "fixed",
-                        left: "50%",
-                        bottom: "24px",
-                        transform: "translateX(-50%)",
-                        background: "#1f2937",
-                        color: "#fff",
-                        padding: "12px 20px",
-                        borderRadius: "8px",
-                        boxShadow: "0 6px 20px rgba(0,0,0,0.25)",
-                        fontSize: "14px",
-                        zIndex: 1100,
-                        maxWidth: "90vw",
-                    }}
-                >
+                <div className="import-toast" role="status" aria-live="polite">
                     {toast.text}
                 </div>
             )}
