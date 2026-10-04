@@ -1,11 +1,12 @@
 import "../report-forms.css";
 import MethodBadges from "../MethodBadges";
+import MethodName from "../MethodName";
 import { useMemo, useState, useEffect, useRef } from "react";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { getClientDate, canonicalMethod } from "../reportData";
+import { getClientDate, canonicalMethod, methodLabel } from "../reportData";
 import ExportConfirmModal from "../ExportConfirmModal";
 import { loadReportLogos, drawReportHeader, reportTableOptions, drawSignatories } from "../reportPdf";
 
@@ -30,8 +31,8 @@ const shortMethods = ["Pills", "Condom", "Injectable"];
 const longMethods = [
     { label: "IUD", key: "IUD" },
     { label: "Implant", key: "Implant" },
-    { label: "Vasectomy", key: "NSV" },
-    { label: "Tubal Ligation", key: "BTL" },
+    { label: "NSV", key: "NSV" },
+    { label: "BTL", key: "BTL" },
 ];
 
 // Excel template layout: JANUARY starts on row 13, Grand Total on row 25.
@@ -55,7 +56,7 @@ function displayMethod(method) {
     switch (method) {
         case "NSV": return "Vasectomy";
         case "BTL": return "Tubal Ligation";
-        default: return method;
+        default: return methodLabel(method);
     }
 }
 
@@ -485,7 +486,7 @@ function ModernShifters({
 
                 ...reportTableOptions(rowKinds, { firstColumnWidth: 27 }),
 
-                head: [["Month", ...methods, "Total"]],
+                head: [["Month", ...methods.map(methodLabel), "Total"]],
 
                 body,
 
@@ -688,7 +689,7 @@ function ModernShifters({
 
     const renderMethodRow = (label, key) => (
         <div className="method-row" key={key}>
-            <span>{label}</span>
+            <span><MethodName name={label} /></span>
             <div className="progress">
                 <div
                     className="progress-fill"
@@ -855,7 +856,7 @@ function ModernShifters({
                         <thead>
                             <tr>
                                 <th>Month</th>
-                                {methods.map(method => <th key={method}>{method}</th>)}
+                                {methods.map(method => <th key={method}>{methodLabel(method)}</th>)}
                                 <th>Total</th>
                             </tr>
                         </thead>

@@ -95,3 +95,12 @@ export function canonicalMethod(value) {
 
     return "";
 }
+
+/*
+    Label shown for a method. The reports keep "CCM" as the internal key
+    (it is the column name in the Excel templates and in saved imports),
+    but the Cervical Mucus Method is displayed as "CMM".
+*/
+export function methodLabel(name) {
+    return name === "CCM" ? "CMM" : name;
+}

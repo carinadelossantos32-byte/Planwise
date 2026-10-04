@@ -1,11 +1,12 @@
 import "../report-forms.css";
 import MethodBadges from "../MethodBadges";
+import MethodName from "../MethodName";
 import { useMemo, useState, useEffect, useRef } from "react";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { getClientDate } from "../reportData";
+import { getClientDate, methodLabel } from "../reportData";
 import ExportConfirmModal from "../ExportConfirmModal";
 import { loadReportLogos, drawReportHeader, reportTableOptions, drawSignatories } from "../reportPdf";
 
@@ -32,7 +33,7 @@ const headerLabels = {
     "Tubal Ligation": "BTL",
 };
 
-const labelOf = (method) => headerLabels[method] || method;
+const labelOf = (method) => methodLabel(headerLabels[method] || method);
 
 const methodAliases = [
     { name: "Condom", aliases: ["condom"] },
@@ -168,7 +169,7 @@ function topMethods(rec) {
 
     if (highest === 0) return "-";
 
-    return methodHeaders.filter(name => (rec[name] || 0) === highest).join(", ");
+    return methodHeaders.filter(name => (rec[name] || 0) === highest).map(methodLabel).join(", ");
 }
 
 /*
@@ -843,7 +844,7 @@ function ModernFPUsersAnalytics({
 
                                 <div className="method-row" key={method}>
 
-                                    <span>{labelOf(method)}</span>
+                                    <span><MethodName name={labelOf(method)} /></span>
 
                                     <div className="method-progress">
                                         <div

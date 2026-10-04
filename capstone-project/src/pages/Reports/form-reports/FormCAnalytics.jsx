@@ -1,12 +1,13 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import "../report-forms.css";
 import MethodBadges from "../MethodBadges";
+import MethodName from "../MethodName";
 
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { getClientDate, isArchived } from "../reportData";
+import { getClientDate, isArchived, methodLabel } from "../reportData";
 import ExportConfirmModal from "../ExportConfirmModal";
 import { loadReportLogos, drawReportHeader, reportTableOptions, drawSignatories } from "../reportPdf";
 
@@ -171,7 +172,7 @@ function topMethods(rec) {
 
     if (highest <= 0) return "-";
 
-    return methodNames.filter(name => (rec[name] || 0) === highest).join(", ");
+    return methodNames.filter(name => (rec[name] || 0) === highest).map(methodLabel).join(", ");
 }
 
 const createMonthRecord = (month) => ({
@@ -580,7 +581,7 @@ function FormCAnalytics({
 
                 ...reportTableOptions(rowKinds, { firstColumnWidth: 27 }),
 
-                head: [["Month", ...formColumns, "Total"]],
+                head: [["Month", ...formColumns.map(methodLabel), "Total"]],
 
                 body,
 
@@ -892,7 +893,7 @@ function FormCAnalytics({
 
                                 <div key={method.name} className="method-row">
 
-                                    <span>{method.name}</span>
+                                    <span><MethodName name={method.name} /></span>
 
                                     <div className="method-progress">
                                         <div
@@ -1002,7 +1003,7 @@ function FormCAnalytics({
                             <tr>
                                 <th>Month</th>
                                 {formColumns.map(name => (
-                                    <th key={name}>{name}</th>
+                                    <th key={name}>{methodLabel(name)}</th>
                                 ))}
                                 <th>Total</th>
                             </tr>
