@@ -209,7 +209,7 @@
     border-radius: 16px;
     padding: 28px 24px;
     width: 360px;
-    box-shadow: 0 20px 40px rgba(15,23,42,0.18);
+    
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -227,13 +227,19 @@
     box-sizing: border-box;
 }
 
-.modal-content{
+.updated-modal-box .modal-content{
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
     width: 90%;
     gap: 4px;
+
+     box-shadow: none;
+    background: transparent;
+    border-radius: 0;
+    overflow: visible;
+    animation: none;
 }
 
 .modal-content h3{

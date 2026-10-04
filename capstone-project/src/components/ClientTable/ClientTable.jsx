@@ -1,6 +1,6 @@
 import { useState } from "react";
 import "./client-table.css";
-import { SquarePen, Trash2, Eye, ArchiveRestore, ImageIcon, Loader2, AlertCircle } from "lucide-react";
+import { SquarePen, Trash2, ArchiveRestore, ImageIcon, Loader2, AlertCircle } from "lucide-react";
 
 function ClientTable({ clients, loading, onView, onEdit, onDelete, isArchived, onRestore }) {
     const [currentPage, setCurrentPage] = useState(1);
@@ -92,7 +92,20 @@ function ClientTable({ clients, loading, onView, onEdit, onDelete, isArchived, o
 
                             <tbody>
                                 {currentClients.map((client, index) => (
-                                    <tr key={client.id || index} className={isArchived ? "archived-row" : ""}>
+                                    <tr
+                                        key={client.id || index}
+                                        className={`${isArchived ? "archived-row" : ""}${!isArchived ? " client-record-row-clickable" : ""}`}
+                                        style={{ cursor: isArchived ? undefined : "pointer" }}
+                                        tabIndex={isArchived ? undefined : 0}
+                                        aria-label={isArchived ? undefined : `View ${client.name || "client"} record`}
+                                        onClick={isArchived ? undefined : () => onView(client)}
+                                        onKeyDown={isArchived ? undefined : (event) => {
+                                            if (event.key === "Enter" || event.key === " ") {
+                                                event.preventDefault();
+                                                onView(client);
+                                            }
+                                        }}
+                                    >
                                         <th>{String(indexOfFirstClient + index + 1).padStart(3, "0")}</th>
                                         <td>
                                             <div className="client-name">
@@ -147,7 +160,10 @@ function ClientTable({ clients, loading, onView, onEdit, onDelete, isArchived, o
                                             {client.signature_url ? (
                                                 <div
                                                     className="sig-cell-attached"
-                                                    onClick={() => setPreviewImage({ url: client.signature_url, name: client.name })}
+                                                    onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        setPreviewImage({ url: client.signature_url, name: client.name });
+                                                    }}
                                                     title="Click to zoom signature"
                                                 >
                                                     <img
@@ -185,13 +201,10 @@ function ClientTable({ clients, loading, onView, onEdit, onDelete, isArchived, o
                                                     </button>
                                                 ) : (
                                                     <>
-                                                        <button className="action-btn view" onClick={() => onView(client)} title="View">
-                                                            <Eye size={15} strokeWidth={1.5} />
-                                                        </button>
-                                                        <button className="action-btn edit" onClick={() => onEdit(client)} title="Edit">
+                                                        <button className="action-btn edit" onClick={(event) => { event.stopPropagation(); onEdit(client); }} title="Edit">
                                                             <SquarePen size={15} strokeWidth={1.5} />
                                                         </button>
-                                                        <button className="action-btn delete" onClick={() => onDelete(client)} title="Delete">
+                                                        <button className="action-btn delete" onClick={(event) => { event.stopPropagation(); onDelete(client); }} title="Delete">
                                                             <Trash2 size={15} strokeWidth={1.5} />
                                                         </button>
                                                     </>

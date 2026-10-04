@@ -188,7 +188,7 @@ function ClientArchive({ searchQuery }) {
                             </button>
                             <button 
                                 className="btn-archive" 
-                                style={{ backgroundColor: '#10b981', color: 'white', border: 'none' }} 
+                                style={{ backgroundColor: '#10b981', color: 'green', border: 'none' }} 
                                 onClick={confirmRestore}
                             >
                                 <ArchiveRestore size={15} /> Restore
