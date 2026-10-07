@@ -1,3 +1,4 @@
+import { notify } from "../../utils/notify";
 import { useState } from "react";
 import * as XLSX from "xlsx";
 import { collection, writeBatch, doc, serverTimestamp } from "firebase/firestore";
@@ -191,7 +192,6 @@ const parsePublicRows = (rows) => {
       signature_status: rawSignature ? "imported" : "none",
     };
 
-    // Validation checks
     client._errors = [];
     if (!client.name) client._errors.push("Missing husband name");
     if (!client.civil_status_male) client._errors.push("Missing civil status");
@@ -333,7 +333,7 @@ function ImportModal({ onClose, collectionName, onSuccess, tabType = "public" })
     if (!file) return;
 
     if (file.size > MAX_FILE_SIZE_BYTES) {
-      alert(`The selected file is too large (${(file.size / (1024 * 1024)).toFixed(2)} MB). Maximum allowed size is ${MAX_FILE_SIZE_MB} MB.`);
+      notify(`The selected file is too large (${(file.size / (1024 * 1024)).toFixed(2)} MB). Maximum allowed size is ${MAX_FILE_SIZE_MB} MB.`);
       e.target.value = "";
       return;
     }
@@ -352,7 +352,7 @@ function ImportModal({ onClose, collectionName, onSuccess, tabType = "public" })
 
         const clients = config.parseRows(rows);
         if (clients.length === 0) {
-          alert("No valid records found in template.");
+          notify("No valid records found in template.");
           return;
         }
 
@@ -373,14 +373,13 @@ function ImportModal({ onClose, collectionName, onSuccess, tabType = "public" })
         setStep("preview");
       } catch (err) {
         console.error("File parse error:", err);
-        alert("Failed to parse file. Please verify structure.");
+        notify("Failed to parse file. Please verify structure.");
         setStep("upload");
       }
     };
     reader.readAsArrayBuffer(file);
   };
 
-  // Dropdown Change Handler
   const handleBarangayChange = (index, selectedBarangay) => {
     const updated = [...parsedClients];
     const client = updated[index];
@@ -454,7 +453,7 @@ function ImportModal({ onClose, collectionName, onSuccess, tabType = "public" })
       }, 1500);
     } catch (err) {
       console.error("Import error:", err);
-      alert("Something went wrong saving the records.");
+      notify("Something went wrong saving the records.");
       setStep("preview");
     }
   };

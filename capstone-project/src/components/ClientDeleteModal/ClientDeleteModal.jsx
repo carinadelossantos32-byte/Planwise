@@ -11,7 +11,7 @@ function ClientDeleteModal({ selectedClient, onClose, handleDelete }) {
         </button>
 
         <div className="archive-icon-circle">
-          <Archive size={28} color="#fff" />
+          <Archive size={26} />
         </div>
 
         <h2 className="archive-title">Archive client record?</h2>

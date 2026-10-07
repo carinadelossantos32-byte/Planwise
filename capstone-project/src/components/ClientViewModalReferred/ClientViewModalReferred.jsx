@@ -1,4 +1,5 @@
 import "../ClientViewModal/client-view-modal.css";
+import "../ClientAddModalReferred/referral-slip.css";
 
 function ClientViewModalReferred({ client, onClose }) {
   return (

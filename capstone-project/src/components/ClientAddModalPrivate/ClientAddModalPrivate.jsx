@@ -212,29 +212,29 @@ function ClientAddModalPrivate({ onClose, onSuccess }) {
 
       {/* ── DUPLICATE COMPARISON MODAL ── */}
       {dupModalOpen && existingRecord && (
-        <div className="modal-overlay-add dup-modal-overlay">
-          <div className="modal dup-modal">
-            <div className="modal-header dup-modal-header">
-              <h2 className="dup-modal-title">⚠ Duplicate Record Found</h2>
+        <div className="cfpr-dup-overlay">
+          <div className="cfpr-dup-modal">
+            <div className="cfpr-dup-header">
+              <h2 className="cfpr-dup-title">⚠ Duplicate Record Found</h2>
             </div>
-            <div className="modal-body">
-              <p className="dup-modal-subtitle">
+            <div className="cfpr-dup-body">
+              <p className="cfpr-dup-subtitle">
                 A record with the same client name already exists.
                 Review the differences below and choose how to proceed.
               </p>
 
-              <div className="dup-comparison-grid">
-                <div className="dup-column">
-                  <div className="dup-column-header dup-column-header--new">
+              <div className="cfpr-dup-grid">
+                <div className="cfpr-dup-col">
+                  <div className="cfpr-dup-col-header cfpr-dup-col-header-new">
                     ⬆ New Entry (yours)
                   </div>
                   {comparisonFields.map(({ label, key }) => (
                     <div
                       key={key}
-                      className={`dup-field-row ${formData[key] !== existingRecord[key] ? "dup-field-row--diff" : ""
+                      className={`cfpr-dup-row ${formData[key] !== existingRecord[key] ? "cfpr-dup-row-diff" : ""
                         }`}
                     >
-                      <span className="dup-field-label">{label}</span>
+                      <span className="cfpr-dup-row-label">{label}</span>
                       <span>
                         {formData[key] !== undefined && formData[key] !== null
                           ? String(formData[key])
@@ -244,17 +244,17 @@ function ClientAddModalPrivate({ onClose, onSuccess }) {
                   ))}
                 </div>
 
-                <div className="dup-column">
-                  <div className="dup-column-header dup-column-header--existing">
+                <div className="cfpr-dup-col">
+                  <div className="cfpr-dup-col-header cfpr-dup-col-header-existing">
                     📁 Existing (in database)
                   </div>
                   {comparisonFields.map(({ label, key }) => (
                     <div
                       key={key}
-                      className={`dup-field-row ${formData[key] !== existingRecord[key] ? "dup-field-row--diff" : ""
+                      className={`cfpr-dup-row ${formData[key] !== existingRecord[key] ? "cfpr-dup-row-diff" : ""
                         }`}
                     >
-                      <span className="dup-field-label">{label}</span>
+                      <span className="cfpr-dup-row-label">{label}</span>
                       <span>
                         {existingRecord[key] !== undefined && existingRecord[key] !== null
                           ? String(existingRecord[key])
@@ -265,12 +265,12 @@ function ClientAddModalPrivate({ onClose, onSuccess }) {
                 </div>
               </div>
 
-              <p className="dup-legend">🟡 Highlighted fields have different values.</p>
+              <p className="cfpr-dup-legend">🟡 Highlighted fields have different values.</p>
 
-              <div className="dup-actions">
+              <div className="cfpr-dup-actions">
                 <button
                   type="button"
-                  className="cfpr-btn cfpr-btn-cancel"
+                  className="cfpr-dup-btn cfpr-dup-btn-cancel"
                   onClick={() => {
                     setDupModalOpen(false);
                     setExistingRecord(null);
@@ -280,7 +280,7 @@ function ClientAddModalPrivate({ onClose, onSuccess }) {
                 </button>
                 <button
                   type="button"
-                  className="cfpr-btn cfpr-btn-skip"
+                  className="cfpr-dup-btn cfpr-dup-btn-skip"
                   onClick={() => {
                     setDupModalOpen(false);
                     onClose();
@@ -290,7 +290,7 @@ function ClientAddModalPrivate({ onClose, onSuccess }) {
                 </button>
                 <button
                   type="button"
-                  className="cfpr-btn cfpr-btn-overwrite"
+                  className="cfpr-dup-btn cfpr-dup-btn-overwrite"
                   onClick={() => {
                     setDupModalOpen(false);
                     saveRecord(existingRecord.id);
@@ -300,7 +300,7 @@ function ClientAddModalPrivate({ onClose, onSuccess }) {
                 </button>
                 <button
                   type="button"
-                  className="cfpr-btn cfpr-btn-save"
+                  className="cfpr-dup-btn cfpr-dup-btn-save"
                   onClick={() => {
                     setDupModalOpen(false);
                     saveRecord();

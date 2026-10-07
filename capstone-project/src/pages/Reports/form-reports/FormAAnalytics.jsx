@@ -1,3 +1,4 @@
+import { notify } from "../../../utils/notify";
 import { useMemo, useState, useEffect, useRef, Fragment } from "react";
 import "./FormAAnalytics.css";
 
@@ -745,7 +746,7 @@ function FormAAnalytics({
         } catch (error) {
 
             console.error(error);
-            alert("Failed to export Form A.");
+            notify("Failed to export Form A.");
 
         }
 

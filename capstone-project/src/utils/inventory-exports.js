@@ -1,3 +1,4 @@
+import { notify } from "./notify";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
@@ -28,11 +29,11 @@ function getInventoryMatrix(rhuData, fpMethods) {
 
 function hasInventoryRows(rows) {
   if (rows.length > 0) return true;
-  alert("There are no inventory records to export.");
+  notify("There are no inventory records to export.");
   return false;
 }
 
-export async function exportInventoryPDF(rhuData, fpMethods) {
+export async function exportInventoryPDF(rhuData, fpMethods, fileName = "Inventory_Stocks_Matrix.pdf") {
   const { methods, rows, methodTotals, grandTotal } = getInventoryMatrix(rhuData, fpMethods);
   if (!hasInventoryRows(rows)) return;
 
@@ -61,14 +62,14 @@ export async function exportInventoryPDF(rhuData, fpMethods) {
     });
 
     drawSignatories(pdf);
-    pdf.save("Inventory_Stocks_Matrix.pdf");
+    pdf.save(fileName);
   } catch (error) {
     console.error("Failed to export inventory PDF:", error);
-    alert("Failed to export the inventory PDF. Please try again.");
+    notify("Failed to export the inventory PDF. Please try again.");
   }
 }
 
-export async function exportInventoryExcel(rhuData, fpMethods) {
+export async function exportInventoryExcel(rhuData, fpMethods, fileName = "Inventory_Stocks_Matrix.xlsx") {
   const { methods, rows, methodTotals, grandTotal } = getInventoryMatrix(rhuData, fpMethods);
   if (!hasInventoryRows(rows)) return;
 
@@ -111,10 +112,10 @@ export async function exportInventoryExcel(rhuData, fpMethods) {
     const buffer = await workbook.xlsx.writeBuffer();
     saveAs(
       new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
-      "Inventory_Stocks_Matrix.xlsx"
+      fileName
     );
   } catch (error) {
     console.error("Failed to export inventory Excel:", error);
-    alert("Failed to export the inventory Excel file. Please try again.");
+    notify("Failed to export the inventory Excel file. Please try again.");
   }
 }

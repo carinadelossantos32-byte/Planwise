@@ -1,3 +1,4 @@
+import { notify } from "../../../utils/notify";
 import { useMemo, useState, useEffect, useRef } from "react";
 import "../report-forms.css";
 import MethodBadges from "../MethodBadges";
@@ -594,7 +595,7 @@ function FormCAnalytics({
         } catch (err) {
 
             console.error("Form C PDF export error:", err);
-            alert("Failed to export Form C PDF.");
+            notify("Failed to export Form C PDF.");
 
         }
 
@@ -654,7 +655,7 @@ function FormCAnalytics({
         } catch (err) {
 
             console.error(err);
-            alert("Failed to export Form C.");
+            notify("Failed to export Form C.");
 
         }
 

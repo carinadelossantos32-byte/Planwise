@@ -6,12 +6,14 @@ import "./report-select.css";
     Custom dropdown used by the Reports page filters (replaces the native <select>
     so the option list can be styled).
 
-    options: [{ value, label }]. An entry may instead be
+    options: [{ value, label, hint? }]. hint is a muted note shown after the
+             label. An entry may instead be
              { group: "Title", options: [{ value, label }] } to render a titled section.
+    placeholder: muted text shown while nothing is selected.
     onChange: receives { target: { value } } (value is a string), same shape a
               native <select> gives, so existing handlers keep working.
 */
-function ReportSelect({ value, onChange, options, ariaLabel }) {
+function ReportSelect({ value, onChange, options, ariaLabel, placeholder }) {
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const rootRef = useRef(null);
@@ -103,7 +105,10 @@ function ReportSelect({ value, onChange, options, ariaLabel }) {
         onMouseEnter={() => setActiveIndex(index)}
         onClick={() => choose(option)}
       >
-        <span>{option.label}</span>
+        <span>
+          {option.label}
+          {option.hint && <small className="report-select-hint">{option.hint}</small>}
+        </span>
         {isSelected && <Check size={15} strokeWidth={2.5} />}
       </li>
     );
@@ -123,7 +128,10 @@ function ReportSelect({ value, onChange, options, ariaLabel }) {
         onClick={() => (open ? setOpen(false) : openMenu())}
         onKeyDown={handleKeyDown}
       >
-        <span className="report-select-value">{selected ? selected.label : ""}</span>
+        <span className="report-select-value">
+          {selected ? selected.label : <span className="report-select-placeholder">{placeholder}</span>}
+          {selected?.hint && <small className="report-select-hint">{selected.hint}</small>}
+        </span>
         <ChevronDown size={16} className="report-select-chevron" />
       </button>
 

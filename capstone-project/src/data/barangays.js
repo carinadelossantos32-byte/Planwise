@@ -45,7 +45,7 @@ export const barangays = [
   "Santo Cristo",
   "Santo Niño",
   "Santo Rosario",
-  "Santol",
+  "Santor",
   "Sumapang Bata",
   "Sumapang Matanda",
   "Taal",

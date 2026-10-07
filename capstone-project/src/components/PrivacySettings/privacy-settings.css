@@ -1,168 +1,4 @@
-#privacy-settings-page-container h1 {
-    font-size: 1.5rem;
-    font-weight: bold;
-    margin-bottom: 0.3rem;
-}
-
-#privacy-settings-container h3 {
-    font-size: 1.25rem;
-    font-weight: bold;
-    margin-bottom: 15px;
-}
-
-.info-section h5 {
-    font-size: 0.95rem;
-    font-weight: bold;
-    color: #000000;
-}
-
-/* Page Outer Wrapper */
-#privacy-settings-page-container {
-    display: flex;
-    flex-direction: column;
-    align-items: start;   /* was: start */
-    width: 100%;
-    min-height: 100vh;
-    padding: 2.5rem 4.5rem;
-    box-sizing: border-box;
-}
-
-
-
-.privacy-settings-wrapper {
-    display: flex;
-    justify-content: center;
-    width: 100%;
-    padding: 0 1rem;
-    box-sizing: border-box;
-}
-
-/* Privacy Settings Main Card */
-#privacy-settings-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 1.25rem;
-    padding: 2rem 2.25rem;
-    border: 1px solid #c0c0c0;
-    border-radius: 10px;
-    background-color: #ffffff;
-    box-sizing: border-box;
-
-    width: 100%;
-    max-width: 1100px;
-    min-height: 55vh;
-    margin: 1.5rem auto;   /* auto = centers horizontally at any screen size */
-    overflow-x: hidden;
-}
-
-/* Password Section Container */
-/* Password Section Container */
-#change-password-section {
-    width: 100%;
-    max-width: 800px;      /* match the input width so everything lines up */
-    display: flex;
-    flex-direction: column;
-    align-items: start;   /* centers h3, info-section, and button horizontally */
-    font-size: 1.125rem;
-    font-weight: bold;
-    padding: 10px 20px;
-    margin: 10px auto;         /* centers this block within the card */
-    box-sizing: border-box;
-}
-/* Info Section Wrapper */
-.info-section {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    margin-top: 0.9375rem;
-    width: 100%;
-}
-
-/* Password Input Outer Wrapper */
-#change-password-section .password-input-wrapper {
-    position: relative;
-    width: 100%;
-    max-width: 800px;
-}
-
-/* Password Inputs */
-#change-password-section input,
-#change-password-section .password-input-wrapper input {
-    box-sizing: border-box;
-    width: 100%;
-    height: 3rem;
-    padding: 0.6rem 2.75rem 0.6rem 0.875rem;
-    border: 1px solid #e6e6e6;
-    background: #ffffff;
-    border-radius: 10px;
-    font-size: 0.9375rem;
-    color: #111827;
-    transition: border-color 0.18s ease, box-shadow 0.18s ease;
-}
-
-#change-password-section input:focus {
-    border-color: #4F39F6;
-    outline: none;
-}
-
-
-
-/* Required Label Asterisk Container */
-.asterisk {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 6px;
-}
-
-.asterisk h5 {
-    margin: 0;
-}
-
-/* Eye Icon */
-.password-toggle-icon {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #6b7280;
-}
-
-/* Submit/Update Button */
-#update-password-button {
-    padding: 0.6rem 1.25rem;
-    background-color: #091F7A;
-    color: #ffffff;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    align-self: flex-start;
-    font-size: 1rem;
-    font-weight: bold;
-    height: 3rem;
-    margin-top: 20px;
-    margin-left: 0;
-    transition: background-color 0.2s ease, border-color 0.2s ease,
-                box-shadow 0.2s ease, transform 0.12s ease;
-}
-
-#update-password-button:hover {
-    background-color: #041043;
-    color: #ffffff;
-    box-shadow: 0 4px 12px rgba(9, 31, 122, 0.3);
-}
-
-#update-password-button:active {
-    transform: translateY(0) scale(0.97);
-    box-shadow: 0 1px 4px rgba(9, 31, 122, 0.25);
-}
+/* Layout and form styles live in pages/Settings/settings.css */
 
 .error-text{
     color: #b91c1c;
@@ -185,7 +21,6 @@
     border-radius: 14px;
     padding: 24px;
     width: 360px;
-    box-shadow: 0 10px 30px rgba(15,23,42,0.12);
     display: flex;
     flex-direction: column;
     gap: 18px;
@@ -216,7 +51,7 @@
 
 .modal-ok-button{
     padding: 10px 18px;
-    background-color: #4602c5;
+    background-color: #091F7A;
     color: #fff;
     border: none;
     border-radius: 10px;
@@ -225,39 +60,10 @@
 }
 
 .modal-ok-button:hover{
-    background-color: #24035a;
-}
-
-/* ===== RESPONSIVE BREAKPOINTS ===== */
-@media (max-width: 900px) {
-    #privacy-settings-container {
-        padding: 1.75rem 1.5rem;
-        min-height: auto;
-    }
+    background-color: #071758;
 }
 
 @media (max-width: 480px) {
-    #privacy-settings-page-container {
-        padding: 1.5rem 0.75rem;
-        width: 100%;
-    }
-
-    #privacy-settings-page-container h1 {
-        width: 100%;
-    }
-
-    #privacy-settings-container {
-        width: 100%;
-        padding: 1.5rem 1rem;
-        margin: 1rem auto;
-        border-radius: 8px;
-    }
-
-    #update-password-button {
-        width: 100%;
-        justify-content: center;
-    }
-
     .success-modal-box {
         width: 90%;
     }

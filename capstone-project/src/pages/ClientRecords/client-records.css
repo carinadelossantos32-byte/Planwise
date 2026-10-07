@@ -1,215 +1,276 @@
-/* TOOLBAR / SEARCH BAR AREA */
-.toolbar-header-client{
-    display: flex;
-    flex-direction: column;
-    background-color: #ffffff;
-    padding: 20px 25px 2px 25px;
-    box-shadow: 0 1px 5px rgba(181, 183, 185, 0.596);
-}
-.client-record-h2{
-    font-size: 29px;
-    font-weight: 700;
-    color: #000000;
-    margin-bottom: 5px;
+/* =========================================================
+   CLIENT RECORDS PAGE
+   Same heading and Inter type as the Reports tab.
+   ========================================================= */
+
+.client-records-container {
+  min-height: 100vh;
+  padding-bottom: 40px;
+  color: #0f172a;
+  font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-.client-toolbar {
+.client-records-container button,
+.client-records-container input,
+.client-records-container select {
+  font-family: inherit;
+}
+
+
+/* ---------- Page heading + tabs ---------- */
+
+.cr-header {
+  margin-bottom: 20px;
+  padding: 20px 40px 16px;
+  background-color: #ffffff;
+  border-radius: 8px;
+}
+
+.cr-header-top {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 7px;
-  padding: 10px 0 10px 0;
+  gap: 16px;
   flex-wrap: wrap;
 }
 
-.p-sub-title-client{
-    font-size: 14px;
-    color: #6b7280;
-  
+.cr-header h1 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
-/* Search Input */
-.client-search {
+.cr-header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 9px 24px;
-  background: #f1f2f3;
-  width: 380px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.client-search:focus-within {
-  border-color: #091F7A;
-  box-shadow: 0 0 0 3px rgba(9, 31, 122, 0.1);
-  background: #ffffff;
-}
-
-.client-search input {
-  border: none;
-  outline: none;
-  font-size: 15px;
-  color: #141922;
-  width: 100%;
-  background: transparent;
-}
-
-.client-search input::placeholder { 
-  color: #9ca3af;
-}
-
-
-/* Dropdown Selects */
-.client-filter-select {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 10px 28px;
-  font-size: 14px;
-  color: #374151;
-  background: #ffffff;
-  cursor: pointer;
-  outline: none;
-  min-width: 140px;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.client-filter-select:hover {
-  border-color: #091F7A;
-}
-
-.client-filter-select:focus {
-  box-shadow: 0 0 0 3px rgba(9, 31, 122, 0.1);
-}
-
-
-
-.btn-tab-actions {
+.cr-tabs-row {
   display: flex;
-  align-items: last baseline;
-  gap: 8px;
-  margin-left: auto;
-}
-
-
-
-.btn-export,
-.btn-import {
-  display: inline-flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 6px;
-  padding: 10px 54px;
-  border-radius: 8px;
-  background: #09197A;
-  font-size: 14px;
-  font-weight: 400;
-  color: #ffffff;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.btn-import{
-  background: #70c947;
-}
-
-.btn-export:hover{
-   background-color: #9cc4ff;
-  color: #09197A;
-  border: none;
-}
-
-.btn-add-client,
-.btn-sync-client {
+/* Segmented control: a grey track with the current tab filled in */
+.cr-tabs {
   display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 23px;
-  border: none;
-  border-radius: 8px;
-  background: #14990D;
-  font-size: 14px;
-  font-weight: 400;
-  color: #ffffff;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.btn-add-client{
-  background: #5bc42b;
-}
-
-.btn-add-client:hover,
-.btn-sync-client:hover,
-.btn-import:hover {
-  background-color: #59da5096;
-  color: #086308;
-
-}
-
-.client-table-container {
-  width: 100%;
+  gap: 4px;
+  max-width: 100%;
+  padding: 4px;
+  background: #e9edf7;
+  border-radius: 12px;
   overflow-x: auto;
-  background: #ffffff;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
 }
 
-.client-table-wrapper {
-  border-radius: 12px;
-  margin: 17px 17px;
-  background-color: #F4F8FF;
-}
-
-.tabs-client {
-  display: flex;
-  justify-content: space-between;
-}
-
-.toolbar-actions {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 15px;
-}
-
-.view-tabs-client {
-  display: flex;
-  gap: 8px;
-  margin-top: 15px;
-}
-
-.tab-button {
-  padding: 11px 28px;
-  border: none;
-  border-radius: 5px;
-  background-color: #E5E7EB;
-  color: #374151;
+.cr-tab {
+  flex: none;
+  padding: 9px 20px;
+  background: transparent;
+  border: 0;
+  border-radius: 9px;
+  color: #475569;
   font-size: 14px;
-  font-weight: 400;
+  font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-.tab-button:hover {
+.cr-tab:hover {
   background-color: #d7dcf5;
   color: #091F7A;
 }
 
-.tab-active {
+.cr-tab.is-active {
   background-color: #091F7A;
+  box-shadow: 0 1px 3px rgba(9, 31, 122, 0.35);
   color: #ffffff;
 }
 
-.tab-active:hover {
-  background-color: #071760;
+
+/* ---------- Buttons ---------- */
+
+.cr-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, filter 0.15s ease, transform 0.15s ease;
+}
+
+.cr-btn:active {
+  transform: translateY(1px);
+}
+
+.cr-btn:focus-visible,
+.cr-tab:focus-visible {
+  outline: 2px solid #2f5bff;
+  outline-offset: 2px;
+}
+
+/* Main action */
+.cr-btn--primary {
+  background: #091F7A;
   color: #ffffff;
 }
 
-.tab-btn:hover {
-  background-color: #091F7A;
+.cr-btn--primary:hover {
+  background: #07185e;
+}
+
+/* Secondary actions */
+.cr-btn--outline {
+  background: #ffffff;
+  border-color: #d5dbe9;
+  color: #091F7A;
+}
+
+.cr-btn--outline:hover {
+  background: #f1f4fb;
+  border-color: #b9c3dd;
+}
+
+/* Exports use the file-type colors from the Reports tab */
+.cr-btn--excel {
+  background: linear-gradient(135deg, #16a34a 0%, #0b7a3b 100%);
   color: #ffffff;
+}
+
+.cr-btn--pdf {
+  background: linear-gradient(135deg, #e5484d 0%, #b42318 100%);
+  color: #ffffff;
+}
+
+.cr-btn--excel:hover,
+.cr-btn--pdf:hover {
+  filter: brightness(1.08);
+}
+
+
+/* ---------- Body + toolbar ---------- */
+
+.cr-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 24px;
+}
+
+.cr-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cr-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 260px;
+  max-width: 380px;
+  height: 40px;
+  padding: 0 14px;
+  background: #ffffff;
+  border: 1px solid #d5dbe9;
+  border-radius: 10px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cr-search:focus-within {
+  border-color: #2f5bff;
+  box-shadow: 0 0 0 4px #e8eeff;
+}
+
+.cr-search input {
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  outline: none;
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.cr-search input::placeholder {
+  color: #94a3b8;
+}
+
+/* Filter dropdowns: the custom select from the Reports tab, in the page's navy */
+.cr-select {
+  flex: none;
+  width: 170px;
+}
+
+.cr-select--wide {
+  width: 210px;
+}
+
+.cr-select .report-select {
+  --rs-accent: #091F7A;
+  --rs-accent-tint: #e8eeff;
+  --rs-ring: #e8eeff;
+  --rs-border: #d5dbe9;
+  --rs-border-hover: #b9c3dd;
+  --rs-text: #334155;
+  --rs-height: 40px;
+  --rs-radius: 10px;
+}
+
+.cr-select .report-select-menu {
+  z-index: 60;
+}
+
+.cr-export {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 992px) {
+  .cr-header { padding: 16px 20px 14px; }
+  .cr-header h1 { font-size: 24px; }
+  .cr-body { padding: 0 16px; }
+  .cr-tab { padding: 9px 14px; }
+}
+
+@media (max-width: 640px) {
+  .cr-search { max-width: none; }
+  .cr-export { margin-left: 0; }
+}
+
+/* Error notice for failed record actions */
+.client-records-error-toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 3000;
+  max-width: 360px;
+  padding: 12px 16px;
+  background: #fef3f2;
+  border: 1px solid #fecdca;
+  border-radius: 12px;
+  box-shadow: 0 12px 28px -12px rgba(15, 23, 42, 0.35);
+  color: #b42318;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.45;
 }

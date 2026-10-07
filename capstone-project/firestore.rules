@@ -1,0 +1,73 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null && request.auth.token.email != null;
+    }
+
+    // Role stored on the signed-in user's own record (users/{email})
+    function role() {
+      return get(/databases/$(database)/documents/users/$(request.auth.token.email)).data.role;
+    }
+
+    function isStaff() {
+      return signedIn() && role() in ['cpd', 'health'];
+    }
+
+    function isHealth() {
+      return signedIn() && role() == 'health';
+    }
+
+    // User accounts. The login page looks up a single account by email before
+    // signing in, so reading one known record stays open; listing all is not.
+    match /users/{email} {
+      allow get: if true;
+      allow list: if false;
+      // Users may edit their own name and email, never their role
+      allow update: if signedIn()
+        && request.auth.token.email == email
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['username', 'email']);
+      allow create, delete: if false;
+    }
+
+    // Client records: both offices can read, add and edit. Records are
+    // archived, never deleted.
+    match /clients_public/{clientId} {
+      allow read, create, update: if isStaff();
+      allow delete: if false;
+    }
+
+    match /clients_private/{clientId} {
+      allow read, create, update: if isStaff();
+      allow delete: if false;
+    }
+
+    match /clients_referred/{clientId} {
+      allow read, create, update: if isStaff();
+      allow delete: if false;
+    }
+
+    // Inventory: both offices can view, only the Health Office can change
+    match /rhu/{rhuId} {
+      allow read: if isStaff();
+      allow create, update: if isHealth();
+      allow delete: if false;
+    }
+
+    match /inventory/{document=**} {
+      allow read: if isStaff();
+      allow create, update: if isHealth();
+      allow delete: if false;
+    }
+
+    match /lowStock/{settingId} {
+      allow read: if isStaff();
+      allow create, update: if isHealth();
+      allow delete: if false;
+    }
+
+    // Anything not listed above is denied.
+  }
+}

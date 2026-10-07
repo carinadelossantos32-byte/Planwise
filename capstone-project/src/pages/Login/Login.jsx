@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router'; 
-import './Login.css'; 
-import logoImg from '../../assets/malolos-logo.png'; 
+import './login.css';
 import { auth, db } from '../../firebase-config.js';
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -216,118 +215,86 @@ const Login = () => {
 
   return (
     <div className="login-page">
-      <div className="login-wrapper">
-        
-        <div className="login-left">
+      <section className="login-brand">
+        <div className="login-brand-center">
+          <img src="/planwise-logo-yellow.svg" alt="PlanWise logo" className="login-logo" />
+          <h2 className="login-brand-name">Plan<span>Wise</span></h2>
+        </div>
+
+        <div className="login-brand-foot">
+          <p className="login-brand-office">Commission on Population Development</p>
+          <p className="login-brand-place">
+            City of Malolos, Province of Bulacan <span aria-hidden="true">·</span> Republic of the Philippines
+          </p>
+        </div>
+      </section>
+
+      <section className="login-panel">
+        <div className="login-card">
+          <img src="/planwise-logo.svg" alt="PlanWise logo" className="login-card-logo" />
           <h1 className="login-title">Sign In</h1>
-          <p className="login-subtitle">Please enter your credentials to access the system dashboard.</p>
-          
+
           <form onSubmit={handleSubmit}>
             <div className="login-form-group">
-              <input 
-                type="email" 
-                className="login-input" 
-                placeholder="Email Address" 
-                value={email} 
-                onChange={(e) => setEmail(e.target.value)} 
-                disabled={isLockedOut}
-                required 
-              />
-              {emailHint && (
-                <p style={{
-                  color: '#FF6B6B',
-                  fontSize: '12px',
-                  margin: '6px 0 0 14px',
-                  textAlign: 'left',
-                  fontWeight: 500
-                }}>
-                  {emailHint}
-                </p>
-              )}
-            </div>
-
-            <div className="login-form-group" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <input 
-                type={showPassword ? "text" : "password"} 
-                className="login-input" 
-                placeholder="Password" 
-                value={password} 
-                onChange={(e) => setPassword(e.target.value)} 
-                disabled={isLockedOut}
-                required 
-                style={{ width: '100%', paddingRight: '44px', boxSizing: 'border-box' }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((prev) => !prev)}
-                tabIndex="-1"
-                aria-label={showPassword ? "Hide password" : "Show password"}
-                style={{
-                  position: 'absolute',
-                  right: '18px',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#64748B'
-                }}
-              >
-                {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
-              </button>
-            </div>
-
-            {errorMessage && (
-              <div 
-                className="login-error" 
-                style={{ 
-                  color: '#EF4444', 
-                  fontSize: '13px', 
-                  marginTop: '8px', 
-                  textAlign: 'left',
-                  lineHeight: '1.4'
-                }}
-              >
-                {errorMessage}
+              <label className="login-label" htmlFor="login-email">Email address</label>
+              <div className="login-field">
+                <Mail size={18} className="login-field-icon" />
+                <input
+                  id="login-email"
+                  type="email"
+                  className="login-input"
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLockedOut}
+                  required
+                />
               </div>
-            )}
+              {emailHint && <p className="login-hint">{emailHint}</p>}
+            </div>
 
-            <button 
-              type="submit" 
-              className="login-btn"
-              disabled={isLockedOut}
-              style={{
-                opacity: isLockedOut ? 0.6 : 1,
-                cursor: isLockedOut ? 'not-allowed' : 'pointer'
-              }}
-            >
+            <div className="login-form-group">
+              <label className="login-label" htmlFor="login-password">Password</label>
+              <div className="login-field">
+                <Lock size={18} className="login-field-icon" />
+                <input
+                  id="login-password"
+                  type={showPassword ? "text" : "password"}
+                  className="login-input"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLockedOut}
+                  required
+                />
+                <button
+                  type="button"
+                  className="login-toggle"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  tabIndex="-1"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                </button>
+              </div>
+            </div>
+
+            {errorMessage && <div className="login-error">{errorMessage}</div>}
+
+            <button type="submit" className="login-btn" disabled={isLockedOut}>
               {isLockedOut ? "Account Locked" : "Log In"}
             </button>
           </form>
-          
-          <button 
-            type="button" 
-            className="login-forgot" 
+
+          <button
+            type="button"
+            className={`login-forgot${isLockedOut ? " login-forgot--locked" : ""}`}
             onClick={handleOpenModal}
-            style={{
-              fontWeight: isLockedOut ? 700 : 500,
-              color: isLockedOut ? '#F59E0B' : undefined
-            }}
           >
             Forgot Password? {isLockedOut && " (Required to unlock)"}
           </button>
         </div>
-        
-        <div className="login-right">
-          <img src={logoImg} alt="PlanWise Logo" className="login-logo" />
-          <h2 className="login-brand-name">Plan<span>Wise</span></h2>
-          <h3 className="login-brand-city">MALOLOS</h3>
-          <p className="login-brand-description">Commission on Population Development</p>
-        </div>
-
-      </div>
+      </section>
 
       {showModal && (
         <div 

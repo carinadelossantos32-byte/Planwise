@@ -5,7 +5,7 @@ import malolosGeoJSON from "../data/malolos-barangays.json";
 const cleanStr = (s) =>
   String(s || "")
     .toLowerCase()
-    .replace(/[\.\(\)]/g, "")
+    .replace(/[.()]/g, "")
     .trim();
 
 // 1. Kunin ang 51 barangays kasama ang center coordinates mula sa GeoJSON

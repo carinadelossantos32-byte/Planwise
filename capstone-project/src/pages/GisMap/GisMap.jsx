@@ -1,20 +1,23 @@
+import { notify } from "../../utils/notify";
 import "./gis-map.css";
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import MapDisplay from "../../components/MapDisplay/MapDisplay";
 import MapPopUp from "../../components/MapPopUp/MapPopUp";
 import MapExportModal from "../../components/MapExportModal/MapExportModal";
 import { db } from '../../firebase-config';
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { INVENTORY_FP_METHODS } from "../../data/inventoryMethods.js";
+import ReportSelect from "../../components/ReportSelect/ReportSelect";
+import PageHeader from "../../components/PageHeader/PageHeader";
 
-//malolos barangays
 const BARANGAYS = [
-    "Anilao", "Atlag", "Babatnin", "Bagna", "Bagong Bayan", "Balayong", "Balite", 
-    "Bangkal", "Barihan", "Bulihan", "Bungahan", "Caingin", "Calero", "Caliligawan", 
-    "Canalate", "Caniogan", "Catmon", "Cofradia", "Dakila", "Guinhawa", "Ligas", 
-    "Liang", "Longos", "Look 1st", "Look 2nd", "Lugam", "Mabolo", "Mambog", 
-    "Masile", "Matimbo", "Mojon", "Namayan", "Niugan", "Pamarawan", "Panasahan", 
-    "Pinagbakahan", "San Agustin", "San Gabriel", "San Juan", "San Pablo", 
-    "San Vicente", "Santiago", "Santisima Trinidad",  "Santo Cristo", 
+    "Anilao", "Atlag", "Babatnin", "Bagna", "Bagong Bayan", "Balayong", "Balite",
+    "Bangkal", "Barihan", "Bulihan", "Bungahan", "Caingin", "Calero", "Caliligawan",
+    "Canalate", "Caniogan", "Catmon", "Cofradia", "Dakila", "Guinhawa", "Ligas",
+    "Liang", "Longos", "Look 1st", "Look 2nd", "Lugam", "Mabolo", "Mambog",
+    "Masile", "Matimbo", "Mojon", "Namayan", "Niugan", "Pamarawan", "Panasahan",
+    "Pinagbakahan", "San Agustin", "San Gabriel", "San Juan", "San Pablo",
+    "San Vicente", "Santiago", "Santisima Trinidad",  "Santo Cristo",
     "Santo Niño", "Santo Rosario", "Santor", "Sumapang Bata", "Sumapang Matanda", "Taal", "Tikay"
 ];
 
@@ -75,43 +78,45 @@ const BARANGAY_COORDINATES = {
 
 //list of family planning methods for the filter dropdown
 const FP_METHODS = [
-    "Condom", "IUD", "Pills", "Injectable", "Vasectomy", "Tubal Ligation", 
-    "Implant", "CMM/Billings", "BBT", "Sympto-thermal", "SDM", "LAM", 
+    "Condom", "IUD", "Pills", "Injectable", "Vasectomy", "Tubal Ligation",
+    "Implant", "CMM/Billings", "BBT", "Sympto-thermal", "SDM", "LAM",
     "Withdrawal", "Rhythm", "Calendar", "Abstinence", "Herbal", "No Method"
 ];
 
+const BARANGAY_OPTIONS = [
+    { value: "", label: "All Barangays" },
+    ...BARANGAYS.map((barangay) => ({ value: barangay, label: barangay }))
+];
+
+const FP_METHOD_OPTIONS = [
+    { value: "all", label: "All Methods" },
+    ...FP_METHODS.map((method) => ({ value: method, label: method }))
+];
+
 function GisMap({ getCollection }){
-    // filters
     const [isFiltersOpen, setIsFiltersOpen] = useState(true);
     const [selectedBarangay, setSelectedBarangay] = useState("");
     const [mapTrigger, setMapTrigger] = useState(null);
     const [selectedFPMethod, setSelectedFPMethod] = useState('all');
     const [mapMode, setMapMode] = useState('markers');
 
-    // search
     const [searchQuery, setSearchQuery] = useState("");
     const [suggestions, setSuggestions] = useState([]);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const [focusedIndex, setFocusedIndex] = useState(-1); 
+    const [focusedIndex, setFocusedIndex] = useState(-1);
 
-    // export
     const [isExportOpen, setIsExportOpen] = useState(false);
-    const mapRef = useRef(null);
 
-    // settings
     const [zoom, setZoom] = useState(13);
     const [userLocation, setUserLocation] = useState(null);
     const [activeLayer, setActiveLayer] = useState('standard');
     const [isLayerMenuOpen, setIsLayerMenuOpen] = useState(false);
-    
+
     const [selectedFamily, setSelectedFamily] = useState(null);
     const [showInfo, setShowInfo] = useState(true);
-    
-    // families
+
     const [families, setFamilies] = useState([]);
-    const [loading, setLoading] = useState(true);
-    
-    // low stock
+
     const [rhu, setRhu] = useState([]);
     const [isLowStockEnabled, setIsLowStockEnabled] = useState(true);
     const [methodLimits, setMethodLimits] = useState({});
@@ -136,7 +141,7 @@ function GisMap({ getCollection }){
 
             if (configData) {
                 const isAlertActive = configData.enabled ?? configData.isEnabled ?? true;
-    
+
                 setIsLowStockEnabled(Boolean(isAlertActive));
                 setMethodLimits(configData.limitsByMethod || {});
                 setDefaultThreshold(Number(configData.lowStockLimit ?? 10));
@@ -146,9 +151,8 @@ function GisMap({ getCollection }){
         }
     }, []);
 
-    // Fetch RHU Data
     const fetchRHU = useCallback(async () => {
-        try {   
+        try {
             const querySnapshot = await getDocs(collection(db, "rhu"));
             const rhuData = querySnapshot.docs.map(doc => ({
                 id: doc.id,
@@ -165,7 +169,7 @@ function GisMap({ getCollection }){
         if (!isLowStockEnabled || !rhu || !rhu.length) return [];
 
         const markers = [];
-        const normalizeKey = (k) => k.toLowerCase().replace(/[\/\s-]/g, '_');
+        const normalizeKey = (k) => k.toLowerCase().replace(/[/\s-]/g, '_');
 
         rhu.forEach((rhuDoc) => {
             const stockMap = rhuDoc.stockByMethod;
@@ -184,6 +188,8 @@ function GisMap({ getCollection }){
                     if (isNaN(count)) return;
 
                     const normName = normalizeKey(methodName);
+                    // only the methods tracked in Inventory can be low on stock
+                    if (!INVENTORY_FP_METHODS.some((m) => m.id === normName)) return;
                     let limitForThisMethod = defaultThreshold;
 
                     if (methodLimits && typeof methodLimits === 'object') {
@@ -224,13 +230,11 @@ function GisMap({ getCollection }){
         });
 
         return markers;
-    }, [rhu, methodLimits, defaultThreshold, isLowStockEnabled]); 
+    }, [rhu, methodLimits, defaultThreshold, isLowStockEnabled]);
 
-    // Fetch Families Data
     const fetchMapClients = useCallback(async () => {
-            setLoading(true);
             try {
-                const collectionName = typeof getCollection === 'function' ? getCollection() : 'clients_public'; 
+                const collectionName = typeof getCollection === 'function' ? getCollection() : 'clients_public';
 
                 const querySnapshot = await getDocs(collection(db, collectionName));
 
@@ -267,11 +271,11 @@ function GisMap({ getCollection }){
                         const parsedLng = Number(rawLng);
 
                         const rawMethod = (
-                            data.fp_method || 
-                            data.fpMethod || 
-                            data.type || 
-                            data.methodUsed || 
-                            data.traditionalType || 
+                            data.fp_method ||
+                            data.fpMethod ||
+                            data.type ||
+                            data.methodUsed ||
+                            data.traditionalType ||
                             'no method'
                         ).toString().trim().toLowerCase();
 
@@ -282,8 +286,8 @@ function GisMap({ getCollection }){
 
                         const maleName = (data.name || '').trim();
                         const femaleName = (data.spouse_name || '').trim();
-                        const combinedName = maleName && femaleName 
-                            ? `${maleName} & ${femaleName}` 
+                        const combinedName = maleName && femaleName
+                            ? `${maleName} & ${femaleName}`
                             : maleName || femaleName || 'Unnamed Record';
 
                         return {
@@ -296,6 +300,7 @@ function GisMap({ getCollection }){
                             lat: parsedLat,
                             lng: parsedLng,
                             fp_method: normalizedMethod,
+                            status: data.status || '',
                             noOfChildren: Number(data.no_of_children || 0),
                             civilStatusMale: data.civil_status_male || '',
                             civilStatusFemale: data.civil_status_female || '',
@@ -305,7 +310,7 @@ function GisMap({ getCollection }){
                             femaleBirthdate: data.birthdate_female || ''
                         };
                     })
-                    .filter(Boolean); 
+                    .filter(Boolean);
 
                 const coordMap = {};
                 const validCoordsData = [];
@@ -314,13 +319,13 @@ function GisMap({ getCollection }){
                 formattedData.forEach(item => {
                     if (!isNaN(item.lat) && !isNaN(item.lng) && item.lat !== 0 && item.lng !== 0) {
                         const coordKey = `${item.lat.toFixed(3)},${item.lng.toFixed(3)}`;
-                        
+
                         if (coordMap[coordKey] === undefined) {
                             coordMap[coordKey] = 0;
                         } else {
                             coordMap[coordKey] += 1;
                             const count = coordMap[coordKey];
-                            const angle = count * (2 * Math.PI / 6); 
+                            const angle = count * (2 * Math.PI / 6);
                             const distance = 0.0008 * Math.ceil(count / 6);
 
                             item.lat = item.lat + (Math.sin(angle) * distance);
@@ -332,7 +337,7 @@ function GisMap({ getCollection }){
                         invalidCoordsData.push(item);
                     }
                 });
-                
+
                 if (invalidCoordsData.length > 0) {
                     console.warn("⚠️ Records without valid coordinates:", invalidCoordsData);
                 }
@@ -341,26 +346,17 @@ function GisMap({ getCollection }){
 
             } catch (error) {
                 console.error(error);
-            } finally {
-                setLoading(false);
             }
         }, [getCollection]);
 
     useEffect(() => {
-        const loadAllData = async () => {
-            setLoading(true);
-            await Promise.all([
-                fetchMapClients(), 
-                fetchRHU(), 
-                fetchThreshold()
-            ]);
-            setLoading(false);
-        };
-        loadAllData();
+        fetchMapClients();
+        fetchRHU();
+        fetchThreshold();
     }, [fetchMapClients, fetchRHU, fetchThreshold]);
 
     //zooming in on selected barangay
-    useEffect(() => { 
+    useEffect(() => {
         if (selectedBarangay && BARANGAY_COORDINATES[selectedBarangay]) {
             setMapTrigger({
                 coordinates: BARANGAY_COORDINATES[selectedBarangay],
@@ -381,19 +377,19 @@ function GisMap({ getCollection }){
             const selectedBgyClean = (selectedBarangay || '').toString().trim().toLowerCase();
             const selectedMethodClean = (selectedFPMethod || '').toString().trim().toLowerCase();
 
-            const isBgyAll = 
-                !selectedBarangay || 
-                selectedBgyClean === '' || 
-                selectedBgyClean === 'all' || 
+            const isBgyAll =
+                !selectedBarangay ||
+                selectedBgyClean === '' ||
+                selectedBgyClean === 'all' ||
                 selectedBgyClean === 'all barangays' ||
                 selectedBgyClean === 'select barangay';
 
             const matchesBarangay = isBgyAll || itemBarangay === selectedBgyClean;
 
-            const isMethodAll = 
-                !selectedFPMethod || 
-                selectedMethodClean === '' || 
-                selectedMethodClean === 'all' || 
+            const isMethodAll =
+                !selectedFPMethod ||
+                selectedMethodClean === '' ||
+                selectedMethodClean === 'all' ||
                 selectedMethodClean === 'all methods' ||
                 selectedMethodClean === 'select method';
 
@@ -402,10 +398,10 @@ function GisMap({ getCollection }){
             return matchesBarangay && matchesMethod;
         });
     }, [families, selectedBarangay, selectedFPMethod]);
-    
+
     const handleLocateUser = () => {
         if (!navigator.geolocation) {
-            alert("Geolocation is not supported by your browser.");
+            notify("Geolocation is not supported by your browser.");
             return;
         }
 
@@ -419,26 +415,30 @@ function GisMap({ getCollection }){
                     coordinates: coords,
                     timestamp: Date.now()
                 });
-                setZoom(16); 
+                setZoom(16);
             },
             (error) => {
                 console.error("Error getting location:", error);
-                alert("Unable to retrieve location permissions.");
+                notify("Unable to retrieve location permissions.");
             },
             { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
         );
     };
 
-    // Search Input Change Handler
+    // Search Input Change Handler: matches clients on the map by name or address
     const handleSearchChange = (e) => {
         const value = e.target.value;
         setSearchQuery(value);
         setFocusedIndex(-1);
 
-        if (value.trim() !== "") {
-            const matches = BARANGAYS.filter((b) =>
-                b.toLowerCase().includes(value.toLowerCase().trim())
-            );
+        const term = value.trim().toLowerCase();
+        if (term !== "") {
+            const matches = filteredFamilies
+                .filter((family) =>
+                    (family.familyName || "").toLowerCase().includes(term) ||
+                    (family.address || "").toLowerCase().includes(term)
+                )
+                .slice(0, 8);
             setSuggestions(matches);
             setIsDropdownOpen(true);
         } else {
@@ -447,95 +447,86 @@ function GisMap({ getCollection }){
         }
     };
 
-    // Barangay Selection Handler
-    const handleSelectBarangay = (barangayName) => {
-        setSearchQuery(barangayName);
-        setSelectedBarangay(barangayName);
+    // Client Selection Handler: moves the map to the client and opens their details
+    const handleSelectClient = (family) => {
+        setSearchQuery(family.familyName);
         setIsDropdownOpen(false);
         setSuggestions([]);
         setFocusedIndex(-1);
+        setSelectedFamily(family);
+        setMapTrigger({
+            coordinates: { lat: family.lat, lng: family.lng },
+            timestamp: Date.now()
+        });
     };
 
-    // Search Submit Handler (Enter Key or Button)
+    // Search Submit Handler (Enter Key)
     const handleSearchSubmit = (e) => {
         if (e) e.preventDefault();
-        if (focusedIndex >= 0 && suggestions[focusedIndex]) {
-            handleSelectBarangay(suggestions[focusedIndex]);
+        const match = suggestions[focusedIndex] || suggestions[0];
+        if (match) {
+            handleSelectClient(match);
         } else if (searchQuery.trim()) {
-            const match = BARANGAYS.find(
-                (b) => b.toLowerCase() === searchQuery.trim().toLowerCase()
-            );
-            if (match) {
-                handleSelectBarangay(match);
-            } else {
-                alert(`Barangay "${searchQuery}" not found.`);
-            }
+            notify(`No client found for "${searchQuery}".`);
         }
     };
 
-    if (loading) {
-        return (
-            <div className="custom-loading-container">
-                <div className="custom-loading-card">
-                    <div className="custom-spinner"></div>
-                    <p className="custom-loading-text">Fetching live database records...</p>
-                </div>
-            </div>
-        );
-    }
-
-    // Render the main GIS Map component
     return (
         <>
             <div className="pop-up">
                 {selectedFamily && (
-                    <MapPopUp 
-                        family={selectedFamily} 
-                        onClose={() => setSelectedFamily(null)} 
+                    <MapPopUp
+                        family={selectedFamily}
+                        onClose={() => setSelectedFamily(null)}
                     />
                 )}
             </div>
 
-            <div className="page-header">
-                <h1>Geographic Coverage Map</h1>
+            <PageHeader title="Geographic Coverage Map" flush>
                 <div className="gis-header-right">
                     <div className="search-container">
-                        <div className="search-bar"> 
+                        <div className="search-bar">
                             <i className="fa-solid fa-magnifying-glass"></i>
-                            <input 
-                                type="text" 
-                                placeholder="Search Barangay..." 
+                            <input
+                                type="text"
+                                placeholder="Search client name or address..."
                                 value={searchQuery}
                                 onChange={handleSearchChange}
-                                onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit(e)} 
+                                onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit(e)}
                                 style={{ outline: 'none', boxShadow: 'none' }}
                             />
                         </div>
 
                         {isDropdownOpen && (
                             <ul className="suggestions-list">
-                                {suggestions.map((barangayName, index) => (
-                                    <li 
-                                        key={index} 
+                                {suggestions.length === 0 && (
+                                    <li className="suggestion-empty">No matching clients</li>
+                                )}
+                                {suggestions.map((family) => (
+                                    <li
+                                        key={family.id}
                                         className="suggestion-item"
-                                        onClick={() => handleSelectBarangay(barangayName)}
+                                        onClick={() => handleSelectClient(family)}
                                     >
                                         <i className="fa-solid fa-location-dot"></i>
-                                        <span>{barangayName}</span>
+                                        <span className="suggestion-text">
+                                            <strong>{family.familyName}</strong>
+                                            <small>{family.address || family.barangay || "No address"}</small>
+                                        </span>
                                     </li>
                                 ))}
                             </ul>
                         )}
                     </div>
                     <button
-                        className="toolbar-btn" 
-                        title="Export Data"
-                        onClick={() => setIsExportOpen(true)}> 
-                        <i className="fa-solid fa-arrow-up-from-bracket"></i> 
+                        className="toolbar-btn"
+                        title="Export a barangay map as an image"
+                        onClick={() => setIsExportOpen(true)}>
+                        <i className="fa-solid fa-arrow-up-from-bracket"></i>
                         Export Map
                     </button>
                 </div>
-            </div>
+            </PageHeader>
 
             <div className="map-overview">
                 <div className="map-filters">
@@ -544,8 +535,8 @@ function GisMap({ getCollection }){
                             <i className="fa-solid fa-filter"></i>
                             <h3>Map Filters</h3>
                         </div>
-                        <button 
-                            id="show-filters" 
+                        <button
+                            id="show-filters"
                             onClick={() => setIsFiltersOpen(!isFiltersOpen)}
                             className={isFiltersOpen ? 'active' : ''}
                         >
@@ -556,7 +547,7 @@ function GisMap({ getCollection }){
                     <div className="filter-modes" style={{ display: isFiltersOpen ? "block" : "none" }}>
                         <div className="view-mode">
                             <div className="view-mode-options">
-                                <div 
+                                <div
                                     id="markers"
                                     className={`option-item ${mapMode === 'markers' ? 'active' : ''}`}
                                     onClick={() => setMapMode('markers')}
@@ -567,7 +558,7 @@ function GisMap({ getCollection }){
                                     <p>Markers</p>
                                 </div>
 
-                                <div 
+                                <div
                                     id="heatmap"
                                     className={`option-item ${mapMode === 'heatmap' ? 'active' : ''}`}
                                     onClick={() => setMapMode('heatmap')}
@@ -578,7 +569,7 @@ function GisMap({ getCollection }){
                                     <p>Heatmap</p>
                                 </div>
 
-                                <div 
+                                <div
                                     id="clusters"
                                     className={`option-item ${mapMode === 'clusters' ? 'active' : ''}`}
                                     onClick={() => setMapMode('clusters')}
@@ -593,36 +584,22 @@ function GisMap({ getCollection }){
 
                         <div className="barangay-filter">
                             <h4>Barangay</h4>
-                            <select 
-                                value={selectedBarangay} 
+                            <ReportSelect
+                                ariaLabel="Barangay"
+                                value={selectedBarangay}
                                 onChange={(e) => setSelectedBarangay(e.target.value)}
-                                className="form-control"
-                                style={{ fontWeight: 'normal' }}
-                            >
-                                <option value="">All Barangays</option>
-                                {BARANGAYS.map((barangay) => (
-                                    <option key={barangay} value={barangay}>
-                                        {barangay}
-                                    </option>
-                                ))}
-                            </select>
+                                options={BARANGAY_OPTIONS}
+                            />
                         </div>
 
                         <div className="fp-method-filter">
                             <h4>FP Method</h4>
-                            <select 
-                                value={selectedFPMethod} 
+                            <ReportSelect
+                                ariaLabel="FP Method"
+                                value={selectedFPMethod}
                                 onChange={(e) => setSelectedFPMethod(e.target.value)}
-                                className="form-control"
-                                style={{ fontWeight: 'normal' }}
-                            >
-                                <option value="all">All Methods</option>
-                                {FP_METHODS.map((fpmethod) => (
-                                    <option key={fpmethod} value={fpmethod}>
-                                        {fpmethod}
-                                    </option>
-                                ))}
-                            </select>                       
+                                options={FP_METHOD_OPTIONS}
+                            />
                         </div>
                     </div>
                 </div>
@@ -657,7 +634,7 @@ function GisMap({ getCollection }){
                             </div>
                         </div>
 
-                    </div> 
+                    </div>
                     <ul>
                         <p><i className="fa-solid fa-circle" style={{ color: '#EF4444' }}></i> Short-Acting Modern</p>
                         <p><i className="fa-solid fa-circle" style={{ color: '#8B5CF6' }}></i> Long-Acting Modern</p>
@@ -669,21 +646,21 @@ function GisMap({ getCollection }){
                 </div>
 
                 <div className="map-controls">
-                    <button 
+                    <button
                         onClick={() => setZoom(prev => prev < 18 ? prev + 1 : prev)} disabled={zoom === 18} title="Zoom In">
                         <i className="fa-solid fa-magnifying-glass-plus"></i>
                     </button>
-                    <button 
+                    <button
                         onClick={() => setZoom(prev => prev > 3 ? prev - 1 : prev)} disabled={zoom === 3} title="Zoom Out">
                         <i className="fa-solid fa-magnifying-glass-minus"></i>
                     </button>
                     <button onClick={handleLocateUser} title="Current location">
                         <i className="fa-solid fa-location-arrow"></i>
                     </button>
-                    
+
                     <div className="layer-control-wrapper" style={{ position: 'relative' }}>
-                        <button 
-                            onClick={() => setIsLayerMenuOpen(prev => !prev)} 
+                        <button
+                            onClick={() => setIsLayerMenuOpen(prev => !prev)}
                             title="Map Layers"
                             className={isLayerMenuOpen ? 'active' : ''}
                         >
@@ -710,7 +687,7 @@ function GisMap({ getCollection }){
                                             <span>{item.name}</span>
                                         </button>
                                     ))}
-                                </div>  
+                                </div>
                             </div>
                         )}
                     </div>
@@ -720,9 +697,9 @@ function GisMap({ getCollection }){
                     <div className="information-container">
                         <i className="fa-solid fa-circle-info"></i>
                         <p>Click on a barangay or use the filter to view detailed statistics.</p>
-                        <button 
-                            type="button" 
-                            onClick={() => setShowInfo(false)} 
+                        <button
+                            type="button"
+                            onClick={() => setShowInfo(false)}
                             aria-label="Close information"
                         >
                             <i className="fa-solid fa-xmark"></i>
@@ -731,13 +708,13 @@ function GisMap({ getCollection }){
                 )}
 
                 <div className="map-container">
-                    <MapDisplay 
+                    <MapDisplay
                         families={families}
                         filteredFamilies={filteredFamilies}
                         selectedBarangay={selectedBarangay}
                         rhuWarningMarkers={rhuWarningMarkers}
                         mapMode={mapMode}
-                        currentZoom={zoom} 
+                        currentZoom={zoom}
                         onZoomChange={setZoom}
                         barangayCenter={mapTrigger}
                         userLocation={userLocation}
@@ -746,17 +723,16 @@ function GisMap({ getCollection }){
                     />
                 </div>
 
-                <MapExportModal 
+                <MapExportModal
                     isOpen={isExportOpen}
                     onClose={() => setIsExportOpen(false)}
-                    families={filteredFamilies}
+                    families={families}
                     barangayList={BARANGAYS}
-                    mapRef={mapRef}
-                    onSelectBarangayForExport={(bgy) => setSelectedBarangay(bgy)}
+                    activeFilterBarangay={selectedBarangay}
                 />
             </div>
         </>
     );
-} 
+}
 
 export default GisMap;

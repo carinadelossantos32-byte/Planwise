@@ -1,6 +1,7 @@
+import { notify } from "../../utils/notify";
 import { useState, useEffect } from "react";
 import { collection, writeBatch, doc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
-import { db } from "../../firebase-config";
+import { db, auth } from "../../firebase-config";
 import { AlertCircle, CheckCircle, FileText } from "lucide-react";
 import { findDuplicate } from "../../utils/checkDuplicates";
 import "../ImportModal/import-modal.css";
@@ -53,7 +54,10 @@ function KoboSyncModal({ onClose, onSuccess, config }) {
     useEffect(() => {
         const fetchFromKobo = async () => {
             try {
-                const response = await fetch(config.syncUrl);
+                const idToken = await auth.currentUser?.getIdToken();
+                const response = await fetch(config.syncUrl, {
+                    headers: idToken ? { Authorization: `Bearer ${idToken}` } : {},
+                });
 
                 if (!response.ok) throw new Error("Failed to connect to Kobo API.");
                 const data = await response.json();
@@ -217,7 +221,7 @@ function KoboSyncModal({ onClose, onSuccess, config }) {
                 setStep("preview");
             } catch (err) {
                 console.error("Kobo data retrieval failure:", err.message);
-                alert("Error fetching records: " + err.message);
+                notify("Error fetching records: " + err.message);
                 onClose();
             }
         };
@@ -300,7 +304,7 @@ function KoboSyncModal({ onClose, onSuccess, config }) {
             }, 1500);
         } catch (err) {
             console.error("Kobo save error:", err);
-            alert("Failed to save synchronized entries to database.");
+            notify("Failed to save synchronized entries to database.");
             setStep("preview");
         }
     };

@@ -1,9 +1,11 @@
+import { notify } from "../../utils/notify";
 import { useState } from "react";
 import { collection, addDoc, doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../../firebase-config";
 import { findDuplicate } from "../../utils/checkDuplicates";
 import "../ClientAddModal/client-add-modal.css";
+import "./referral-slip.css";
 import { ImageIcon, X } from "lucide-react";
 
 function ClientAddModalReferred({ onClose, onSuccess }) {
@@ -42,21 +44,17 @@ function ClientAddModalReferred({ onClose, onSuccess }) {
     setUploading(true);
 
     try {
-      // 1. Create a reference path in Firebase Storage
       const fileRef = ref(storage, `referral_slips/${Date.now()}_${file.name}`);
 
-      // 2. Upload raw file bytes
       const snapshot = await uploadBytes(fileRef, file);
 
-      // 3. Retrieve public HTTPS URL
       const downloadURL = await getDownloadURL(snapshot.ref);
 
-      // 4. Update state with URL string
       setFormData(prev => ({ ...prev, referral_slip_file: downloadURL }));
       if (errors.referral_slip_file) setErrors(prev => ({ ...prev, referral_slip_file: "" }));
     } catch (err) {
       console.error("Firebase Storage Upload Error:", err);
-      alert("Failed to upload referral slip picture. Please try again.");
+      notify("Failed to upload referral slip picture. Please try again.");
       removeImage();
     } finally {
       setUploading(false);
@@ -93,7 +91,7 @@ function ClientAddModalReferred({ onClose, onSuccess }) {
       await saveRecord();
     } catch (err) {
       console.error("Duplicate check failed:", err);
-      alert("Error checking for duplicates: " + err.message);
+      notify("Error checking for duplicates: " + err.message);
     }
   };
 
@@ -344,51 +342,51 @@ function ClientAddModalReferred({ onClose, onSuccess }) {
       {/* DUPLICATE MODAL */}
       {
         dupModalOpen && existingRecord && (
-          <div className="modal-overlay-add dup-modal-overlay">
-            <div className="modal dup-modal">
-              <div className="modal-header dup-modal-header">
-                <h2 className="dup-modal-title">⚠ Duplicate Record Found</h2>
+          <div className="cfpr-dup-overlay">
+            <div className="cfpr-dup-modal">
+              <div className="cfpr-dup-header">
+                <h2 className="cfpr-dup-title">⚠ Duplicate Record Found</h2>
               </div>
-              <div className="modal-body">
-                <p className="dup-modal-subtitle">
+              <div className="cfpr-dup-body">
+                <p className="cfpr-dup-subtitle">
                   A record with the same name and address already exists. Review the differences and choose how to proceed.
                 </p>
-                <div className="dup-comparison-grid">
-                  <div className="dup-column">
-                    <div className="dup-column-header dup-column-header--new">
+                <div className="cfpr-dup-grid">
+                  <div className="cfpr-dup-col">
+                    <div className="cfpr-dup-col-header cfpr-dup-col-header-new">
                       ⬆ New Entry (yours)
                     </div>
                     {comparisonFields.map(({ label, key }) => (
-                      <div key={key} className={`dup-field-row ${formData[key] !== existingRecord[key] ? "dup-field-row--diff" : ""}`}>
-                        <span className="dup-field-label">{label}</span>
+                      <div key={key} className={`cfpr-dup-row ${formData[key] !== existingRecord[key] ? "cfpr-dup-row-diff" : ""}`}>
+                        <span className="cfpr-dup-row-label">{label}</span>
                         <span>{formData[key] || "—"}</span>
                       </div>
                     ))}
                   </div>
-                  <div className="dup-column">
-                    <div className="dup-column-header dup-column-header--existing">
+                  <div className="cfpr-dup-col">
+                    <div className="cfpr-dup-col-header cfpr-dup-col-header-existing">
                       📁 Existing (in database)
                     </div>
                     {comparisonFields.map(({ label, key }) => (
-                      <div key={key} className={`dup-field-row ${formData[key] !== existingRecord[key] ? "dup-field-row--diff" : ""}`}>
-                        <span className="dup-field-label">{label}</span>
+                      <div key={key} className={`cfpr-dup-row ${formData[key] !== existingRecord[key] ? "cfpr-dup-row-diff" : ""}`}>
+                        <span className="cfpr-dup-row-label">{label}</span>
                         <span>{existingRecord[key] || "—"}</span>
                       </div>
                     ))}
                   </div>
                 </div>
-                <p className="dup-legend">🟡 Highlighted fields have different values.</p>
-                <div className="dup-actions">
-                  <button type="button" className="dup-btn-cancel" onClick={() => { setDupModalOpen(false); setExistingRecord(null); }}>
+                <p className="cfpr-dup-legend">🟡 Highlighted fields have different values.</p>
+                <div className="cfpr-dup-actions">
+                  <button type="button" className="cfpr-dup-btn cfpr-dup-btn-cancel" onClick={() => { setDupModalOpen(false); setExistingRecord(null); }}>
                     Cancel (Go back)
                   </button>
-                  <button type="button" className="dup-btn-skip" onClick={() => { setDupModalOpen(false); onClose(); }}>
+                  <button type="button" className="cfpr-dup-btn cfpr-dup-btn-skip" onClick={() => { setDupModalOpen(false); onClose(); }}>
                     Skip (Don't save)
                   </button>
-                  <button type="button" className="dup-btn-overwrite" onClick={() => { setDupModalOpen(false); saveRecord(existingRecord.id); }}>
+                  <button type="button" className="cfpr-dup-btn cfpr-dup-btn-overwrite" onClick={() => { setDupModalOpen(false); saveRecord(existingRecord.id); }}>
                     Overwrite Existing
                   </button>
-                  <button type="button" className="dup-btn-save" onClick={() => { setDupModalOpen(false); saveRecord(); }}>
+                  <button type="button" className="cfpr-dup-btn cfpr-dup-btn-save" onClick={() => { setDupModalOpen(false); saveRecord(); }}>
                     Save as New
                   </button>
                 </div>

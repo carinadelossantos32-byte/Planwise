@@ -1,0 +1,21 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Referral slip photos attached to referred client records
+    match /referral_slips/{fileName} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow update, delete: if false;
+    }
+
+    // Everything else (including client signatures, which the server manages)
+    // is closed to direct access from the app.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

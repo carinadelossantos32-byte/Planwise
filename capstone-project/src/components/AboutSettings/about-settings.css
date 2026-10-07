@@ -1,151 +1,102 @@
-/* Parent Container */
-#about-settings-page-container {
+/* Card and title styles live in pages/Settings/settings.css */
+
+#about-header {
     display: flex;
-    flex-direction: column;
-    align-items: start;    
-    width: 100%;
-    min-height: 100vh;        
-    padding: 2rem 4.5rem;       
-    box-sizing: border-box;
-}
-
-/* Page Heading */
-#about-settings-page-container h1 {
-    align-self: flex-start;  
-    width: 90%;                  
-    max-width: 1100px;             
-    margin: 0 0 1.5rem 0;        
-    font-size: 25px;
-    font-weight: bold;
-}
-
-/* Main Card Container */
-#about-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between; 
-    
-    /* VERTICAL RESPONSIVENESS */
-    min-height: 65vh;        
-    padding: 3rem 2.5rem;     
-    border: 1px solid #ccc;
-    border-radius: 12px;
-    background-color: #ffffff;
-    box-sizing: border-box;
-
-    width: 100%;              
-    max-width: 1100px;
-    margin: 1.5rem auto;
-    overflow-x: hidden;
-}
-
-#about-header{
-    display: flex;
-    flex-direction: column;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
-    width: 100%;
-    max-width: 100%;
+    gap: 18px;
 }
 
 #about-header img {
-    width: 100px;
-    height: 100px;
-    max-width: 100%;
-    margin-right: 12px;
-}
-
-#about-header h1 {
-    width: 100%;
-    font-size: 22px;
-    font-weight: bold;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-        
-    width: 100%;
-}
-
-#about-header p {
-    font-size: 15px;
-    margin: 10px 0 0 0;
-    text-align:center;
-    color: #000000;
-    max-width: 100%;
-    word-wrap: break-word;
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+    object-fit: contain;
 }
 
 h1{
-    font-size: 24px;             
+    font-size: 24px;
     font-weight: bold;
-    margin: 20px 0 20px 0;      
+    margin: 20px 0 20px 0;
 }
 
-#about-content{
+#about-content {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.about-tile {
     display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    margin: 20px 0;
+    flex-direction: column;
     gap: 10px;
-    width: 100%;
-    max-width: 100%;
-}
-
-.content{
-    border: 1px solid #c0c0c0;
-    border-radius: 10px;
-    padding: 10px 20px;
-    margin: 10px;
-    background-color: #f5f2f2;
-    flex: 1 1 260px;
+    padding: 18px;
+    background-color: #f6f8fc;
+    border-radius: 12px;
     min-width: 0;
-    max-width: 100%;
-    word-wrap: break-word;
 }
 
-#contact-support h3, #office-hours h3{
-    font-size: 18px;
-    font-weight: bold;
-    margin-bottom: 10px;
+.about-tile h3 {
+    margin: 0 0 2px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #64748b;
 }
 
-#about-footer{
-    text-align: center;
+.about-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     font-size: 14px;
-    color: #646464;
-    margin-top: 20px;
+    color: #0f172a;
+    min-width: 0;
 }
 
-/* ===== RESPONSIVE BREAKPOINTS ===== */
-@media (max-width: 900px) {
-    #about-container {
-        padding: 2rem 1.5rem;
-        min-height: auto;
+.about-row svg {
+    flex-shrink: 0;
+    color: #091F7A;
+}
+
+.about-row a {
+    color: #091F7A;
+    font-weight: 500;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+}
+
+.about-row a:hover {
+    text-decoration: underline;
+}
+
+.about-row-value {
+    margin-left: auto;
+    color: #475569;
+    white-space: nowrap;
+}
+
+#about-footer {
+    margin-top: 24px;
+    padding-top: 18px;
+    border-top: 1px solid #e6eaf3;
+}
+
+#about-footer p {
+    margin: 0;
+    font-size: 13px;
+    color: #64748b;
+}
+
+@media (max-width: 720px) {
+    #about-content {
+        grid-template-columns: 1fr;
     }
 }
 
 @media (max-width: 480px) {
-    #about-settings-page-container {
-        padding: 1rem 0.75rem;
-    }
-
-    #about-container {
-        padding: 1.5rem 1rem;
-        margin: 1rem auto;
-        border-radius: 8px;
-    }
-
-    #about-header img {
-        width: 72px;
-        height: 72px;
-    }
-
-    #about-header h1 {
-        font-size: 18px;
-    }
-
-    h1 {
-        font-size: 20px;
+    #about-header {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }

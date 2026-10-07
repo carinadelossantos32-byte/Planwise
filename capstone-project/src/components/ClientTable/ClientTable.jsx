@@ -1,6 +1,33 @@
 import { useState } from "react";
 import "./client-table.css";
-import { SquarePen, Trash2, ArchiveRestore, ImageIcon, Loader2, AlertCircle } from "lucide-react";
+import { ImageIcon, Loader2, AlertCircle } from "lucide-react";
+import { Clip, RecordsStats, RowActions, RecordsPagination } from "./TableParts";
+
+// Address has no width, so it takes whatever the other columns leave
+const COLUMNS = [
+    { label: "ID", width: 46 },
+    { label: "Name", width: "15%" },
+    { label: "Civil Status", width: "6.5%" },
+    { label: "Birthdate", width: "8.5%" },
+    { label: "Address" },
+    { label: "Education", width: "9.6%", title: "Highest Educational Attainment", className: "rec-tight-right" },
+    { label: "Kids", width: 40, title: "No. of Children", className: "rec-center" },
+    { label: "Method / Shift", width: "12.8%", title: "Method Used / Intention to Shift", className: "rec-gap-left" },
+    { label: "Type / Status", width: "9.5%", title: "Traditional FP User: Type / Status" },
+    { label: "Reason / Class", width: "9%", title: "Reason / Classes Held" },
+    { label: "Sign.", width: 50, title: "Signature" },
+    { label: "Actions" },
+];
+
+const EDUCATION_SHORT = {
+    "No Education": "No Educ.",
+    "Elementary Level": "Elem. Level",
+    "Elementary Graduate": "Elem. Grad",
+    "High School Level": "HS Level",
+    "High School Graduate": "HS Grad",
+    "College Graduate": "College Grad",
+    "Post Graduate": "Post Grad",
+};
 
 function ClientTable({ clients, loading, onView, onEdit, onDelete, isArchived, onRestore }) {
     const [currentPage, setCurrentPage] = useState(1);
@@ -9,84 +36,41 @@ function ClientTable({ clients, loading, onView, onEdit, onDelete, isArchived, o
 
     const safeClients = clients || [];
     const totalPages = Math.ceil(safeClients.length / itemsPerPage);
+    // a search or filter can leave fewer pages than the one being viewed
+    const page = Math.min(currentPage, Math.max(totalPages, 1));
 
-    const indexOfLastClient = currentPage * itemsPerPage;
+    const indexOfLastClient = page * itemsPerPage;
     const indexOfFirstClient = indexOfLastClient - itemsPerPage;
     const currentClients = safeClients.slice(indexOfFirstClient, indexOfLastClient);
 
-    const handleNextPage = () => {
-        if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
-    };
-
-    const handlePrevPage = () => {
-        if (currentPage > 1) setCurrentPage((prev) => prev - 1);
-    };
-
     return (
         <>
-            {/* Stats Banner */}
-            <div className="stats-banner">
-                <div className="stat-item">
-                    <span className="stat-label">{isArchived ? "Archived Records" : "Total Records"}</span>
-                    <span className="stat-value">{safeClients.length}</span>
-                </div>
+            <div className="rec-card">
+                {!isArchived && <RecordsStats clients={safeClients} showActive />}
 
-                {!isArchived && (
-                    <>
-                        <div className="stat-item">
-                            <span className="stat-label">New This Month</span>
-                            <span className="stat-value">
-                                {safeClients.filter((c) => {
-                                    if (!c.created_at || typeof c.created_at.toDate !== "function") return false;
-                                    const date = c.created_at.toDate();
-                                    const now = new Date();
-                                    return (
-                                        date.getMonth() === now.getMonth() &&
-                                        date.getFullYear() === now.getFullYear()
-                                    );
-                                }).length}
-                            </span>
-                        </div>
-                        <div className="stat-item">
-                            <span className="stat-label">Active Users</span>
-                            <span className="stat-value">
-                                {safeClients.filter((c) => c.status === "Active" || c.status === "A").length}
-                            </span>
-                        </div>
-                    </>
-                )}
-            </div>
-
-            {/* Client Table */}
-            <div className="client-table-container">
                 {loading ? (
-                    <div className="table-empty">Loading records...</div>
+                    <div className={`rec-empty${isArchived ? " rec-empty--compact" : ""}`}>Loading records...</div>
                 ) : safeClients.length === 0 ? (
-                    <div className="table-empty">
+                    <div className={`rec-empty${isArchived ? " rec-empty--compact" : ""}`}>
                         {isArchived ? "No archived records found." : "No records found."}
                     </div>
                 ) : (
-                    <>
-                        <table className="table table-xs table-pin-rows table-pin-cols">
+                    <div className="rec-table-scroll">
+                        <table className="rec-table rec-table--public">
+                            <colgroup>
+                                {COLUMNS.map((column) => (
+                                    <col
+                                        key={column.label}
+                                        style={{ width: column.label === "Actions" ? (isArchived ? 104 : 80) : column.width }}
+                                    />
+                                ))}
+                            </colgroup>
+
                             <thead>
                                 <tr>
-                                    <th>ID</th>
-                                    <td>Name</td>
-                                    <td>Sex</td>
-                                    <td>Civil Status</td>
-                                    <td>Birthdate</td>
-                                    <td>Address</td>
-                                    <td>Barangay</td>
-                                    <td>Highest Educational Attainment</td>
-                                    <td>No. of Children</td>
-                                    <td>Method Used</td>
-                                    <td>Intention to Shift</td>
-                                    <td>Type</td>
-                                    <td>Status</td>
-                                    <td>Reason</td>
-                                    <td>Classes Held</td>
-                                    <td>Signature</td>
-                                    <td>Actions</td>
+                                    {COLUMNS.map((column) => (
+                                        <th key={column.label} title={column.title} className={column.className}>{column.label}</th>
+                                    ))}
                                 </tr>
                             </thead>
 
@@ -94,8 +78,7 @@ function ClientTable({ clients, loading, onView, onEdit, onDelete, isArchived, o
                                 {currentClients.map((client, index) => (
                                     <tr
                                         key={client.id || index}
-                                        className={`${isArchived ? "archived-row" : ""}${!isArchived ? " client-record-row-clickable" : ""}`}
-                                        style={{ cursor: isArchived ? undefined : "pointer" }}
+                                        className={isArchived ? "rec-row--archived" : "rec-row--clickable"}
                                         tabIndex={isArchived ? undefined : 0}
                                         aria-label={isArchived ? undefined : `View ${client.name || "client"} record`}
                                         onClick={isArchived ? undefined : () => onView(client)}
@@ -106,60 +89,80 @@ function ClientTable({ clients, loading, onView, onEdit, onDelete, isArchived, o
                                             }
                                         }}
                                     >
-                                        <th>{String(indexOfFirstClient + index + 1).padStart(3, "0")}</th>
+                                        <td className="rec-id">{String(indexOfFirstClient + index + 1).padStart(3, "0")}</td>
                                         <td>
-                                            <div className="client-name">
-                                                <span className="client-name-male">{client.name}</span>
-                                                <span className="client-name-female">{client.spouse_name || ""}</span>
+                                            <div className="rec-stack">
+                                                <span className="rec-person">
+                                                    <span className="rec-sex rec-sex--male" title="Male">M</span>
+                                                    <Clip className="rec-name">{client.name}</Clip>
+                                                </span>
+                                                <span className="rec-person">
+                                                    <span className="rec-sex rec-sex--female" title="Female">F</span>
+                                                    <Clip className="rec-name rec-name--spouse">{client.spouse_name}</Clip>
+                                                </span>
                                             </div>
                                         </td>
                                         <td>
-                                            <div className="client-sex">
-                                                <span className="sex-badge male">M</span>
-                                                <span className="sex-badge female">F</span>
+                                            <div className="rec-stack">
+                                                <Clip>{client.civil_status_male}</Clip>
+                                                <Clip>{client.civil_status_female}</Clip>
                                             </div>
                                         </td>
                                         <td>
-                                            <div className="client-civil-status">
-                                                <span>{client.civil_status_male || "—"}</span>
-                                                <span>{client.civil_status_female || "—"}</span>
+                                            <div className="rec-stack">
+                                                <Clip>{client.birthdate_male}</Clip>
+                                                <Clip>{client.birthdate_female}</Clip>
                                             </div>
                                         </td>
                                         <td>
-                                            <div className="client-birthdate">
-                                                <span>{client.birthdate_male || "—"}</span>
-                                                <span>{client.birthdate_female || "—"}</span>
+                                            <div className="rec-stack">
+                                                <Clip>{client.address}</Clip>
+                                                {client.barangay && <Clip className="rec-muted">{`Brgy. ${client.barangay}`}</Clip>}
                                             </div>
                                         </td>
-                                        <td>{client.address || "—"}</td>
-                                        <td>{client.barangay || "—"}</td>
-                                        <td>
-                                            <div className="client-educational-attainment">
-                                                <span>{client.educational_attainment_male || "—"}</span>
-                                                <span>{client.educational_attainment_female || "—"}</span>
+                                        <td className="rec-tight-right">
+                                            <div className="rec-stack">
+                                                <Clip title={client.educational_attainment_male}>
+                                                    {EDUCATION_SHORT[client.educational_attainment_male] || client.educational_attainment_male}
+                                                </Clip>
+                                                <Clip title={client.educational_attainment_female}>
+                                                    {EDUCATION_SHORT[client.educational_attainment_female] || client.educational_attainment_female}
+                                                </Clip>
+                                            </div>
+                                        </td>
+                                        <td className="rec-center">
+                                            <span className="rec-count">{client.no_of_children || "0"}</span>
+                                        </td>
+                                        <td className="rec-gap-left">
+                                            <div className="rec-stack">
+                                                {client.fp_method
+                                                    ? <span className="rec-badge" title={client.fp_method}>{client.fp_method}</span>
+                                                    : <span>—</span>}
+                                                {client.intention_to_shift && (
+                                                    <Clip className="rec-muted" title={`Intention to shift: ${client.intention_to_shift}`}>
+                                                        → {client.intention_to_shift}
+                                                    </Clip>
+                                                )}
                                             </div>
                                         </td>
                                         <td>
-                                            <span className="children-badge">{client.no_of_children || "0"}</span>
+                                            <div className="rec-stack">
+                                                <Clip>{client.type}</Clip>
+                                                {client.status && <Clip className="rec-muted">{client.status}</Clip>}
+                                            </div>
                                         </td>
                                         <td>
-                                            <span className="method-badge">{client.fp_method || "—"}</span>
+                                            <div className="rec-stack">
+                                                <Clip>{client.reason}</Clip>
+                                                {client.classes_held && <Clip className="rec-muted">{client.classes_held}</Clip>}
+                                            </div>
                                         </td>
-                                        <td>{client.intention_to_shift || "—"}</td>
-                                        <td>
-                                            <span className="type-badge">{client.type || "—"}</span>
-                                        </td>
-                                        <td>
-                                            <span>{client.status || "—"}</span>
-                                        </td>
-                                        <td>{client.reason || "—"}</td>
-                                        <td>{client.classes_held || "—"}</td>
 
-                                        {/* SIGNATURE COLUMN */}
                                         <td>
                                             {client.signature_url ? (
-                                                <div
-                                                    className="sig-cell-attached"
+                                                <button
+                                                    type="button"
+                                                    className="rec-thumb-btn"
                                                     onClick={(event) => {
                                                         event.stopPropagation();
                                                         setPreviewImage({ url: client.signature_url, name: client.name });
@@ -171,74 +174,54 @@ function ClientTable({ clients, loading, onView, onEdit, onDelete, isArchived, o
                                                         alt={`${client.name}'s Signature`}
                                                         loading="lazy"
                                                         decoding="async"
-                                                        className="sig-thumbnail"
+                                                        className="rec-thumb"
                                                     />
-                                                    <span className="sig-status-attached">Attached</span>
-                                                </div>
+                                                </button>
                                             ) : client.signature_status === "pending" ? (
-                                                <div className="sig-cell-syncing">
-                                                    <Loader2 size={14} className="animate-spin" />
-                                                    <span className="sig-status-syncing">Syncing...</span>
-                                                </div>
+                                                <span className="rec-attach-status rec-attach-status--syncing" title="Signature is syncing">
+                                                    <Loader2 size={14} className="animate-spin" /> Syncing
+                                                </span>
                                             ) : client.signature_status === "failed" ? (
-                                                <div className="sig-cell-failed" title="Check the Cloud Functions logs for the sync error.">
-                                                    <AlertCircle size={14} />
-                                                    <span className="sig-status-failed">Sync failed</span>
-                                                </div>
+                                                <span className="rec-attach-status rec-attach-status--failed" title="Check the Cloud Functions logs for the sync error.">
+                                                    <AlertCircle size={14} /> Failed
+                                                </span>
                                             ) : (
-                                                <div className="sig-cell-none">
-                                                    <ImageIcon size={14} />
-                                                    <span className="sig-status-none">—</span>
-                                                </div>
+                                                <span className="rec-attach-status" title="No signature">
+                                                    <ImageIcon size={14} /> —
+                                                </span>
                                             )}
                                         </td>
 
                                         <td>
-                                            <div className="action-buttons">
-                                                {isArchived ? (
-                                                    <button className="action-btn restore" onClick={() => onRestore(client)} title="Restore">
-                                                        <ArchiveRestore size={15} strokeWidth={1.5} />
-                                                    </button>
-                                                ) : (
-                                                    <>
-                                                        <button className="action-btn edit" onClick={(event) => { event.stopPropagation(); onEdit(client); }} title="Edit">
-                                                            <SquarePen size={15} strokeWidth={1.5} />
-                                                        </button>
-                                                        <button className="action-btn delete" onClick={(event) => { event.stopPropagation(); onDelete(client); }} title="Delete">
-                                                            <Trash2 size={15} strokeWidth={1.5} />
-                                                        </button>
-                                                    </>
-                                                )}
-                                            </div>
+                                            <RowActions
+                                                client={client}
+                                                isArchived={isArchived}
+                                                onEdit={onEdit}
+                                                onDelete={onDelete}
+                                                onRestore={onRestore}
+                                            />
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
-                    </>
+                    </div>
                 )}
-            </div>
 
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-                <div className="pagination-controls">
-                    <button className="page-btn" onClick={handlePrevPage} disabled={currentPage === 1}>
-                        Previous
-                    </button>
-                    <span className="page-info">
-                        Page {currentPage} of {totalPages}
-                    </span>
-                    <button className="page-btn" onClick={handleNextPage} disabled={currentPage === totalPages}>
-                        Next
-                    </button>
-                </div>
-            )}
+                <RecordsPagination
+                    page={page}
+                    totalPages={totalPages}
+                    total={safeClients.length}
+                    pageSize={itemsPerPage}
+                    onPageChange={setCurrentPage}
+                />
+            </div>
 
             {/* Signature Zoom Modal */}
             {previewImage && (
                 <div className="sig-modal-overlay" onClick={() => setPreviewImage(null)}>
                     <div className="sig-modal-content" onClick={(e) => e.stopPropagation()}>
-                        <h4 className="sig-modal-title">Lagda: {previewImage.name}</h4>
+                        <h4 className="sig-modal-title">Signature: {previewImage.name}</h4>
                         <div className="sig-modal-image-box">
                             <img
                                 src={previewImage.url}

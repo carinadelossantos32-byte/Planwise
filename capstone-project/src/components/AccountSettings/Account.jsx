@@ -1,6 +1,5 @@
 import "./account.css"
-import Settings from "../../pages/Settings/settings";
-import { Camera, CheckCircle,CardSim } from 'lucide-react';
+import { CheckCircle,CardSim } from 'lucide-react';
 import { useState,useEffect } from "react";
 import { getAuth } from "firebase/auth";
 import {db} from "../../firebase-config";
@@ -138,53 +137,47 @@ function Account(){
         <>
         
 
-<div id="account-settings-page">
-    <h1 >Account Settings</h1>
+<div id="account-settings-page" className="settings-page">
+    <h1 className="settings-page-title">Account</h1>
+    <p className="settings-page-sub">Manage the profile details for this office account.</p>
 
-    <div  id="account-settings-container">
-            <h2 >Profile Information</h2>
+    <div id="account-settings-container" className="settings-card">
+        <h2 className="settings-card-title">Profile Information</h2>
 
-            
-
-                {/* Form */}
-                <div id="personal-info">
-                    <div id="name-field" className="info-field">
-                            <h3>Username</h3>
-                            <input type="text" placeholder="Enter your username" 
-                            value={userData.username}
-                             onChange={verifyUsername}/>
-                             <p className="error-text">{errors.username}</p>
-                    </div>
-                
-
-                 <div id="email-field" className="info-field">
-                            <h3>Email</h3>
-                            <input type="email" placeholder="Enter your email address" 
-                            value={userData.email}
-                             onChange={verifyEmail}/>
-                             <p className="error-text">{errors.email}</p>
-                </div>
-
-                <div id="position-field" className="info-field">
-                       <h3>Position</h3>
-                       <div id="position-display">
-                        {userData.role === "cpd" ? "CPD Personnel" : "Health Personnel"}
-                        </div>
-                </div>
-
-                <div id="buttons-field">
-                        <button id="save-button"
-                        onClick={handleUpdateInfo}><CardSim className="w-5 h-5" />Update Changes
-                        </button>
-                    </div>
+        <div id="personal-info" className="settings-form">
+            <div className="settings-field">
+                <label className="settings-label" htmlFor="account-username">Username</label>
+                <input id="account-username" className="settings-input" type="text"
+                    placeholder="Enter your username"
+                    value={userData.username}
+                    onChange={verifyUsername}/>
+                <p className="settings-error">{errors.username}</p>
             </div>
 
-              
-
+            <div className="settings-field">
+                <label className="settings-label" htmlFor="account-email">Email</label>
+                <input id="account-email" className="settings-input" type="email"
+                    placeholder="Enter your email address"
+                    value={userData.email}
+                    onChange={verifyEmail}/>
+                <p className="settings-error">{errors.email}</p>
             </div>
 
+            <div className="settings-field">
+                <span className="settings-label">Position</span>
+                <div className="settings-input settings-input--readonly">
+                    {userData.role === "cpd" ? "CPD Personnel" : "Health Personnel"}
+                </div>
+            </div>
 
-                  
+            <div className="settings-actions">
+                <button id="save-button" className="settings-btn settings-btn--primary"
+                    onClick={handleUpdateInfo}>
+                    <CardSim size={16} />Update Changes
+                </button>
+            </div>
+        </div>
+    </div>
 
                     {showModal && (
                         <div className="modal-overlay">

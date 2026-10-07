@@ -1,3 +1,4 @@
+import { notify } from "./notify";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
@@ -502,12 +503,12 @@ function writePublicRows(sheet, filteredClients) {
     merges.forEach((col) => {
       try {
         sheet.mergeCells(`${col}${husbandRow}:${col}${wifeRow}`);
-      } catch {}
+      } catch { /* cells already merged */ }
     });
 
     // Merge C at D para sa Name column (Name width spans Col C and Col D)
-    try { sheet.mergeCells(`C${husbandRow}:D${husbandRow}`); } catch {}
-    try { sheet.mergeCells(`C${wifeRow}:D${wifeRow}`); } catch {}
+    try { sheet.mergeCells(`C${husbandRow}:D${husbandRow}`); } catch { /* already merged */ }
+    try { sheet.mergeCells(`C${wifeRow}:D${wifeRow}`); } catch { /* already merged */ }
 
     // ── HUSBAND ROW (Row 9, 11, 13...) ──
     setCell(sheet, `B${husbandRow}`, index + 1);
@@ -613,13 +614,13 @@ export async function exportClientRecordsExcel(activeTab, filteredClients, fileN
     saveAs(new Blob([buffer]), fileName || config.filename);
   } catch (error) {
     console.error("Export failed:", error);
-    alert(`Could not export. Make sure '${config.template.replace("/", "")}' is in your public folder!`);
+    notify(`Could not export. Make sure '${config.template.replace("/", "")}' is in your public folder!`);
   }
 }
 
 export async function exportClientRecordsPDF(activeTab, filteredClients, fileName) {
   if (filteredClients.length === 0) {
-    alert("There are no records to export.");
+    notify("There are no records to export.");
     return;
   }
 
@@ -628,7 +629,7 @@ export async function exportClientRecordsPDF(activeTab, filteredClients, fileNam
       await exportClientRecordsReportPDF(activeTab, filteredClients, fileName);
     } catch (error) {
       console.error("Client records PDF export failed:", error);
-      alert("Could not export the PDF. Please try again.");
+      notify("Could not export the PDF. Please try again.");
     }
     return;
   }
@@ -986,6 +987,6 @@ export async function exportClientRecordsPDF(activeTab, filteredClients, fileNam
     pdf.save(fileName || `${exportConfig.filename}-${new Date().toISOString().slice(0, 10)}.pdf`);
   } catch (error) {
     console.error("PDF export failed:", error);
-    alert("Could not export the PDF. Please try again.");
+    notify("Could not export the PDF. Please try again.");
   }
 }
