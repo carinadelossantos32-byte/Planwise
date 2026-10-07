@@ -117,6 +117,8 @@ function GisMap({ getCollection }){
     const [methodLimits, setMethodLimits] = useState({});
     const [defaultThreshold, setDefaultThreshold] = useState(10);
 
+    const [locationNotice, setLocationNotice] = useState(null);
+
     // Fetch the low stock threshold from Firestore on component mount
     const fetchThreshold = useCallback(async () => {
         try {
@@ -405,7 +407,8 @@ function GisMap({ getCollection }){
     
     const handleLocateUser = () => {
         if (!navigator.geolocation) {
-            alert("Geolocation is not supported by your browser.");
+            setLocationNotice("Geolocation is not supported by your browser.");
+            setTimeout(() => setLocationNotice(null), 5000);
             return;
         }
 
@@ -419,13 +422,37 @@ function GisMap({ getCollection }){
                     coordinates: coords,
                     timestamp: Date.now()
                 });
-                setZoom(16); 
+                setZoom(16);
+                setLocationNotice(null);
             },
             (error) => {
-                console.error("Error getting location:", error);
-                alert("Unable to retrieve location permissions.");
+                let userMessage = "";
+
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        userMessage = "Location access blocked. Please allow location permissions in your browser URL bar.";
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        userMessage = "Location is currently unavailable. Please check your network or GPS connection.";
+                        break;
+                    case error.TIMEOUT:
+                        userMessage = "Request to get user location timed out. Please try again.";
+                        break;
+                    default:
+                        userMessage = "An unknown error occurred while retrieving your location.";
+                        break;
+                }
+
+                console.warn(`Geolocation error (${error.code}): ${error.message}`);
+                setLocationNotice(userMessage);
+
+                setTimeout(() => setLocationNotice(null), 5000);
             },
-            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+            { 
+                enableHighAccuracy: false,
+                timeout: 10000,
+                maximumAge: 60000
+            }
         );
     };
 
@@ -487,6 +514,29 @@ function GisMap({ getCollection }){
     // Render the main GIS Map component
     return (
         <>
+        {/* FLOATING LOCATION NOTIFICATION BANNER */}
+        {locationNotice && (
+            <div className="location-toast-banner">
+                <i className="fa-solid fa-triangle-exclamation"></i>
+                <span>{locationNotice}</span>
+                <button 
+                    type="button" 
+                    onClick={() => setLocationNotice(null)}
+                    aria-label="Close notification"
+                >
+                    <i className="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        )}
+
+        <div className="pop-up">
+            {selectedFamily && (
+                <MapPopUp 
+                    family={selectedFamily} 
+                    onClose={() => setSelectedFamily(null)} 
+                />
+            )}
+        </div>
             <div className="pop-up">
                 {selectedFamily && (
                     <MapPopUp 
