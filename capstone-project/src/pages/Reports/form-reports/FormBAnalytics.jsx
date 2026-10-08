@@ -3,6 +3,7 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import "../report-forms.css";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import { tidyReportHeader } from "../reportExcel.js";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { getClientDate } from "../reportData";
@@ -659,6 +660,8 @@ function FormBAnalytics({
             await workbook.xlsx.load(buffer);
 
             const sheet = workbook.worksheets[0];
+
+            tidyReportHeader(sheet);
 
             // Writes one label + the 7 data values (columns B to H)
             const writeRow = (rowNumber, label, record) => {

@@ -5,6 +5,7 @@ import MethodName from "../MethodName";
 import { useMemo, useState, useEffect, useRef } from "react";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import { tidyReportHeader } from "../reportExcel.js";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { getClientDate, methodLabel } from "../reportData";
@@ -572,6 +573,8 @@ function ModernFPUsersAnalytics({
             await workbook.xlsx.load(buffer);
 
             const sheet = workbook.worksheets[0];
+
+            tidyReportHeader(sheet);
 
             if (TEMPLATE_TITLE_CELL) {
                 sheet.getCell(TEMPLATE_TITLE_CELL).value =
