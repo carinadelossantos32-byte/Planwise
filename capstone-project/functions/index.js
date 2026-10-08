@@ -54,6 +54,23 @@ function getTransporter() {
 
 const STOCK_FIELD = "stock";
 
+// Rejects HTTP requests that don't carry a valid Firebase sign-in token
+async function requireSignedIn(req, res) {
+  const header = req.headers.authorization || "";
+  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+  if (!token) {
+    res.status(401).json({ error: "You must be signed in." });
+    return false;
+  }
+  try {
+    await admin.auth().verifyIdToken(token);
+    return true;
+  } catch (error) {
+    res.status(401).json({ error: "Your session is invalid or has expired." });
+    return false;
+  }
+}
+
 
 async function getAllEmails() {
   const usersSnap = await admin.firestore().collection("users").get();
@@ -95,6 +112,7 @@ async function alertIfLow(rhuRef, rhuId, rhu, methodIds, limitsByMethod) {
       const subject = `Low Stock Alert: ${label} at ${rhuName}`;
       const text = `${rhuName} is low on ${label}.\n\nRemaining: ${qty}\nLimit: ${limit}`;
 
+      const transporter = getTransporter();
       const results = await Promise.allSettled(
         allEmails.map((email) =>
           transporter.sendMail({
@@ -141,101 +159,6 @@ const METHOD_LABELS = {
   lam: "Lactational Amenorrhea Method (LAM)",
 };
  
-// exports.checkLowStock = onDocumentUpdated(
-//   { document: "rhu/{rhuId}", region: "asia-southeast1" },
-//   async (event) => {
-//     const { rhuId } = event.params;
-//     const before = event.data.before.data();
-//     const after = event.data.after.data();
- 
-//     const beforeStock = before.stockByMethod || {};
-//     const afterStock = after.stockByMethod || {};
-//     console.log(`Function triggered for ${rhuId}`);
- 
-//     // Settings saved by the LowStockSettings page
-//     const settingsSnap = await admin.firestore().doc("lowStock/lowStockLimit").get();
-//     if (!settingsSnap.exists) return null;
- 
-//     const { enabled = true, limitsByMethod = {} } = settingsSnap.data();
-//     if (!enabled) {
-//       console.log("Alerts are turned off in settings.");
-//       return null;
-//     }
- 
-//     const notified = after.lowStockNotifiedByMethod || {};
-//     const newlyLow = [];
-//     const updates = {};
- 
-//     for (const [methodId, qty] of Object.entries(afterStock)) {
-//       if (beforeStock[methodId] === qty) continue; // this method didn't change
-//       console.log(`${rhuId}/${methodId}: ${beforeStock[methodId]} -> ${qty}`);
- 
-//       const limit = limitsByMethod[methodId];
-//       if (limit === undefined || limit === null || limit === "") {
-//         console.log(`No limit set for method "${methodId}"`);
-//         continue;
-//       }
- 
-//       const isNowLow = Number(qty) <= Number(limit);
-//       const wasAlreadyNotified = notified[methodId] === true;
-//       console.log(`limit: ${limit} isNowLow: ${isNowLow} wasAlreadyNotified: ${wasAlreadyNotified}`);
- 
-//       if (isNowLow && !wasAlreadyNotified) {
-//         newlyLow.push({ methodId, qty, limit });
-//         updates[`lowStockNotifiedByMethod.${methodId}`] = true;
-//       } else if (!isNowLow && wasAlreadyNotified) {
-//         updates[`lowStockNotifiedByMethod.${methodId}`] = false; // restocked
-//       }
-//     }
- 
-//     if (newlyLow.length > 0) {
-//       const rhuName = after.name || rhuId;
- 
-//       const usersSnap = await admin.firestore().collection("users").get();
-//       const allEmails = usersSnap.docs
-//         .map((doc) => {
-//           const data = doc.data();
-//           if (data && (data.email || data.Email)) return data.email || data.Email;
-//           if (doc.id && doc.id.includes("@")) return doc.id;
-//           return null;
-//         })
-//         .filter(Boolean);
-//       console.log("Recipients found:", allEmails.length);
- 
-//       if (allEmails.length > 0) {
-//         const lines = newlyLow.map(
-//           (m) => `- ${METHOD_LABELS[m.methodId] || m.methodId}: ${m.qty} left (limit: ${m.limit})`
-//         );
-//         const subjectMethods = newlyLow
-//           .map((m) => METHOD_LABELS[m.methodId] || m.methodId)
-//           .join(", ");
- 
-//         try {
-//           const info = await transporter.sendMail({
-//             from: `"PlanWise System" <${process.env.BREVO_FROM_EMAIL}>`,
-//             to: process.env.BREVO_FROM_EMAIL,
-//             bcc: allEmails.join(","), // keeps recipients' addresses private
-//             subject: `Low Stock Alert: ${subjectMethods} at ${rhuName}`,
-//             text: `${rhuName} has low stock:\n\n${lines.join("\n")}`,
-//           });
-//           console.log("Brevo accepted:", info.accepted);
-//           console.log("Brevo rejected:", info.rejected);
-//           console.log("Server response:", info.response);
-//           console.log(`Low stock email sent for ${rhuName}`);
-//         } catch (err) {
-//           console.error("Failed to send email:", err);
-//         }
-//       } else {
-//         console.log("No recipient emails found in users collection.");
-//       }
-//     }
- 
-//     if (Object.keys(updates).length > 0) {
-//       return event.data.after.ref.update(updates);
-//     }
-//     return null;
-//   }
-// );
 
 exports.checkLowStock = onDocumentUpdated(
   { document: "rhu/{rhuId}", region: "asia-southeast1" },
@@ -297,6 +220,7 @@ exports.checkLowStock = onDocumentUpdated(
       console.log("Recipients found:", allEmails.length);
 
       if (allEmails.length > 0) {
+        const transporter = getTransporter();
         for (const m of newlyLow) {
           const label = METHOD_LABELS[m.methodId] || m.methodId;
           const subject = `Low Stock Alert: ${label} at ${rhuName}`;
@@ -352,6 +276,8 @@ exports.koboSync = onRequest(
     const axios = require("axios");
 
     cors(req, res, async () => {
+      if (!(await requireSignedIn(req, res))) return;
+
       try {
         const response = await axios.get(
           `https://kf.kobotoolbox.org/api/v2/assets/${KOBO_FORM_ID}/data/`,
@@ -392,6 +318,8 @@ exports.koboSyncPrivate = onRequest(
     const axios = require("axios");
 
     cors(req, res, async () => {
+      if (!(await requireSignedIn(req, res))) return;
+
       try {
         const response = await axios.get(
           `https://kf.kobotoolbox.org/api/v2/assets/${FORM_2_ID}/data/`,

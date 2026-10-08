@@ -7,14 +7,17 @@
   height: 100vh;
   height: 100dvh;
 
-  background: linear-gradient(180deg, #091F7A 0%, #0a1a5e 100%);
+  background:
+    radial-gradient(120% 40% at 0% 0%, rgba(84, 118, 231, 0.28) 0%, transparent 60%),
+    linear-gradient(180deg, #0a2183 0%, #081858 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   flex-direction: column;
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
   flex-shrink: 0;
 
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 
 .sidebar::-webkit-scrollbar {
@@ -22,197 +25,209 @@
 }
 
 .sidebar::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.25);
+  background-color: rgba(255, 255, 255, 0.2);
   border-radius: 10px;
 }
 
-.brand {
+.sidebar .brand {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 18px 20px;
-  background-color: #ffffff;
-  border-bottom: 3px solid #14990D;
+  padding: 22px 20px 18px;
 }
 
-.logo-wrapper {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
+.sidebar .logo-wrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   overflow: hidden;
-  background-color: #f4f8ff;
+  background-color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border: 2px solid #091F7A;
 }
 
-.logo {
+.sidebar .logo {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.logo-fallback {
+.sidebar .logo-fallback {
   width: 100%;
   height: 100%;
   align-items: center;
   justify-content: center;
-  background-color: #091F7A;
+  background: linear-gradient(135deg, #FFD75A 0%, #F2A900 100%);
   display: none;
 }
 
-.logo-fallback-text {
-  color: #ffffff;
+.sidebar .logo-fallback-text {
+  color: #091F7A;
   font-weight: 700;
   font-size: 20px;
 }
 
-.brand-name {
-  color: #091F7A;
+.sidebar .brand-name {
+  color: #ffffff;
   font-weight: 700;
   font-size: 18px;
   line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 
-.brand-sub {
-  color: #14990D;
-  font-size: 12px;
+.sidebar .brand-sub {
+  color: #FFC72C;
+  font-size: 11px;
   font-weight: 600;
-  opacity: 0.9;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 2px;
 }
 
-.nav {
+.sidebar .nav {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  padding: 14px 0;
+  gap: 4px;
+  padding: 8px 12px 14px;
   flex: 1;
 }
 
-.nav-item {
+.sidebar .nav-item {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 15px;
-  padding: 14px 28px;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: 10px;
   text-decoration: none;
   cursor: pointer;
-  transition: background 0.15s ease, transform 0.1s ease;
+  transition: background-color 0.18s ease;
 }
 
-.nav-item:hover {
-  background-color: rgba(255, 255, 255, 0.08);
+.sidebar .nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.07);
 }
 
-.nav-item.active {
-  background-color: rgba(84, 118, 231, 0.479);
+.sidebar .nav-item:focus-visible,
+.sidebar .logout-btn:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.7);
+  outline-offset: 2px;
 }
 
-.active-bar {
+.sidebar .nav-item.active {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.sidebar .active-bar {
   position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
+  left: -12px;
+  top: 9px;
+  bottom: 9px;
   width: 4px;
-  background-color: #14990D;
-  box-shadow: 0 0 8px rgba(20, 153, 13, 0.6);
+  border-radius: 0 4px 4px 0;
+  background-color: #FFC72C;
 }
 
-.nav-icon {
-  color: rgba(255, 255, 255, 0.85);
+.sidebar .nav-icon {
+  color: rgba(255, 255, 255, 0.65);
   flex-shrink: 0;
-  transition: color 0.15s ease;
+  transition: color 0.18s ease;
 }
 
-.nav-item:hover .nav-icon {
+.sidebar .nav-item:hover .nav-icon,
+.sidebar .nav-item.active .nav-icon {
   color: #ffffff;
 }
 
-.nav-item.active .nav-icon {
-  color: #ffffff;
-}
-
-.nav-label {
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 15px;
+.sidebar .nav-label {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 14.5px;
   font-weight: 500;
-  transition: color 0.15s ease;
+  transition: color 0.18s ease;
 }
 
-.nav-item:hover .nav-label {
+.sidebar .nav-item:hover .nav-label {
   color: #ffffff;
 }
 
-.nav-item.active .nav-label {
+.sidebar .nav-item.active .nav-label {
   color: #ffffff;
   font-weight: 600;
 }
 
-.bottom {
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
-  padding-top: 10px;
-  padding-bottom: 10px;
+.sidebar .bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.user-row {
+.sidebar .user-row {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 20px;
-  margin-top: 4px;
+  padding: 10px;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.user-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background-color: #14990D;
+.sidebar .user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #FFD75A 0%, #F2A900 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
-.user-avatar-text {
-  color: #ffffff;
+.sidebar .user-avatar--cpd {
+  background: #ffffff;
+}
+
+.sidebar .user-avatar-text {
+  color: #091F7A;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
-.user-info {
+.sidebar .user-info {
   flex: 1;
-  overflow: hidden;
+  min-width: 0;
 }
 
-.user-name {
+.sidebar .user-name {
   color: #ffffff;
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   display: block;
 }
 
-.logout-btn {
+.sidebar .logout-btn {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 6px;
+  padding: 8px;
   display: flex;
   align-items: center;
   border-radius: 8px;
   flex-shrink: 0;
-  transition: background 0.15s ease;
+  transition: background-color 0.18s ease;
 }
 
-.logout-btn:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+.sidebar .logout-btn:hover {
+  background-color: rgba(255, 99, 99, 0.18);
 }
 
-.logout-btn:hover .nav-icon {
-  color: #ffffff;
+.sidebar .logout-btn:hover .nav-icon {
+  color: #ff9a9a;
 }

@@ -1,80 +1,95 @@
+/* Archive and restore confirmation dialogs */
+
 /* OVERLAY */
 .modal-overlay-delete {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.55);
+  z-index: 2000;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.5);
+  -webkit-backdrop-filter: blur(4px);
+          backdrop-filter: blur(4px);
 }
 
 /* MODAL BOX */
 .modal-delete {
-  background: #fff;
-  border-radius: 16px;
-  min-height: 300px;
-  max-width: 400px;
-  padding: 52px 38px;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: min(420px, 100%);
+  padding: 36px 32px 28px;
+  background: #ffffff;
+  border: 1px solid #e6eaf3;
+  border-radius: 24px;
+  box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.28);
+  font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif;
   text-align: center;
-  position: relative;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  gap: 10px;
 }
 
 /* CLOSE BUTTON */
 .modal-close-delete {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #9ca3af;
-  padding: 4px;
-  border-radius: 4px;
+  top: 14px;
+  right: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .modal-close-delete:hover {
-  color: #374151;
+  background: #f1f4f9;
+  color: #334155;
 }
 
 /* ICON CIRCLE */
 .archive-icon-circle {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: #a70707;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 20px;
+  width: 60px;
+  height: 60px;
+  margin-bottom: 18px;
+  border-radius: 50%;
+  background: #fef3f2;
+  color: #d92d20;
+}
+
+.archive-icon-circle--restore {
+  background: #e3f7ec;
+  color: #0b7a3b;
 }
 
 /* TITLE */
 .archive-title {
-  font-size: 1.2rem;
+  margin: 0 0 10px;
+  color: #0f172a;
+  font-size: 18px;
   font-weight: 700;
-  color: #111827;
-  margin: 0 0 16px;
+  letter-spacing: -0.01em;
 }
 
 /* MESSAGE */
 .archive-message {
-  font-size: 0.9rem;
-  color: #374151;
-  line-height: 1.6;
   margin: 0 0 24px;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 .archive-name {
-  color: #a70707;
+  color: #0f172a;
   font-weight: 600;
 }
 
@@ -83,44 +98,57 @@
   display: flex;
   gap: 12px;
   width: 100%;
-  margin-bottom: 16px;
 }
 
-.btn-cancel-d {
-  flex: 1;
-  padding: 12px;
-  border-radius: 10px;
-  border: none;
-  background: #f3f4f6;
-  color: #374151;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.btn-cancel-d:hover {
-  background: #e5e7eb;
-}
-
+.btn-cancel-d,
 .btn-archive {
   flex: 1;
-  padding: 12px;
-  border-radius: 10px;
-  border: none;
-  background: #a70707;
-  color: #fff;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
+  height: 42px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-cancel-d {
+  background: #ffffff;
+  border: 1px solid #d5dbe9;
+  color: #334155;
+}
+
+.btn-cancel-d:hover {
+  background: #f1f4fb;
+}
+
+.btn-archive {
+  background: #d92d20;
+  border: 1px solid transparent;
+  color: #ffffff;
 }
 
 .btn-archive:hover {
-  background-color: #a707078f;
-  color: #810909;
+  background: #b42318;
+}
+
+.btn-archive--restore {
+  background: #0b7a3b;
+}
+
+.btn-archive--restore:hover {
+  background: #096330;
+}
+
+.btn-cancel-d:focus-visible,
+.btn-archive:focus-visible,
+.modal-close-delete:focus-visible {
+  outline: 2px solid #2f5bff;
+  outline-offset: 2px;
 }
 
 /* FOOTER NOTE */
@@ -128,21 +156,20 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  background: #eff6ff;
-  border-radius: 8px;
-  padding: 10px 14px;
   width: 100%;
-  text-align: left;
-  font-size: 0.8rem;
-  color: #374151;
+  margin-top: 16px;
+  padding: 10px 14px;
+  background: #f1f4fb;
+  border-radius: 10px;
+  color: #475569;
+  font-size: 12.5px;
   line-height: 1.5;
-  box-sizing: border-box;
+  text-align: left;
 }
 
 .archive-note-icon {
-  color: #3b82f6;
+  flex: none;
+  color: #2f5bff;
+  font-size: 13px;
   font-weight: 700;
-  font-size: 0.85rem;
-  margin-top: 1px;
-  flex-shrink: 0;
 }

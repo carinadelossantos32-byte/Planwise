@@ -1,157 +1,116 @@
 import { useState } from "react";
-import './client-table-private.css';
-import { SquarePen, Trash2, ArchiveRestore } from 'lucide-react';
+import "../ClientTable/client-table.css";
+import { Clip, RecordsStats, RowActions, RecordsPagination } from "../ClientTable/TableParts";
 
+const COLUMNS = [
+    { label: "ID", width: 46 },
+    { label: "Name", width: "22%" },
+    { label: "Age", width: "7%" },
+    { label: "Birthdate", width: "12%" },
+    { label: "Address" },
+    { label: "Method", width: "13%", title: "Method Used" },
+    { label: "FP Issued By", width: "20%", title: "FP Issued By (Name of Clinic, Hospital, Lying-In)" },
+    { label: "Actions" },
+];
 
 function ClientTablePrivate({ clients, loading, onView, onEdit, onDelete, isArchived, onRestore }) {
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10; 
+    const itemsPerPage = 10;
 
     const safeClients = clients || [];
     const totalPages = Math.ceil(safeClients.length / itemsPerPage);
+    // a search or filter can leave fewer pages than the one being viewed
+    const page = Math.min(currentPage, Math.max(totalPages, 1));
 
-    const indexOfLastClient = currentPage * itemsPerPage;
+    const indexOfLastClient = page * itemsPerPage;
     const indexOfFirstClient = indexOfLastClient - itemsPerPage;
     const currentClients = safeClients.slice(indexOfFirstClient, indexOfLastClient);
 
-    const handleNextPage = () => {
-        if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
-    };
-
-    const handlePrevPage = () => {
-        if (currentPage > 1) setCurrentPage(prev => prev - 1);
-    };
-
     return (
-        <>
-            {/* Stats Banner */}
-            <div className="stats-banner-private">
-                <div className="stat-item-private">
-                    <span className="stat-label-private">
-                        {isArchived ? "Archived Records" : "Total Records"}
-                    </span>
-                    <span className="stat-value-private">{safeClients.length}</span>
+        <div className="rec-card">
+            {!isArchived && <RecordsStats clients={safeClients} />}
+
+            {loading ? (
+                <div className={`rec-empty${isArchived ? " rec-empty--compact" : ""}`}>Loading records...</div>
+            ) : safeClients.length === 0 ? (
+                <div className={`rec-empty${isArchived ? " rec-empty--compact" : ""}`}>
+                    {isArchived ? "No archived records found." : "No records found."}
                 </div>
-                {!isArchived && (
-                    <div className="stat-item-private">
-                        <span className="stat-label-private">New This Month</span>
-                        <span className="stat-value-private">
-                            {safeClients.filter(c => {
-                                if (!c.created_at || typeof c.created_at.toDate !== 'function') return false;
+            ) : (
+                <div className="rec-table-scroll">
+                    <table className="rec-table rec-table--private">
+                        <colgroup>
+                            {COLUMNS.map((column) => (
+                                <col
+                                    key={column.label}
+                                    style={{ width: column.label === "Actions" ? (isArchived ? 104 : 80) : column.width }}
+                                />
+                            ))}
+                        </colgroup>
 
-                                const date = c.created_at.toDate();
-                                const now = new Date();
-                                return date.getMonth() === now.getMonth() &&
-                                    date.getFullYear() === now.getFullYear();
-                            }).length}
-                        </span>
-                    </div>
-                )}
-            </div>
-
-            {/* Table */}
-            <div className="client-table-container-private">
-                {loading ? (
-                    <div className="table-empty-private">Loading records...</div>
-                ) : safeClients.length === 0 ? (
-                    <div className="table-empty-private">
-                        {isArchived ? "No archived records found." : "No records found."}
-                    </div>
-                ) : (
-                    <>
-                        <table className="table table-xs table-pin-rows table-pin-cols">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <td>Name</td>
-                                    <td>Age</td>
-                                    <td>Birthdate</td>
-                                    <td>Address</td>
-                                    <td>Barangay</td>
-                                    <td>Method Used</td>
-                                    <td>FP Issued By (Name of Clinic, Hospital, Lying-In)</td>
-                                    <td>Actions</td>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {currentClients.map((client, index) => (
-                                    <tr
-                                        key={client.id}
-                                        className={`${isArchived ? "archived-row" : ""}${!isArchived ? " client-record-row-clickable" : ""}`}
-                                        style={{ cursor: isArchived ? undefined : "pointer" }}
-                                        tabIndex={isArchived ? undefined : 0}
-                                        aria-label={isArchived ? undefined : `View ${client.name || "client"} record`}
-                                        onClick={isArchived ? undefined : () => onView(client)}
-                                        onKeyDown={isArchived ? undefined : (event) => {
-                                            if (event.key === "Enter" || event.key === " ") {
-                                                event.preventDefault();
-                                                onView(client);
-                                            }
-                                        }}
-                                    >
-                                        <th>{String(indexOfFirstClient + index + 1).padStart(3, "0")}</th>
-                                        <td>
-                                            <div className="client-name">
-                                                <span className="client-name-male">{client.name}</span>
-                                            </div>
-                                        </td>
-                                        <td>{client.age || "—"}</td>
-                                        <td>{client.birthdate || "—"}</td>
-                                        <td>{client.address || "—"}</td>
-                                        <td>{client.barangay || "—"}</td>
-                                        <td>
-                                            <span className="method-badge">{client.fp_method}</span>
-                                        </td>
-                                        <td>{client.fp_issued_by || "—"}</td>
-                                        <td>
-                                            <div className="action-buttons">
-                                                {isArchived ? (
-                                                    <button className="action-btn restore" onClick={() => onRestore(client)}>
-                                                        <ArchiveRestore size={15} strokeWidth={1.5} />
-                                                    </button>
-                                                ) : (
-                                                    <>
-                                                        <button className="action-btn edit" onClick={(event) => { event.stopPropagation(); onEdit(client); }} title="Edit">
-                                                            <SquarePen size={15} strokeWidth={1.5} />
-                                                        </button>
-                                                        <button className="action-btn delete" onClick={(event) => { event.stopPropagation(); onDelete(client); }} title="Delete">
-                                                            <Trash2 size={15} strokeWidth={1.5} />
-                                                        </button>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
+                        <thead>
+                            <tr>
+                                {COLUMNS.map((column) => (
+                                    <th key={column.label} title={column.title}>{column.label}</th>
                                 ))}
-                            </tbody>
-                        </table>
+                            </tr>
+                        </thead>
 
-                        {/* Pagination Controls */}
-                        {totalPages > 1 && (
-                            <div className="pagination-controls">
-                                <button 
-                                    className="page-btn" 
-                                    onClick={handlePrevPage} 
-                                    disabled={currentPage === 1}
+                        <tbody>
+                            {currentClients.map((client, index) => (
+                                <tr
+                                    key={client.id}
+                                    className={isArchived ? "rec-row--archived" : "rec-row--clickable"}
+                                    tabIndex={isArchived ? undefined : 0}
+                                    aria-label={isArchived ? undefined : `View ${client.name || "client"} record`}
+                                    onClick={isArchived ? undefined : () => onView(client)}
+                                    onKeyDown={isArchived ? undefined : (event) => {
+                                        if (event.key === "Enter" || event.key === " ") {
+                                            event.preventDefault();
+                                            onView(client);
+                                        }
+                                    }}
                                 >
-                                    Previous
-                                </button>
-                                <span className="page-info">
-                                    Page {currentPage} of {totalPages}
-                                </span>
-                                <button 
-                                    className="page-btn" 
-                                    onClick={handleNextPage} 
-                                    disabled={currentPage === totalPages}
-                                >
-                                    Next
-                                </button>
-                            </div>
-                        )}
-                    </>
-                )}
-            </div>
-        </>
+                                    <td className="rec-id">{String(indexOfFirstClient + index + 1).padStart(3, "0")}</td>
+                                    <td><Clip className="rec-name">{client.name}</Clip></td>
+                                    <td>{client.age || "—"}</td>
+                                    <td><Clip>{client.birthdate}</Clip></td>
+                                    <td>
+                                        <div className="rec-stack">
+                                            <Clip>{client.address}</Clip>
+                                            {client.barangay && <Clip className="rec-muted">{`Brgy. ${client.barangay}`}</Clip>}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {client.fp_method
+                                            ? <span className="rec-badge" title={client.fp_method}>{client.fp_method}</span>
+                                            : "—"}
+                                    </td>
+                                    <td><Clip>{client.fp_issued_by}</Clip></td>
+                                    <td>
+                                        <RowActions
+                                            client={client}
+                                            isArchived={isArchived}
+                                            onEdit={onEdit}
+                                            onDelete={onDelete}
+                                            onRestore={onRestore}
+                                        />
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+
+            <RecordsPagination
+                page={page}
+                totalPages={totalPages}
+                total={safeClients.length}
+                pageSize={itemsPerPage}
+                onPageChange={setCurrentPage}
+            />
+        </div>
     );
 }
 

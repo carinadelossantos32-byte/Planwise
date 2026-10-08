@@ -1,3 +1,4 @@
+import { notify } from "../../../utils/notify";
 import { useMemo, useState, useEffect, useRef } from "react";
 import "../report-forms.css";
 import ExcelJS from "exceljs";
@@ -695,7 +696,7 @@ function FormBAnalytics({
 
             console.error(error);
 
-            alert("Failed to export Form B.");
+            notify("Failed to export Form B.");
 
         }
 

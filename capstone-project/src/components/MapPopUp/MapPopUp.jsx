@@ -1,4 +1,3 @@
-import React from 'react';
 import './map-pop-up.css'; 
 
 export default function MapPopUp({ family, onClose }) {
@@ -14,13 +13,11 @@ export default function MapPopUp({ family, onClose }) {
     <div className="modal-overlay" onClick={onClose} title="Close">
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         
-        {/* Modal Header */}
         <div className="modal-header">
           <h2>Submission Record</h2>
           <button className="close-btn" onClick={onClose}>&times;</button>
         </div>
 
-        {/* Modal Body */}
         <div className="modal-body">
           <table className="summary-table">
             <thead>

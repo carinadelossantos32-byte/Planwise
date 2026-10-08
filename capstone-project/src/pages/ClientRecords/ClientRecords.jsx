@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   collection,
   onSnapshot,
@@ -12,7 +12,7 @@ import {
 import ClientTable from "../../components/ClientTable/ClientTable";
 import ClientTablePrivate from "../../components/ClientTablePrivate/ClientTablePrivate";
 import ClientArchive from "../../components/ClientArchive/ClientArchive";
-import { Search, Filter, Download, Upload, CirclePlus, RefreshCw, CloudSync } from 'lucide-react';
+import { Search, FileSpreadsheet, FileText, Upload, CirclePlus, CloudSync } from 'lucide-react';
 import "./client-records.css";
 import { db } from "../../firebase-config";
 import ClientAddModal from "../../components/ClientAddModal/ClientAddModal";
@@ -31,85 +31,38 @@ import KoboSyncModal from "../../components/KoboSyncModal/KoboSyncModal";
 import { PUBLIC_FORM_CONFIG, PRIVATE_FORM_CONFIG } from "../../utils/kobo-form-configs.js";
 import { exportClientRecordsExcel, exportClientRecordsPDF } from "../../utils/client-record-exports.js";
 import ExportConfirmModal from "../Reports/ExportConfirmModal.jsx";
-import { barangays } from "../../data/barangays.js";
-import { familyPlanningMethods } from "../../data/familyPlanningMethods.js";
-import { canonicalMethod, getClientDate } from "../Reports/reportData.js";
-
-const EXPORT_PERIODS = [
-  { value: "all", label: "All Periods" },
-  { value: "q1", label: "Q1 (Jan - Mar)" },
-  { value: "q2", label: "Q2 (Apr - Jun)" },
-  { value: "q3", label: "Q3 (Jul - Sep)" },
-  { value: "q4", label: "Q4 (Oct - Dec)" },
-  { value: "january", label: "January" },
-  { value: "february", label: "February" },
-  { value: "march", label: "March" },
-  { value: "april", label: "April" },
-  { value: "may", label: "May" },
-  { value: "june", label: "June" },
-  { value: "july", label: "July" },
-  { value: "august", label: "August" },
-  { value: "september", label: "September" },
-  { value: "october", label: "October" },
-  { value: "november", label: "November" },
-  { value: "december", label: "December" },
-];
-const EXPORT_MONTHS = [
-  "january", "february", "march", "april", "may", "june",
-  "july", "august", "september", "october", "november", "december",
-];
+import ReportSelect from "../../components/ReportSelect/ReportSelect";
+import PageHeader from "../../components/PageHeader/PageHeader";
 
 const slugify = (value) =>
   String(value ?? "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
-function matchesExportFilters(client, filters) {
-  const clientDate = getClientDate(client);
-  if (filters.year !== "all" && (!clientDate || clientDate.getFullYear() !== Number(filters.year))) {
-    return false;
-  }
+const CATEGORY_OPTIONS = [
+  { value: "", label: "All Records" },
+  { value: "fp_users", label: "FP Users" },
+  { value: "unmet_needs", label: "Unmet Needs" },
+  { value: "intention_to_shift", label: "Intention to Shift" },
+  { value: "new_this_month", label: "New this Month" },
+];
 
-  if (filters.period !== "all") {
-    if (!clientDate) return false;
-    const month = clientDate.getMonth();
-    const quarter = Math.floor(month / 3) + 1;
-    if (filters.period.startsWith("q")) {
-      if (quarter !== Number(filters.period.slice(1))) return false;
-    } else if (month !== EXPORT_MONTHS.indexOf(filters.period)) {
-      return false;
-    }
-  }
-
-  if (filters.barangay !== "all") {
-    const barangay = slugify(filters.barangay);
-    const clientBarangay = slugify(
-      client.barangay || client.barangay_name || client.barangayName
-    );
-    const address = slugify(client.address);
-    if (
-      clientBarangay !== barangay &&
-      !`-${address}-`.includes(`-${barangay}-`)
-    ) {
-      return false;
-    }
-  }
-
-  if (filters.method !== "all") {
-    const method = canonicalMethod(
-      client.fp_method ||
-      client.FP_method ||
-      client.method ||
-      client.family_planning_method ||
-      client.familyPlanningMethod
-    );
-    if (method !== canonicalMethod(filters.method)) return false;
-  }
-
-  return true;
-}
+const METHOD_OPTIONS = [
+  { value: "", label: "All FP Method" },
+  { value: "Condom", label: "Condom" },
+  { value: "IUD", label: "IUD" },
+  { value: "Pills", label: "Pills" },
+  { value: "Injectable", label: "Injectable" },
+  { value: "Vasectomy", label: "Vasectomy" },
+  { value: "Tubal Ligation", label: "Tubal Ligation" },
+  { value: "Implant", label: "Implant" },
+  { value: "CMM/Billings", label: "CMM/Billings" },
+  { value: "BBT", label: "Basal Body Temperature (BBT)" },
+  { value: "Symptothermal", label: "Sympto-Thermal Method (STM)" },
+  { value: "SDM", label: "Standard Days Method (SDM)" },
+  { value: "LAM", label: "Lactational Amenorrhea Method (LAM)" },
+];
 
 function ClientRecords() {
 
-  // STATES
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -117,7 +70,6 @@ function ClientRecords() {
   const [activeTab, setActiveTab] = useState("public");
   const [filterCategory, setFilterCategory] = useState("");
 
-  // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -127,15 +79,8 @@ function ClientRecords() {
   const [syncConfig, setSyncConfig] = useState(null);
   const [selectedClient, setSelectedClient] = useState(null);
   const [exportFormat, setExportFormat] = useState(null);
-  const [exportSnapshot, setExportSnapshot] = useState(null);
-  const [exportFilters, setExportFilters] = useState({
-    year: "all",
-    period: "all",
-    barangay: "all",
-    method: "all",
-  });
+  const [actionError, setActionError] = useState("");
 
-  // Form state
   const [formData, setFormData] = useState({
     name: "",
     spouse_name: "",
@@ -159,11 +104,10 @@ function ClientRecords() {
     signature_status: "none",
   });
 
-  // COLLECTION HELPER
   const getCollection = useCallback(() => {
     if (activeTab === "private") return "clients_private";
     if (activeTab === "referred") return "clients_referred";
-    return "clients_public"; // Default fallback
+    return "clients_public";
   }, [activeTab]);
 
   // ⚡ REAL-TIME READ LISTENER (onSnapshot para kusa mag-update kapag natapos ang signature sync)
@@ -195,12 +139,9 @@ function ClientRecords() {
     return () => unsubscribe();
   }, [activeTab, getCollection]);
 
-  // Manual fallback refresh kung kailangan
   const fetchClients = useCallback(() => {
-    // Kusang pinapagana ng onSnapshot ang updates
   }, []);
 
-  // CREATE
   const handleAdd = async () => {
     try {
       await addDoc(collection(db, getCollection()), {
@@ -215,7 +156,6 @@ function ClientRecords() {
     }
   };
 
-  // UPDATE
   const handleUpdate = async () => {
     try {
       const docRef = doc(db, getCollection(), selectedClient.id);
@@ -231,7 +171,6 @@ function ClientRecords() {
     }
   };
 
-  // ARCHIVE
   const handleDelete = async () => {
     try {
       await updateDoc(doc(db, getCollection(), selectedClient.id), {
@@ -242,24 +181,22 @@ function ClientRecords() {
       setSelectedClient(null);
     } catch (error) {
       console.error("Error archiving client:", error);
+      setShowDeleteModal(false);
+      setActionError("The record could not be archived. Check your connection and try again.");
+      setTimeout(() => setActionError(""), 6000);
     }
   };
 
   const handleExport = (format) => {
-    setExportFilters({ year: "all", period: "all", barangay: "all", method: "all" });
-    setExportSnapshot({ activeTab, clients: filteredClients });
     setExportFormat(format);
   };
 
   const handleConfirmExport = (fileName) => {
-    if (!exportSnapshot || !exportFormat) return;
+    if (!exportFormat) return;
 
-    const { activeTab: tab, clients: sourceClients } = exportSnapshot;
-    const records = sourceClients.filter((client) => matchesExportFilters(client, exportFilters));
     const exportFunction = exportFormat === "pdf" ? exportClientRecordsPDF : exportClientRecordsExcel;
     setExportFormat(null);
-    setExportSnapshot(null);
-    exportFunction(tab, records, fileName);
+    exportFunction(activeTab, filteredClients, fileName);
   };
 
   const resetForm = () => {
@@ -365,119 +302,85 @@ function ClientRecords() {
     return matchesSearch && matchesMethod && matchesCategory;
   });
 
-  const exportYears = useMemo(() => {
-    const years = new Set([new Date().getFullYear()]);
-    clients.forEach((client) => {
-      const date = getClientDate(client);
-      if (date) years.add(date.getFullYear());
-    });
-    return [
-      { value: "all", label: "All Years" },
-      ...[...years].sort((a, b) => a - b).map((year) => ({ value: String(year), label: String(year) })),
-    ];
-  }, [clients]);
-
+  // Same filters as the toolbar, so the export always matches the table
   const exportFilterControls = [
-    {
-      key: "year",
-      label: "Year",
-      value: exportFilters.year,
-      onChange: (event) => setExportFilters((current) => ({ ...current, year: event.target.value })),
-      options: exportYears,
-    },
-    {
-      key: "period",
-      label: "Period",
-      value: exportFilters.period,
-      onChange: (event) => setExportFilters((current) => ({ ...current, period: event.target.value })),
-      options: EXPORT_PERIODS,
-    },
-    {
-      key: "barangay",
-      label: "Barangay",
-      value: exportFilters.barangay,
-      onChange: (event) => setExportFilters((current) => ({ ...current, barangay: event.target.value })),
-      options: [
-        { value: "all", label: "All Barangays" },
-        ...barangays.map((barangay) => ({ value: slugify(barangay), label: barangay })),
-      ],
-    },
+    ...(activeTab === "public"
+      ? [{
+        key: "category",
+        label: "Records",
+        value: filterCategory,
+        onChange: (e) => setFilterCategory(e.target.value),
+        options: CATEGORY_OPTIONS,
+      }]
+      : []),
     {
       key: "method",
-      label: "Method",
-      value: exportFilters.method,
-      onChange: (event) => setExportFilters((current) => ({ ...current, method: event.target.value })),
-      options: [
-        { value: "all", label: "All Methods" },
-        ...familyPlanningMethods.map((method) => ({ value: method, label: method })),
-      ],
+      label: "FP Method",
+      value: filterMethod,
+      onChange: (e) => setFilterMethod(e.target.value),
+      options: METHOD_OPTIONS,
     },
   ];
 
-  const exportBaseName = useMemo(() => {
-    if (!exportSnapshot) return "Client_Records";
-    const segments = ["Client_Records", exportSnapshot.activeTab];
-    if (exportFilters.year !== "all") segments.push(exportFilters.year);
-    if (exportFilters.period !== "all") segments.push(exportFilters.period.toUpperCase());
-    if (exportFilters.barangay !== "all") segments.push(exportFilters.barangay);
-    if (exportFilters.method !== "all") segments.push(slugify(exportFilters.method));
-    return segments.join("_");
-  }, [exportFilters, exportSnapshot]);
+  const exportBaseName = [
+    "Client_Records",
+    activeTab,
+    activeTab === "public" && filterCategory,
+    filterMethod && slugify(filterMethod),
+  ].filter(Boolean).join("_");
 
   return (
     <>
       <div className="client-records-container">
 
         {/* HEADER */}
-        <div className="toolbar-header-client">
-          <h2 className="client-record-h2">Client Records</h2>
-          <p className="p-sub-title-client">Responsible Parenthood and Family Planning Program</p>
+        <PageHeader
+          title="Client Records"
+          footer={
+            <div className="cr-tabs-row">
+              <div className="cr-tabs">
+                <button
+                  className={`cr-tab ${activeTab === "public" ? "is-active" : ""}`}
+                  onClick={() => { setActiveTab("public"); setFilterCategory(""); }}>FP Public</button>
+                <button
+                  className={`cr-tab ${activeTab === "private" ? "is-active" : ""}`}
+                  onClick={() => setActiveTab("private")}>FP Private</button>
+                <button
+                  className={`cr-tab ${activeTab === "referred" ? "is-active" : ""}`}
+                  onClick={() => setActiveTab("referred")}>Referred & Served</button>
+                <button
+                  className={`cr-tab ${activeTab === "archived" ? "is-active" : ""}`}
+                  onClick={() => setActiveTab("archived")}>Archived</button>
+              </div>
 
-          {/* TABS */}
-          <div className="tabs-client">
-            <div className="view-tabs-client">
-              <button
-                className={`tab-button ${activeTab === "public" ? "tab-active" : ""}`}
-                onClick={() => { setActiveTab("public"); setFilterCategory(""); }}>FP Public</button>
-              <button
-                className={`tab-button ${activeTab === "private" ? "tab-active" : ""}`}
-                onClick={() => setActiveTab("private")}>FP Private</button>
-
-              <button
-                className={`tab-button ${activeTab === "referred" ? "tab-active" : ""}`}
-                onClick={() => setActiveTab("referred")}>Referred & Served</button>
-
-              <button
-                className={`tab-button ${activeTab === "archived" ? "tab-active" : ""}`}
-                onClick={() => setActiveTab("archived")}>Archived</button>
-            </div>
-
-            <div className="toolbar-actions">
-              {activeTab === "public" && (
-                <button className="btn-sync-client" onClick={() => { setSyncConfig(PUBLIC_FORM_CONFIG); setShowKoboSyncModal(true); }}>
-                  <CloudSync size={16} strokeWidth={2.0} /> Sync Public Form
-                </button>
-              )}
-              {activeTab === "private" && (
-                <button className="btn-sync-client" onClick={() => { setSyncConfig(PRIVATE_FORM_CONFIG); setShowKoboSyncModal(true); }}>
-                  <CloudSync size={16} strokeWidth={2.00} /> Sync Private Form
-                </button>
-              )}
               {activeTab !== "archived" && (
-                <button className="btn-add-client" onClick={() => setShowAddModal(true)}>
-                  <CirclePlus size={16} strokeWidth={1.75} />
+                <button className="cr-btn cr-btn--primary" onClick={() => setShowAddModal(true)}>
+                  <CirclePlus size={16} />
                   {activeTab === "referred" ? "Add New Referral" : "Add New Client"}
                 </button>
               )}
-              <button className="btn-import" onClick={() => setShowImportModal(true)}>
-                <Upload size={14} /> Import
-              </button>
             </div>
-          </div>
+          }
+        >
+              {activeTab === "public" && (
+                <button className="cr-btn cr-btn--outline" onClick={() => { setSyncConfig(PUBLIC_FORM_CONFIG); setShowKoboSyncModal(true); }}>
+                  <CloudSync size={16} /> Sync Public Form
+                </button>
+              )}
+              {activeTab === "private" && (
+                <button className="cr-btn cr-btn--outline" onClick={() => { setSyncConfig(PRIVATE_FORM_CONFIG); setShowKoboSyncModal(true); }}>
+                  <CloudSync size={16} /> Sync Private Form
+                </button>
+              )}
+              <button className="cr-btn cr-btn--outline" onClick={() => setShowImportModal(true)}>
+                <Upload size={15} /> Import
+              </button>
+        </PageHeader>
 
-          <div className="client-toolbar">
-            <div className="client-search">
-              <Search size={14} color="#9ca3af" />
+        <div className="cr-body">
+          <div className="cr-toolbar">
+            <div className="cr-search">
+              <Search size={15} color="#94a3b8" />
               <input
                 type="text"
                 placeholder={
@@ -495,59 +398,38 @@ function ClientRecords() {
             {activeTab !== "archived" && (
               <>
                 {activeTab === "public" && (
-                  <select
-                    className="client-filter-select"
-                    value={filterCategory}
-                    onChange={(e) => setFilterCategory(e.target.value)}
-                  >
-                    <option value="">All Records</option>
-                    <option value="fp_users">FP Users</option>
-                    <option value="unmet_needs">Unmet Needs</option>
-                    <option value="intention_to_shift">Intention to Shift</option>
-                    <option value="new_this_month">New this Month</option>
-                  </select>
-                )}
-
-                {(activeTab === "public" || activeTab === "private" || activeTab === "referred") && (
-                  <select
-                    className="client-filter-select"
-                    value={filterMethod}
-                    onChange={(e) => setFilterMethod(e.target.value)}
-                  >
-                    <option value="">All FP Method</option>
-                    <option value="Condom">Condom</option>
-                    <option value="IUD">IUD</option>
-                    <option value="Pills">Pills</option>
-                    <option value="Injectable">Injectable</option>
-                    <option value="Vasectomy">Vasectomy</option>
-                    <option value="Tubal Ligation">Tubal Ligation</option>
-                    <option value="Implant">Implant</option>
-                    <option value="CMM/Billings">CMM/Billings</option>
-                    <option value="BBT">Basal Body Temperature(BBT)</option>
-                    <option value="Symptothermal">Sympto-Thermal Method(STM)</option>
-                    <option value="SDM">Standard Days Method(SDM)</option>
-                    <option value="LAM">Lactational Amenorrhea Method(LAM)</option>
-                  </select>
-                )}
-
-                {(activeTab === "public" || activeTab === "private" || activeTab === "referred") && (
-                  <div className="btn-tab-actions">
-                    <button className="btn-export" onClick={() => handleExport("excel")}>
-                      <Download size={14} /> Export Excel
-                    </button>
-                    <button className="btn-export" onClick={() => handleExport("pdf")}>
-                      <Download size={14} /> Export PDF
-                    </button>
-
+                  <div className="cr-select">
+                    <ReportSelect
+                      ariaLabel="Record category"
+                      value={filterCategory}
+                      onChange={(e) => setFilterCategory(e.target.value)}
+                      options={CATEGORY_OPTIONS}
+                    />
                   </div>
                 )}
+
+                <div className="cr-select cr-select--wide">
+                  <ReportSelect
+                    ariaLabel="FP method"
+                    value={filterMethod}
+                    onChange={(e) => setFilterMethod(e.target.value)}
+                    options={METHOD_OPTIONS}
+                  />
+                </div>
+
+                <div className="cr-export">
+                  <button className="cr-btn cr-btn--excel" onClick={() => handleExport("excel")}>
+                    <FileSpreadsheet size={15} /> Export Excel
+                  </button>
+                  <button className="cr-btn cr-btn--pdf" onClick={() => handleExport("pdf")}>
+                    <FileText size={15} /> Export PDF
+                  </button>
+                </div>
               </>
             )}
           </div>
-        </div>
 
-        {/* TABLES */}
-        <div className="client-table-wrapper">
+          {/* TABLES */}
           {activeTab === "public" && (
             <ClientTable
               clients={filteredClients}
@@ -670,6 +552,10 @@ function ClientRecords() {
         />
       )}
 
+      {actionError && (
+        <div className="client-records-error-toast" role="alert">{actionError}</div>
+      )}
+
       {/* KOBO SYNC MODAL */}
       {showKoboSyncModal && (
         <KoboSyncModal
@@ -679,22 +565,19 @@ function ClientRecords() {
         />
       )}
 
-      {exportFormat && exportSnapshot && (
+      {exportFormat && (
         <ExportConfirmModal
           format={exportFormat}
           reportName={
-            exportSnapshot.activeTab === "public"
+            activeTab === "public"
               ? "FP Public Client Records"
-              : exportSnapshot.activeTab === "private"
+              : activeTab === "private"
                 ? "FP Private Client Records"
                 : "Referred and Served Client Records"
           }
           filters={exportFilterControls}
           defaultFileName={exportBaseName}
-          onCancel={() => {
-            setExportFormat(null);
-            setExportSnapshot(null);
-          }}
+          onCancel={() => setExportFormat(null)}
           onConfirm={handleConfirmExport}
         />
       )}

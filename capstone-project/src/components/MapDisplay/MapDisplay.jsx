@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css'; 
@@ -20,7 +20,6 @@ L.Icon.Default.mergeOptions({
 
 //custom function to create a FontAwesome icon for the map markers based on family planning method
 const createFaIcon = (family, zoom) => {
-  let iconClass = 'fa-circle';
   let colorClass = 'color-traditional';
 
   let rawMethod = "";
@@ -37,7 +36,6 @@ const createFaIcon = (family, zoom) => {
     rawMethod = family.fpMethod;
   }
 
-  // determine the color class based on the family planning method
   const safeMethod = rawMethod ? rawMethod.toString().trim().toLowerCase() : "no method";
 
   if (['pills', 'condom', 'injectable', 'short-acting'].includes(safeMethod)) {
@@ -54,15 +52,15 @@ const createFaIcon = (family, zoom) => {
     colorClass = 'color-no-method'; 
   }
 
-  const dynamicSize = (zoom - 12) * 2 + 11;
-  const clampedSize = Math.max(6, Math.min(13, dynamicSize)); 
+  // grows with zoom so client pins stay clear of the street map's own icons
+  const size = Math.max(12, Math.min(26, (zoom - 12) * 3 + 12));
 
   return L.divIcon({
-    html: `<i class="fa-solid ${iconClass} ${colorClass}"  style="font-size: ${clampedSize}px;"></i>`,
+    html: `<span class="map-client-dot ${colorClass}" style="width: ${size}px; height: ${size}px;"></span>`,
     className: 'map-fa-marker',
-    iconSize: [clampedSize, clampedSize],
-    iconAnchor: [clampedSize / 2, clampedSize / 2], 
-    popupAnchor: [0, -clampedSize / 2]
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    popupAnchor: [0, -size / 2]
   });
 };
 

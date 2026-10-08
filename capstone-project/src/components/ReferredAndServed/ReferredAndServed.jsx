@@ -1,163 +1,151 @@
 import { useState } from "react";
-import './referred-and-served.css';
-import { SquarePen, Trash2, ArchiveRestore, ImageIcon } from 'lucide-react';
+import "../ClientTable/client-table.css";
+import { ImageIcon } from "lucide-react";
+import { Clip, RecordsStats, RowActions, RecordsPagination } from "../ClientTable/TableParts";
+
+const COLUMNS = [
+    { label: "ID", width: 46 },
+    { label: "Name", width: "15%" },
+    { label: "Address" },
+    { label: "Method / Shift", width: "12%", title: "FP Method / With Intention to Shift" },
+    { label: "Health Facility", width: "18%", title: "Name and Address of Health Service Facility" },
+    { label: "Referred By", width: "14%", title: "Who Referred the Client / Contact No. of Volunteer" },
+    { label: "Date", width: "9%" },
+    { label: "Slip", width: 56, title: "Referral Slip Picture" },
+    { label: "Actions" },
+];
 
 function ReferredAndServed({ clients, loading, onView, onEdit, onDelete, isArchived, onRestore }) {
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10; 
+    const itemsPerPage = 10;
 
     const safeClients = clients || [];
     const totalPages = Math.ceil(safeClients.length / itemsPerPage);
+    // a search or filter can leave fewer pages than the one being viewed
+    const page = Math.min(currentPage, Math.max(totalPages, 1));
 
-    const indexOfLastClient = currentPage * itemsPerPage;
+    const indexOfLastClient = page * itemsPerPage;
     const indexOfFirstClient = indexOfLastClient - itemsPerPage;
     const currentClients = safeClients.slice(indexOfFirstClient, indexOfLastClient);
 
-    const handleNextPage = () => {
-        if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
-    };
-
-    const handlePrevPage = () => {
-        if (currentPage > 1) setCurrentPage(prev => prev - 1);
-    };
-
     return (
-        <>
-            <div className="stats-banner-private">
-                <div className="stat-item-private">
-                    <span className="stat-label-private">
-                        {isArchived ? "Archived Records" : "Total Records"}
-                    </span>
-                    <span className="stat-value-private">{safeClients.length}</span>
+        <div className="rec-card">
+            {!isArchived && <RecordsStats clients={safeClients} />}
+
+            {loading ? (
+                <div className={`rec-empty${isArchived ? " rec-empty--compact" : ""}`}>Loading records...</div>
+            ) : safeClients.length === 0 ? (
+                <div className={`rec-empty${isArchived ? " rec-empty--compact" : ""}`}>
+                    {isArchived ? "No archived records found." : "No records found."}
                 </div>
-                {!isArchived && (
-                    <div className="stat-item-private">
-                        <span className="stat-label-private">New This Month</span>
-                        <span className="stat-value-private">
-                            {safeClients.filter(c => {
-                                if (!c.created_at || typeof c.created_at.toDate !== 'function') return false;
-                                const date = c.created_at.toDate();
-                                const now = new Date();
-                                return date.getMonth() === now.getMonth() &&
-                                    date.getFullYear() === now.getFullYear();
-                            }).length}
-                        </span>
-                    </div>
-                )}
-            </div>
+            ) : (
+                <div className="rec-table-scroll">
+                    <table className="rec-table rec-table--referred">
+                        <colgroup>
+                            {COLUMNS.map((column) => (
+                                <col
+                                    key={column.label}
+                                    style={{ width: column.label === "Actions" ? (isArchived ? 104 : 80) : column.width }}
+                                />
+                            ))}
+                        </colgroup>
 
-            <div className="client-table-container-private">
-                {loading ? (
-                    <div className="table-empty-private">Loading records...</div>
-                ) : safeClients.length === 0 ? (
-                    <div className="table-empty-private">
-                        {isArchived ? "No archived records found." : "No records found."}
-                    </div>
-                ) : (
-                    <>
-                        <table className="table table-xs table-pin-rows table-pin-cols">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <td>Name</td>
-                                    <td>Address</td>
-                                    <td>Barangay</td>
-                                    <td>FP Method</td>
-                                    <td>With Intention to Shift</td>
-                                    <td>Name of Health Service Facility</td>
-                                    <td>Address of Health Service Facility</td>
-                                    <td>Who Referred the Client</td>
-                                    <td>Contact No. Volunteer</td>
-                                    <td>Date</td>
-                                    <td>Referral Slip Picture</td>
-                                    <td>Actions</td>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {currentClients.map((client, index) => (
-                                    <tr
-                                        key={client.id}
-                                        className={`${isArchived ? "archived-row" : ""}${!isArchived ? " client-record-row-clickable" : ""}`}
-                                        style={{ cursor: isArchived ? undefined : "pointer" }}
-                                        tabIndex={isArchived ? undefined : 0}
-                                        aria-label={isArchived ? undefined : `View ${client.name || "client"} record`}
-                                        onClick={isArchived ? undefined : () => onView(client)}
-                                        onKeyDown={isArchived ? undefined : (event) => {
-                                            if (event.key === "Enter" || event.key === " ") {
-                                                event.preventDefault();
-                                                onView(client);
-                                            }
-                                        }}
-                                    >
-                                        <th>{String(indexOfFirstClient + index + 1).padStart(3, "0")}</th>
-                                        <td>
-                                            <div className="client-name">
-                                                <span className="client-name-male">{client.name}</span>
-                                            </div>
-                                        </td>
-                                        <td>{client.address || "—"}</td>
-                                        <td>{client.barangay || "—"}</td>
-                                        <td>{client.fp_method || "—"}</td>
-                                        <td>{client.with_intention_to_shift || "—"}</td>
-                                        <td>{client.facility_name || "—"}</td>
-                                        <td>{client.facility_address || "—"}</td>
-                                        <td>{client.referred_by || "—"}</td>
-                                        <td>{client.volunteer_contact || "—"}</td>
-                                        <td>{client.date || "—"}</td>
-                                        
-                                        {/* STATIC IMAGE COLUMN */}
-                                        <td>
-                                            {client.referral_slip_file ? (
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <img 
-                                                        src={client.referral_slip_file} 
-                                                        alt="Slip" 
-                                                        style={{ width: '32px', height: '32px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #e5e7eb' }} 
-                                                    />
-                                                    <span style={{ fontSize: '12px', color: '#4b5563', fontWeight: '500' }}>Attached</span>
-                                                </div>
-                                            ) : (
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#9ca3af' }}>
-                                                    <ImageIcon size={14} />
-                                                    <span style={{ fontSize: '12px' }}>—</span>
-                                                </div>
-                                            )}
-                                        </td>
-
-                                        <td>
-                                            <div className="action-buttons">
-                                                {isArchived ? (
-                                                    <button className="action-btn restore" onClick={(event) => { event.stopPropagation(); onRestore(client); }}>
-                                                        <ArchiveRestore size={15} strokeWidth={1.5} />
-                                                    </button>
-                                                ) : (
-                                                <>
-                                                    <button className="action-btn edit" onClick={(event) => { event.stopPropagation(); onEdit(client); }} title="Edit">
-                                                        <SquarePen size={15} strokeWidth={1.5} />
-                                                    </button>
-                                                    <button className="action-btn delete" onClick={(event) => { event.stopPropagation(); onDelete(client); }} title="Delete">
-                                                        <Trash2 size={15} strokeWidth={1.5} />
-                                                    </button>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
+                        <thead>
+                            <tr>
+                                {COLUMNS.map((column) => (
+                                    <th key={column.label} title={column.title}>{column.label}</th>
                                 ))}
-                            </tbody>
-                        </table>
+                            </tr>
+                        </thead>
 
-                        {totalPages > 1 && (
-                            <div className="pagination-controls">
-                                <button className="page-btn" onClick={handlePrevPage} disabled={currentPage === 1}>Previous</button>
-                                <span className="page-info">Page {currentPage} of {totalPages}</span>
-                                <button className="page-btn" onClick={handleNextPage} disabled={currentPage === totalPages}>Next</button>
-                            </div>
-                        )}
-                    </>
-                )}
-            </div>
-        </>
+                        <tbody>
+                            {currentClients.map((client, index) => (
+                                <tr
+                                    key={client.id}
+                                    className={isArchived ? "rec-row--archived" : "rec-row--clickable"}
+                                    tabIndex={isArchived ? undefined : 0}
+                                    aria-label={isArchived ? undefined : `View ${client.name || "client"} record`}
+                                    onClick={isArchived ? undefined : () => onView(client)}
+                                    onKeyDown={isArchived ? undefined : (event) => {
+                                        if (event.key === "Enter" || event.key === " ") {
+                                            event.preventDefault();
+                                            onView(client);
+                                        }
+                                    }}
+                                >
+                                    <td className="rec-id">{String(indexOfFirstClient + index + 1).padStart(3, "0")}</td>
+                                    <td><Clip className="rec-name">{client.name}</Clip></td>
+                                    <td>
+                                        <div className="rec-stack">
+                                            <Clip>{client.address}</Clip>
+                                            {client.barangay && <Clip className="rec-muted">{`Brgy. ${client.barangay}`}</Clip>}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div className="rec-stack">
+                                            {client.fp_method
+                                                ? <span className="rec-badge" title={client.fp_method}>{client.fp_method}</span>
+                                                : <span>—</span>}
+                                            {client.with_intention_to_shift && (
+                                                <Clip className="rec-muted" title={`With intention to shift: ${client.with_intention_to_shift}`}>
+                                                    → {client.with_intention_to_shift}
+                                                </Clip>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div className="rec-stack">
+                                            <Clip>{client.facility_name}</Clip>
+                                            <Clip className="rec-muted">{client.facility_address}</Clip>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div className="rec-stack">
+                                            <Clip>{client.referred_by}</Clip>
+                                            {client.volunteer_contact && <Clip className="rec-muted">{client.volunteer_contact}</Clip>}
+                                        </div>
+                                    </td>
+                                    <td><Clip>{client.date}</Clip></td>
+
+                                    <td>
+                                        {client.referral_slip_file ? (
+                                            <img
+                                                src={client.referral_slip_file}
+                                                alt="Referral slip"
+                                                title="Referral slip attached"
+                                                className="rec-thumb"
+                                            />
+                                        ) : (
+                                            <span className="rec-attach-status" title="No referral slip">
+                                                <ImageIcon size={14} /> —
+                                            </span>
+                                        )}
+                                    </td>
+
+                                    <td>
+                                        <RowActions
+                                            client={client}
+                                            isArchived={isArchived}
+                                            onEdit={onEdit}
+                                            onDelete={onDelete}
+                                            onRestore={onRestore}
+                                        />
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+
+            <RecordsPagination
+                page={page}
+                totalPages={totalPages}
+                total={safeClients.length}
+                pageSize={itemsPerPage}
+                onPageChange={setCurrentPage}
+            />
+        </div>
     );
 }
 

@@ -12,6 +12,9 @@ export default defineConfig({
             if (id.includes('jspdf')) return 'vendor-pdf';
             if (id.includes('leaflet') || id.includes('mapbox')) return 'vendor-maps';
             if (id.includes('chart') || id.includes('recharts')) return 'vendor-charts';
+            if (id.includes('exceljs') || id.includes('xlsx')) return 'vendor-excel';
+            if (id.includes('@turf')) return 'vendor-geo';
+            if (id.includes('firebase')) return 'vendor-firebase';
             return 'vendor';
           }
         },

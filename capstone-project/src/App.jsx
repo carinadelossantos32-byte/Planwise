@@ -1,55 +1,96 @@
-import React, { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { BrowserRouter, Navigate, Routes, Route, useLocation } from "react-router";
 import Sidebar from "./components/Sidebar/Sidebar";
-import ClientRecords from "./pages/ClientRecords/ClientRecords";
-import Dashboard from "./pages/Dashboard/Dashboard"; 
-import HealthDashboard from "./pages/Dashboard/HealthDashboard"; 
-import GisMap from "./pages/GisMap/GisMap";
-import Reports from "./pages/Reports/Reports";
+import ErrorBoundary from "./components/ErrorBoundary/ErrorBoundary";
 import Login from "./pages/Login/Login";
-import Settings from "./pages/Settings/settings";
-import Inventory from "./pages/Inventory/Inventory";
-import { auth, onAuthStateChanged } from "./firebase-config";
+import { auth, db, doc, getDoc, onAuthStateChanged } from "./firebase-config";
+import "./app-shell.css";
+
+// Each page is downloaded only when it is first opened
+const ClientRecords = lazy(() => import("./pages/ClientRecords/ClientRecords"));
+const Dashboard = lazy(() => import("./pages/Dashboard/Dashboard"));
+const HealthDashboard = lazy(() => import("./pages/Dashboard/HealthDashboard"));
+const GisMap = lazy(() => import("./pages/GisMap/GisMap"));
+const Reports = lazy(() => import("./pages/Reports/Reports"));
+const Settings = lazy(() => import("./pages/Settings/Settings"));
+const Inventory = lazy(() => import("./pages/Inventory/Inventory"));
 
 const NO_SIDEBAR_ROUTES = ["/login"];
+
+function PageLoader() {
+  return (
+    <div className="page-loader" role="status" aria-live="polite">
+      <div className="page-loader-spinner"></div>
+      <p>Loading...</p>
+    </div>
+  );
+}
+
+// Role per signed-in user, read once from their database record
+const verifiedRoles = new Map();
+
+async function loadVerifiedRole(user) {
+  if (verifiedRoles.has(user.uid)) return verifiedRoles.get(user.uid);
+
+  const snap = await getDoc(doc(db, "users", (user.email || "").toLowerCase()));
+  const role = snap.exists() ? snap.data().role : null;
+  if (role !== "cpd" && role !== "health") return null;
+
+  verifiedRoles.set(user.uid, role);
+  return role;
+}
 
 function ProtectedRoute({ allowedRole, children }) {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
+  const [userRole, setUserRole] = useState(null);
+  // keeps the loader on screen long enough to be seen when the session check is instant
+  const [minTimePassed, setMinTimePassed] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const timer = setTimeout(() => setMinTimePassed(true), 450);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      let role = null;
+      if (user) {
+        try {
+          role = await loadVerifiedRole(user);
+        } catch (error) {
+          console.error("Could not verify user role:", error);
+        }
+      } else {
+        verifiedRoles.clear();
+      }
+
+      // Sidebar reads the role from here, so keep it in step with the verified one
+      if (role) localStorage.setItem("userRole", role);
+      else localStorage.removeItem("userRole");
+
       setCurrentUser(user);
+      setUserRole(role);
       setCheckingAuth(false);
     });
 
     return () => unsubscribe();
   }, []);
 
-  if (checkingAuth) {
-    return (
-      <div style={{ height: "100vh", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#F8FAFC" }}>
-        <p style={{ color: "#091F7A", fontWeight: 600, fontSize: "15px" }}>Verifying session...</p>
-      </div>
-    );
+  if (checkingAuth || !minTimePassed) {
+    return <PageLoader />;
   }
 
-  if (!currentUser) {
+  if (!currentUser || !userRole) {
     return <Navigate to="/login" replace />;
   }
 
-  const userRole = localStorage.getItem("userRole");
   if (allowedRole && userRole !== allowedRole) {
     const fallback = userRole === "health" ? "/dashboard/health" : "/dashboard/cpd";
     return <Navigate to={fallback} replace />;
   }
 
   return children;
-}
-
-function DynamicDashboard() {
-  const userRole = localStorage.getItem("userRole") || "cpd"; 
-  return userRole === "health" ? <HealthDashboard /> : <Dashboard />;
 }
 
 function Layout() {
@@ -60,71 +101,75 @@ function Layout() {
     <div style={{ display: "flex", minHeight: "100vh" }}>
       {showSidebar && <Sidebar />}
       <main style={{ flex: 1, overflow: "auto" }}>
+        <ErrorBoundary key={location.pathname}>
+        <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
 
-          <Route 
-            path="/dashboard/cpd" 
+          <Route
+            path="/dashboard/cpd"
             element={
               <ProtectedRoute allowedRole="cpd">
                 <Dashboard />
               </ProtectedRoute>
-            } 
+            }
           />
 
-          <Route 
-            path="/dashboard/health" 
+          <Route
+            path="/dashboard/health"
             element={
               <ProtectedRoute allowedRole="health">
                 <HealthDashboard />
               </ProtectedRoute>
-            } 
+            }
           />
 
-          <Route 
-            path="/client-records" 
+          <Route
+            path="/client-records"
             element={
               <ProtectedRoute>
                 <ClientRecords />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/gis-map" 
+          <Route
+            path="/gis-map"
             element={
               <ProtectedRoute>
                 <GisMap />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/inventory" 
+          <Route
+            path="/inventory"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRole="health">
                 <Inventory />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/reports" 
+          <Route
+            path="/reports"
             element={
               <ProtectedRoute>
                 <Reports />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/settings" 
+          <Route
+            path="/settings"
             element={
               <ProtectedRoute>
                 <Settings />
               </ProtectedRoute>
-            } 
+            }
           />
 
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
+        </Suspense>
+        </ErrorBoundary>
       </main>
     </div>
   );

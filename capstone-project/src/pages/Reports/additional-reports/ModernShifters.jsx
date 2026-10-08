@@ -1,3 +1,4 @@
+import { notify } from "../../../utils/notify";
 import "../report-forms.css";
 import MethodBadges from "../MethodBadges";
 import MethodName from "../MethodName";
@@ -498,7 +499,7 @@ function ModernShifters({
 
         } catch (error) {
             console.error("Failed to export Modern FP Shifters PDF:", error);
-            alert("Failed to export Modern FP Shifters PDF.");
+            notify("Failed to export Modern FP Shifters PDF.");
         }
 
     };
@@ -542,7 +543,7 @@ function ModernShifters({
 
         } catch (error) {
             console.error(error);
-            alert("Failed to export Modern FP Shifters Excel.");
+            notify("Failed to export Modern FP Shifters Excel.");
         }
 
     };

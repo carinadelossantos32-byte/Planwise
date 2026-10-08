@@ -8,23 +8,36 @@ h1, h2, h3, h4, h5, h6, p, ul {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 16px;
+    height: 80px;
     background-color: #fff;
-    padding: 6px 30px 6px 30px;
+    padding: 0 40px;
     position: relative;
     z-index: 1001;
+}
+
+/* same page heading as the Reports tab */
+.page-header h1 {
+    color: #1f2937;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
 }
 
 .gis-header-right {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 12px;
+    min-width: 0;
 }
 
 .search-container {
     position: relative !important;
-    width: 280px !important;     
+    width: 280px !important;
     max-width: 280px !important;
-    flex-shrink: 0 !important;     
+    flex-shrink: 1 !important;
+    min-width: 150px;
 }
 
 .search-bar {
@@ -32,11 +45,13 @@ h1, h2, h3, h4, h5, h6, p, ul {
     height: 40px;
     align-items: center;
     background-color: transparent;
-    border: 1px solid #ccc;
+    border: 1px solid #d5dbe9;
     border-radius: 10px;
-    padding: 0px 10px 0px 15px;
-    width: 100% !important;        
+    padding: 0px 10px 0px 14px;
+    width: 100% !important;
     box-sizing: border-box !important;
+    color: #94a3b8;
+    font-size: 14px;
 }
 
 .search-bar input {
@@ -45,16 +60,19 @@ h1, h2, h3, h4, h5, h6, p, ul {
     margin-left: 5px;
     background-color: transparent;
     width: 100%;
+    min-width: 0;
+    color: #0f172a;
+    font-size: 14px;
 }
 
 ul.suggestions-list {
     position: absolute !important;
-    top: calc(100% + 5px) !important; 
+    top: calc(100% + 5px) !important;
     left: 0 !important;
-    width: 100% !important;           
-    max-width: 280px !important;     
+    width: 100% !important;
+    max-width: 280px !important;
     box-sizing: border-box !important;
-    
+
     margin: 0 !important;
     background-color: #ffffff !important;
     border: 1px solid #d1d5db !important;
@@ -64,7 +82,7 @@ ul.suggestions-list {
     padding: 4px 0 !important;
     max-height: 200px !important;
     overflow-y: auto !important;
-    z-index: 9999 !important;        
+    z-index: 9999 !important;
 }
 
 .suggestion-item {
@@ -96,48 +114,70 @@ ul.suggestions-list {
 /* --- MAP OVERVIEW & OTHERS --- */
 
 .gis-header-right button {
-    background-color: #fff;
-    border: 1px solid #ccc;
-    cursor: pointer;
-    padding: 10px;
+    height: 40px;
+    padding: 0 16px;
+    background-color: #091F7A;
+    border: 1px solid transparent;
     border-radius: 10px;
+    color: #ffffff;
+    font-size: 13.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.gis-header-right button:hover {
+    background-color: #07185e;
 }
 
 .toolbar-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px; 
+  flex: none;
+  gap: 8px;
 }
 
 .map-overview {
     display: grid;
     grid-template-columns: 33.3% 33.3% 33.3%;
     grid-template-rows: 1fr;
-    grid-template-areas: 
+    grid-template-areas:
     "filters    instructions controls"
     "legend     map          map";
 
-    height: calc(100vh - 80px);
+    height: calc(100vh - 81px);
     box-sizing: border-box;
     position: relative;
 }
 
 .map-filters {
     grid-area: filters;
-    width: 55%;
+    width: 260px;
     height: max-content;
-    min-width: 250px;
     display: flex;
     flex-direction: column;
     background-color: #fff;
-    margin: 25px;
-    border-radius: 10px;
-    padding: 0px 0px 15px 0px;
-    box-shadow: 5px 2px 4px rgba(0, 0, 0, 0.1);
+    margin: 16px;
+    border-radius: 14px;
+    padding: 0px 0px 6px 0px;
+    box-shadow: 0 8px 24px -8px rgba(15, 23, 42, 0.25);
 }
 
 .map-filters p, option, label {
-    font-size: 14px;
+    font-size: 12px;
+}
+
+.map-filters h3,
+.map-legend h3 {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.map-filters h4 {
+    color: #334155;
+    font-size: 12.5px;
+    font-weight: 600;
 }
 
 .filters-header {
@@ -146,8 +186,8 @@ ul.suggestions-list {
     justify-content: space-between;
     align-items: center;
     background-color: #091F7A;
-    padding: 15px;
-    border-radius: 10px 10px 0 0;
+    padding: 12px 16px;
+    border-radius: 14px 14px 0 0;
 }
 
 .filters-header-left {
@@ -161,6 +201,7 @@ ul.suggestions-list {
     border: none;
     color: white;
     display: inline-block;
+    cursor: pointer;
     transition: transform 0.3s ease;
 }
 
@@ -169,29 +210,29 @@ ul.suggestions-list {
 }
 
 .filter-modes {
-    padding: 15px;
-    transition: height 0.4s ease-in-out, padding 0.4s ease-in-out; 
-    overflow: hidden;
+    padding: 12px 16px 10px;
     box-sizing: border-box;
 }
 
 .view-mode-options {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
-    gap: 5px;
-    padding: 10px 0px;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 0 0 12px;
 }
 
 #markers, #heatmap, #clusters {
     display: flex;
-    width: 30%;
+    flex: 1;
+    min-width: 0;
     flex-direction: column;
     align-items: center;
     gap: 5px;
-    border: 1px solid #ccc;
+    border: 1px solid #d5dbe9;
     border-radius: 10px;
-    padding: 13px;
+    padding: 10px 4px;
+    font-size: 14px;
 }
 
 #markers.selected, #heatmap.selected, #clusters.selected {
@@ -201,12 +242,14 @@ ul.suggestions-list {
 
 .barangay-filter select, .fp-method-filter select {
     width: 100%;
-    padding: 10px;
-    padding-right: 30px;
-    margin: 10px 0px;
-    border: 1px solid #ccc;
+    height: 38px;
+    padding: 0 30px 0 12px;
+    margin: 6px 0 12px;
+    border: 1px solid #d5dbe9;
     border-radius: 10px;
     background-color: #fff;
+    color: #0f172a;
+    font-size: 13.5px;
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
@@ -231,22 +274,24 @@ ul.suggestions-list {
 
 .map-legend {
     grid-area: legend;
-    width: 15%;
-    min-width: 250px;
+    align-self: end;
+    width: 260px;
+    height: max-content;
     background-color: #fff;
-    margin: 25px;
-    border-radius: 10px;
-    box-shadow: 5px 2px 4px rgba(0, 0, 0, 0.1);
+    margin: 16px;
+    border-radius: 14px;
+    box-shadow: 0 8px 24px -8px rgba(15, 23, 42, 0.25);
 }
 
 .legend-title {
     display: flex;
     justify-content: space-between;
-    padding: 15px 15px 0px 15px;
+    align-items: center;
+    padding: 14px 16px 0px 16px;
+    color: #0f172a;
 }
 
 .legend-title i {
-    margin-top: 7px;
     color: #091F7A;
     font-size: 14px;
 }
@@ -264,7 +309,7 @@ ul.suggestions-list {
 .legend-tooltip-popover {
     display: none;
     position: absolute;
-    top: -80%;       
+    top: -80%;
     left: 200%;
     width: 260px;
     background: #ffffff;
@@ -302,13 +347,23 @@ ul.suggestions-list {
     color: #091F7A;
 }
 
-.map-legend ul {
-    padding: 15px;    
+.map-legend > ul {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding: 10px 16px 14px;
 }
 
-.map-legend p {
-    padding: 3px;
-    font-size: 13px;
+.map-legend > ul p {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #334155;
+    font-size: 12.5px;
+}
+
+.map-legend > ul p i {
+    font-size: 10px;
 }
 
 .map-controls {
@@ -317,8 +372,8 @@ ul.suggestions-list {
     flex-direction: column;
     justify-content: flex-start;
     justify-self: end;
-    margin: 25px;
-    gap: 10px;
+    margin: 16px;
+    gap: 8px;
 }
 
 .map-controls button {
@@ -339,16 +394,16 @@ ul.suggestions-list {
 }
 
 .layer-control-wrapper {
-    position: relative !important; 
+    position: relative !important;
     width: 42px;
     height: 42px;
 }
 
 .layer-menu-popup {
   position: absolute !important;
-  right: 0; 
-  bottom: 10; 
-  margin-top: 10px;   
+  right: 0;
+  bottom: 10;
+  margin-top: 10px;
   width: 150px;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(8px);
@@ -391,20 +446,24 @@ ul.suggestions-list {
 
 .information-container {
     grid-area: instructions;
-    width: 80%;
+    justify-self: center;
+    max-width: min(420px, calc(100% - 32px));
     height: max-content;
     background-color: #fff;
-    margin: 25px;
-    border-radius: 10px;
-    box-shadow: 5px 2px 4px rgba(0, 0, 0, 0.1);
+    margin: 16px;
+    border-radius: 999px;
+    box-shadow: 0 8px 24px -8px rgba(15, 23, 42, 0.25);
     display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 10px;
-    gap: 10px;
-    flex-wrap: wrap;
-    font-size: 13px;
-    text-align: center;
+    padding: 8px 10px 8px 14px;
+    gap: 8px;
+    color: #334155;
+    font-size: 12.5px;
+}
+
+.information-container p {
+    font-size: 12.5px;
+    min-width: 0;
 }
 
 .information-container i {
@@ -414,26 +473,28 @@ ul.suggestions-list {
 .information-container button {
     border: none;
     background-color: transparent;
-    color: gray;
+    color: #64748b;
     cursor: pointer;
-    width: 1%;
+    flex: none;
+    width: 22px;
+    height: 22px;
 }
 
 .map-container {
     grid-area: map;
     grid-column: 1 / -1;
     grid-row: 1 / -1;
-    
+
     width: 100%;
     height: 100%;
     background-color: #e5e5e5;
-    
+
     z-index: 1;
 }
 
 .map-filters, .map-legend, .map-controls, .information-container {
-    z-index: 2; 
-}   
+    z-index: 2;
+}
 
 .custom-user-location {
   display: flex;
@@ -469,10 +530,10 @@ ul.suggestions-list {
   width: 100vw;
   height: 100vh;
   display: flex;
-  align-items: center;     
-  justify-content: center;  
-  background-color: rgba(255, 255, 255, 0.8); 
-  z-index: 9999;         
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 9999;
 }
 
 .custom-loading-card {
@@ -490,7 +551,7 @@ ul.suggestions-list {
   width: 28px;
   height: 28px;
   border: 3px solid #e5e7eb;
-  border-top-color: #2563eb; 
+  border-top-color: #2563eb;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }

@@ -163,3 +163,351 @@ select.custom-select {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* =========================================================
+   EXPORT BARANGAY MAP DIALOG  (.mx-*)
+   The rules above are generic class names other pages still
+   pick up; the dialog itself only uses the ones below.
+   ========================================================= */
+
+.mx-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.5);
+  -webkit-backdrop-filter: blur(4px);
+          backdrop-filter: blur(4px);
+}
+
+.mx-modal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 980px;
+  max-height: calc(100vh - 40px);
+  background: #ffffff;
+  border: 1px solid #e6eaf3;
+  border-radius: 20px;
+  box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.28);
+  color: #0f172a;
+  font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+  overflow: hidden;
+}
+
+.mx-modal button,
+.mx-modal select {
+  font-family: inherit;
+}
+
+.mx-header {
+  flex: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #e6eaf3;
+}
+
+.mx-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #0f172a;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.mx-title svg {
+  color: #091F7A;
+}
+
+.mx-subtitle {
+  margin-top: 4px;
+  color: #64748b;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.mx-close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.mx-close:hover {
+  background: #f1f4f9;
+  color: #0f172a;
+}
+
+.mx-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 24px;
+  background: #f1f4f9;
+  overflow-y: auto;
+}
+
+.mx-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mx-field-label {
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mx-field .report-select {
+  --rs-accent: #2f5bff;
+  --rs-accent-tint: #e8eeff;
+  --rs-ring: #e8eeff;
+  --rs-border: #d5dbe9;
+  --rs-text: #0f172a;
+  --rs-height: 40px;
+  --rs-radius: 10px;
+  width: 260px;
+  max-width: 100%;
+}
+
+/* the option list must open above the map's own layers and controls */
+.mx-field .report-select-menu {
+  z-index: 1100;
+}
+
+.mx-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 320px;
+  background: #ffffff;
+  border: 1.5px dashed #cdd6ea;
+  border-radius: 14px;
+  color: #64748b;
+  font-size: 13.5px;
+}
+
+.mx-preview-image {
+  display: block;
+  width: 100%;
+  border: 1px solid #d5dbe9;
+  box-shadow: 0 8px 24px -10px rgba(15, 23, 42, 0.35);
+}
+
+/* ---------- The sheet that gets exported (A4 landscape proportions) ---------- */
+
+.mx-sheet {
+  flex: none;
+  width: 100%;
+  aspect-ratio: 297 / 210;
+  padding: 14px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px -10px rgba(15, 23, 42, 0.35);
+}
+
+.mx-sheet-frame {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 2px solid #0f172a;
+}
+
+.mx-sheet-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.mx-sheet-map {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  border-right: 2px solid #0f172a;
+}
+
+.mx-sheet-map .leaflet-container {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  font-family: 'Inter', sans-serif;
+}
+
+.mx-sheet-legend {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  width: 172px;
+  padding: 16px 14px;
+}
+
+.mx-legend-title {
+  margin-bottom: 12px;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mx-sheet-legend ul {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+}
+
+.mx-sheet-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.mx-legend-dot {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.mx-legend-label {
+  margin-right: auto;
+}
+
+.mx-legend-count {
+  font-variant-numeric: tabular-nums;
+}
+
+.mx-legend-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1.5px solid #0f172a;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.mx-legend-total strong {
+  font-size: 16px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.mx-sheet-title {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 12px 16px;
+  border-top: 2px solid #0f172a;
+  text-align: center;
+}
+
+.mx-sheet-title strong {
+  color: #0f172a;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.mx-sheet-title span {
+  color: #475569;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+/* ---------- Footer ---------- */
+
+.mx-footer {
+  flex: none;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 24px;
+  background: #ffffff;
+  border-top: 1px solid #e6eaf3;
+}
+
+.mx-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 18px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.mx-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mx-btn:focus-visible,
+.mx-close:focus-visible {
+  outline: 2px solid #2f5bff;
+  outline-offset: 2px;
+}
+
+.mx-btn--outline {
+  background: #ffffff;
+  border-color: #d5dbe9;
+  color: #334155;
+}
+
+.mx-btn--outline:hover:not(:disabled) {
+  background: #f1f4fb;
+}
+
+.mx-btn--primary {
+  background: #091F7A;
+  color: #ffffff;
+}
+
+.mx-btn--primary:hover:not(:disabled) {
+  background: #07185e;
+}
+
+.mx-spin {
+  animation: mx-spin 0.8s linear infinite;
+}
+
+@keyframes mx-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 640px) {
+  .mx-sheet-legend { width: 130px; padding: 10px; }
+  .mx-sheet-title strong { font-size: 15px; }
+}

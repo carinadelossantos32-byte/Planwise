@@ -4,7 +4,7 @@ import { db } from "../../firebase-config";
 import ClientTable from "../ClientTable/ClientTable";
 import ClientTablePrivate from "../ClientTablePrivate/ClientTablePrivate";
 import ReferredAndServed from "../ReferredAndServed/ReferredAndServed"; 
-import { Search, X, ArchiveRestore } from "lucide-react"; 
+import { X, Archive, ArchiveRestore } from "lucide-react";
 import "./client-archive.css";
 
 import '../ClientDeleteModal/client-delete-modal.css'; 
@@ -15,26 +15,21 @@ function ClientArchive({ searchQuery }) {
     const [referredClients, setReferredClients] = useState([]); 
     const [loading, setLoading] = useState(true);
 
-    // MODAL STATES
     const [showRestoreModal, setShowRestoreModal] = useState(false);
     const [clientToRestore, setClientToRestore] = useState(null);
     const [restoreType, setRestoreType] = useState(""); 
 
-    // FETCH ALL THREE COLLECTIONS
     const fetchArchived = useCallback(async () => {
         setLoading(true);
         try {
-            // fetch archived public
             const qPublic = query(collection(db, "clients_public"), where("is_archived", "==", true));
             const publicSnapshot = await getDocs(qPublic);
             setPublicClients(publicSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
 
-            // fetch archived private
             const qPrivate = query(collection(db, "clients_private"), where("is_archived", "==", true));
             const privateSnapshot = await getDocs(qPrivate);
             setPrivateClients(privateSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
 
-            // fetch archived referred & served
             const qReferred = query(collection(db, "clients_referred"), where("is_archived", "==", true));
             const referredSnapshot = await getDocs(qReferred);
             setReferredClients(referredSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
@@ -49,14 +44,12 @@ function ClientArchive({ searchQuery }) {
         fetchArchived();
     }, [fetchArchived]);
 
-    // OPEN CONFIRMATION MODAL
     const openRestoreModal = (client, type) => {
         setClientToRestore(client);
         setRestoreType(type);
         setShowRestoreModal(true);
     };
 
-    // CONFIRM AND EXECUTE RESTORE
     const confirmRestore = async () => {
         if (!clientToRestore) return;
         
@@ -79,7 +72,6 @@ function ClientArchive({ searchQuery }) {
         }
     };
 
-    // FILTER HOOKS
     const filteredPublic = publicClients.filter((client) =>
         client.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         client.spouse_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -106,8 +98,9 @@ function ClientArchive({ searchQuery }) {
             {/* PUBLIC ARCHIVED TABLE */}
             <div className="archive-section">
                 <div className="archive-section-header">
-                    <h3>FP Public — Archived</h3>
-                    <span className="archive-count">{filteredPublic.length} records</span>
+                    <span className="archive-section-icon"><Archive size={15} /></span>
+                    <h3>FP Public</h3>
+                    <span className="archive-count">{filteredPublic.length} archived</span>
                 </div>
                 <ClientTable
                     clients={filteredPublic}
@@ -123,8 +116,9 @@ function ClientArchive({ searchQuery }) {
             {/* PRIVATE ARCHIVED TABLE */}
             <div className="archive-section">
                 <div className="archive-section-header">
-                    <h3>FP Private — Archived</h3>
-                    <span className="archive-count">{filteredPrivate.length} records</span>
+                    <span className="archive-section-icon"><Archive size={15} /></span>
+                    <h3>FP Private</h3>
+                    <span className="archive-count">{filteredPrivate.length} archived</span>
                 </div>
                 <ClientTablePrivate
                     clients={filteredPrivate}
@@ -137,11 +131,11 @@ function ClientArchive({ searchQuery }) {
                 />
             </div>
 
-            {/* NEW: REFERRED & SERVED ARCHIVED TABLE SECTION */}
             <div className="archive-section">
                 <div className="archive-section-header">
-                    <h3>Referred & Served — Archived</h3>
-                    <span className="archive-count">{filteredReferred.length} records</span>
+                    <span className="archive-section-icon"><Archive size={15} /></span>
+                    <h3>Referred & Served</h3>
+                    <span className="archive-count">{filteredReferred.length} archived</span>
                 </div>
                 <ReferredAndServed
                     clients={filteredReferred}
@@ -165,8 +159,8 @@ function ClientArchive({ searchQuery }) {
                         >
                             <X size={16} />
                         </button>
-                        <div className="archive-icon-circle" style={{ backgroundColor: '#10b981' }}>
-                            <ArchiveRestore size={28} color="#fff" />
+                        <div className="archive-icon-circle archive-icon-circle--restore">
+                            <ArchiveRestore size={26} />
                         </div>
 
                         <h2 className="archive-title">Restore client record?</h2>
@@ -187,8 +181,7 @@ function ClientArchive({ searchQuery }) {
                                 Cancel
                             </button>
                             <button 
-                                className="btn-archive" 
-                                style={{ backgroundColor: '#10b981', color: 'green', border: 'none' }} 
+                                className="btn-archive btn-archive--restore" 
                                 onClick={confirmRestore}
                             >
                                 <ArchiveRestore size={15} /> Restore

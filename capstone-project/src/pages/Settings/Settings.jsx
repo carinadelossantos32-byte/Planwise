@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import "./settings.css"
 import { useNavigate } from "react-router"
-import {Info, LockKeyhole, User, Bell, Search } from "lucide-react";
+import {Info, LockKeyhole, User, Bell } from "lucide-react";
 import Account from "../../components/AccountSettings/Account"
 import PrivacySettings from "../../components/PrivacySettings/PrivacySettings"
 import LowStockSettings from "../../components/LowStockSettings/LowStock"
@@ -45,7 +45,7 @@ function Settings(){
         onClick={() => setActivePage("account")} 
         className={activePage === "account" ? "selected" : ""}
          >
-        <User size={16} strokeWidth={1} />
+        <User size={18} strokeWidth={1.75} />
         <h4>Account</h4>
         </div>
 
@@ -53,7 +53,7 @@ function Settings(){
         onClick={() => setActivePage("privacy")} 
         className={activePage === "privacy" ? "selected" : ""}
          >
-        <LockKeyhole size={16} strokeWidth={1} />
+        <LockKeyhole size={18} strokeWidth={1.75} />
         <h4>Privacy & Security</h4>
         </div>
 
@@ -62,7 +62,7 @@ function Settings(){
         onClick={() => setActivePage("notifications")} 
         className={activePage === "notifications" ? "selected" : ""}
          >
-        <Bell size={16} strokeWidth={1} />
+        <Bell size={18} strokeWidth={1.75} />
         <h4>Low Stock</h4>
         </div>
         )}
@@ -71,7 +71,7 @@ function Settings(){
         onClick={() => setActivePage("about")} 
         className={activePage === "about" ? "selected" : ""}
          >
-        <Info size={16} strokeWidth={1} />
+        <Info size={18} strokeWidth={1.75} />
         <h4>About</h4>
         </div>
   

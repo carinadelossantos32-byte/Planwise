@@ -78,3 +78,28 @@
   height: 50px;
   font-size: 16px;
 }
+
+/* Client pin: solid method color, white ring, soft halo and a white center */
+.map-client-dot {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  border: 2.5px solid #ffffff;
+  border-radius: 50%;
+  background-color: currentColor;
+  box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 45%, transparent), 0 3px 8px rgba(15, 23, 42, 0.45);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.map-client-dot::after {
+  content: "";
+  position: absolute;
+  inset: 30%;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.map-fa-marker:hover .map-client-dot {
+  transform: scale(1.2);
+}

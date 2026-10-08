@@ -64,7 +64,7 @@ function ExportConfirmModal({
         .sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
 
     const isNarrowed = editable.some(
-        control => control.key !== "year" && String(control.value) !== "all"
+        control => control.key !== "year" && !["all", ""].includes(String(control.value))
     );
 
     return (
@@ -83,9 +83,12 @@ function ExportConfirmModal({
                 </h3>
 
                 <p className="import-hint">
-                    Review the filters before exporting.
+                    {editable.length > 0
+                        ? "Review the filters before exporting."
+                        : "Check the file name, then export."}
                 </p>
 
+                {editable.length > 0 && (
                 <div className="export-modal-filters">
                     {editable.map(control => (
                         <div key={control.key}>
@@ -99,6 +102,7 @@ function ExportConfirmModal({
                         </div>
                     ))}
                 </div>
+                )}
 
                 <div className="export-modal-filename">
                     <label htmlFor="export-file-name">File name</label>

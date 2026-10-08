@@ -1,0 +1,73 @@
+/* Referral slip picture: upload box and preview, used by the add, edit and view referral modals */
+
+.file-upload-box {
+  border: 1.5px dashed #cdd6ea;
+  border-radius: 12px;
+  background: #f8fafd;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.file-upload-box:hover {
+  border-color: #2f5bff;
+  background: #eef2ff;
+}
+
+.upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 16px;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.upload-label svg {
+  color: #2f5bff;
+}
+
+.image-preview-container {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-self: flex-start;
+  max-width: 100%;
+}
+
+.slip-preview {
+  display: block;
+  max-width: 100%;
+  max-height: 260px;
+  border: 1px solid #e6eaf3;
+  border-radius: 12px;
+  object-fit: contain;
+}
+
+.remove-img-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: #ffffff;
+  border: 1px solid #d5dbe9;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+  color: #b42318;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.remove-img-btn:hover:not(:disabled) {
+  background: #fef3f2;
+}
+
+.remove-img-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

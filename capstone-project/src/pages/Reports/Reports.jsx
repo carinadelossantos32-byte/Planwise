@@ -10,10 +10,14 @@ import ModernShifters from "./additional-reports/ModernShifters";
 import { db } from "../../firebase-config";
 import { collection, getDocs } from "firebase/firestore";
 import { RefreshCw } from "lucide-react";
+import { useFadeZeros } from "./useFadeZeros";
+import PageHeader from "../../components/PageHeader/PageHeader";
 import ReportSelect from "../../components/ReportSelect/ReportSelect";
 import { getClientDate, isArchived, canonicalMethod } from "./reportData";
 
 function Reports() {
+    const stageRef = useRef(null);
+    useFadeZeros(stageRef);
     const [period, setPeriod] = useState("all");
     const [year, setYear] = useState(new Date().getFullYear());
     const [importedYears, setImportedYears] = useState([]);
@@ -29,22 +33,32 @@ function Reports() {
 
     const periods = [
         { value: "all", label: "All Year" },
-        { value: "q1", label: "Q1 (Jan - Mar)" },
-        { value: "q2", label: "Q2 (Apr - Jun)" },
-        { value: "q3", label: "Q3 (Jul - Sep)" },
-        { value: "q4", label: "Q4 (Oct - Dec)" },
-        { value: "january", label: "January" },
-        { value: "february", label: "February" },
-        { value: "march", label: "March" },
-        { value: "april", label: "April" },
-        { value: "may", label: "May" },
-        { value: "june", label: "June" },
-        { value: "july", label: "July" },
-        { value: "august", label: "August" },
-        { value: "september", label: "September" },
-        { value: "october", label: "October" },
-        { value: "november", label: "November" },
-        { value: "december", label: "December" },
+        {
+            group: "Quarters",
+            options: [
+                { value: "q1", label: "Q1", hint: "Jan to Mar" },
+                { value: "q2", label: "Q2", hint: "Apr to Jun" },
+                { value: "q3", label: "Q3", hint: "Jul to Sep" },
+                { value: "q4", label: "Q4", hint: "Oct to Dec" },
+            ],
+        },
+        {
+            group: "Months",
+            options: [
+                { value: "january", label: "January" },
+                { value: "february", label: "February" },
+                { value: "march", label: "March" },
+                { value: "april", label: "April" },
+                { value: "may", label: "May" },
+                { value: "june", label: "June" },
+                { value: "july", label: "July" },
+                { value: "august", label: "August" },
+                { value: "september", label: "September" },
+                { value: "october", label: "October" },
+                { value: "november", label: "November" },
+                { value: "december", label: "December" },
+            ],
+        },
     ];
 
     const reportTypeOptions = [
@@ -444,22 +458,17 @@ function Reports() {
 
     return (
         <>
-            <div className="reports-container">
-                <h3>Reports & Analytics</h3>
-                <div className="reports-header-actions">
-                    
-                    <button
-                        type="button"
-                        className="refresh-btn"
-                        onClick={handleRefresh}
-                        disabled={refreshing || loading}
-                        style={{ cursor: refreshing ? "wait" : "pointer" }}
-                    >
-                        <RefreshCw size={14} className={refreshing ? "spin-icon" : ""} />
-                        {refreshing ? "Refreshing..." : "Refresh Data"}
-                    </button>
-                </div>
-            </div>
+            <PageHeader title="Reports & Analytics">
+                <button
+                    type="button"
+                    className="page-head-btn"
+                    onClick={handleRefresh}
+                    disabled={refreshing || loading}
+                >
+                    <RefreshCw size={14} className={refreshing ? "page-head-spin" : ""} />
+                    {refreshing ? "Refreshing..." : "Refresh Data"}
+                </button>
+            </PageHeader>
 
             <div className="report-tabs-container">
                 <div className="clients-report-content">
@@ -487,7 +496,7 @@ function Reports() {
                         ))}
                     </div>
 
-                    <div className={`report-stage${loading || refreshing ? " is-loading" : ""}`}>
+                    <div ref={stageRef} className={`report-stage${loading || refreshing ? " is-loading" : ""}`}>
                         {renderAnalytics()}
                     </div>
                 </div>

@@ -1,3 +1,4 @@
+import { notify } from "../../utils/notify";
 import { useState, useEffect } from "react";
 import { collection, addDoc, doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebase-config";
@@ -189,7 +190,7 @@ function ClientAddModal({ onClose, onSuccess }) {
       await saveRecord();
     } catch (err) {
       console.error("findDuplicate error:", err);
-      alert("Error checking for duplicates: " + err.message);
+      notify("Error checking for duplicates: " + err.message);
     }
   };
 

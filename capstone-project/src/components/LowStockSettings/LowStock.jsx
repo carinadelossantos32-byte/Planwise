@@ -1,21 +1,8 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { db } from "../../firebase-config"
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import "./notification-settings.css";
-const FP_METHODS = [
-    { id: "condom", label: "Condom" },
-    { id: "iud", label: "IUD" },
-    { id: "pills", label: "Pills" },
-    { id: "injectable", label: "Injectable" },
-    { id: "vasectomy", label: "Vasectomy" },
-    { id: "tubal_ligation", label: "Tubal Ligation" },
-    { id: "implant", label: "Implant" },
-    { id: "cmm_billings", label: "CMM/Billings" },
-    { id: "bbt", label: "Basal Body Temperature (BBT)" },
-    { id: "stm", label: "Sympto-Thermal Method (STM)" },
-    { id: "sdm", label: "Standard Days Method (SDM)" },
-    { id: "lam", label: "Lactational Amenorrhea Method (LAM)" },
-];
+import { INVENTORY_FP_METHODS as FP_METHODS } from "../../data/inventoryMethods.js";
 
 function LowStockSettings() {
     const [alertsEnabled, setAlertsEnabled] = useState(true);
@@ -25,7 +12,6 @@ function LowStockSettings() {
     const [toastTitle, setToastTitle] = useState("");
     const [toastMessage, setToastMessage] = useState("");
 
-    // Load existing thresholds from Firestore
     useEffect(() => {
         async function loadSettings() {
             const snap = await getDoc(doc(db, "lowStock", "lowStockLimit"));
@@ -38,7 +24,6 @@ function LowStockSettings() {
         loadSettings();
     }, []);
 
-    // Helper: Update individual method limit
     const handleLimitChange = (methodId, value) => {
         setThresholds(prev => ({
             ...prev,
@@ -46,7 +31,6 @@ function LowStockSettings() {
         }));
     };
 
-    // Helper: Apply global value to all methods
     const handleApplyGlobal = () => {
         if (!globalValue && globalValue !== 0) return;
         const updated = {};
@@ -56,7 +40,6 @@ function LowStockSettings() {
         setThresholds(updated);
     };
 
-    // Save all thresholds to Firestore
     const handleSave = async () => {
     try {
         await setDoc(doc(db, "lowStock", "lowStockLimit"), {
@@ -78,11 +61,15 @@ function LowStockSettings() {
 
     return (
         <>
-        <div className="low-stock-card">
+        <div className="settings-page">
+        <h1 className="settings-page-title">Low Stock</h1>
+        <p className="settings-page-sub">Set the stock level at which each FP method is flagged as low.</p>
+
+        <div className="low-stock-card settings-card">
             <div className="low-stock-header">
                 <div>
-                    <h2>Low Stock Alerts</h2>
-                    <p className="subtext">Get notified when commodity levels fall below method thresholds.</p>
+                    <h2 className="settings-card-title">Low Stock Alerts</h2>
+                    <p className="settings-card-sub">Get notified when commodity levels fall below method thresholds.</p>
                 </div>
                 <label className="toggle-switch">
                     <input 
@@ -98,15 +85,16 @@ function LowStockSettings() {
 
             {/* Quick Bulk Set Section */}
             <div className="bulk-set-container">
-                <label>Quick Set All Limits:</label>
-                <input 
-                    type="number" 
+                <label htmlFor="low-stock-quick-set">Quick set all limits</label>
+                <input
+                    id="low-stock-quick-set"
+                    type="number"
                     placeholder="e.g. 10" 
                     value={globalValue} 
                     onChange={(e) => setGlobalValue(e.target.value)}
                     className="threshold-input"
                 />
-                <button className="btn-secondary" onClick={handleApplyGlobal}>Apply to All</button>
+                <button className="settings-btn settings-btn--outline" onClick={handleApplyGlobal}>Apply to All</button>
             </div>
 
             {/* Per-Method Grid Settings */}
@@ -127,12 +115,11 @@ function LowStockSettings() {
             </div>
 
             <div className="settings-footer">
-                <button className="btn-primary" onClick={handleSave}>
+                <button className="settings-btn settings-btn--primary" onClick={handleSave}>
                     Save Threshold Limits
                 </button>
             </div>
-
-            
+        </div>
         </div>
 
          {showToast && (

@@ -1,9 +1,11 @@
+import { notify } from "../../utils/notify";
 import { useState } from "react";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../../firebase-config";
 import { ImageIcon, X } from "lucide-react";
 import '../ClientEditModal/client-edit-modal.css';
+import '../ClientAddModalReferred/referral-slip.css';
 
 
 function ClientEditModalReferred({ client, onClose, onSuccess }) {
@@ -29,23 +31,19 @@ function ClientEditModalReferred({ client, onClose, onSuccess }) {
     setUploading(true);
 
     try {
-      // 1. Create a reference in Firebase Storage
       const fileRef = ref(storage, `referral_slips/${Date.now()}_${file.name}`);
 
-      // 2. Upload file bytes
       const snapshot = await uploadBytes(fileRef, file);
 
-      // 3. Get public HTTPS download URL
       const downloadURL = await getDownloadURL(snapshot.ref);
 
-      // 4. Save URL into form state
       setFormData((prev) => ({ ...prev, referral_slip_file: downloadURL }));
       if (errors.referral_slip_file) {
         setErrors((prev) => ({ ...prev, referral_slip_file: "" }));
       }
     } catch (err) {
       console.error("Firebase Storage Upload Error:", err);
-      alert("Failed to upload new referral slip picture. Please try again.");
+      notify("Failed to upload new referral slip picture. Please try again.");
       removeImage();
     } finally {
       setUploading(false);

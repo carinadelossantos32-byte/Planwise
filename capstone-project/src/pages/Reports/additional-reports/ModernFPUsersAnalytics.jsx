@@ -1,3 +1,4 @@
+import { notify } from "../../../utils/notify";
 import "../report-forms.css";
 import MethodBadges from "../MethodBadges";
 import MethodName from "../MethodName";
@@ -474,9 +475,11 @@ function ModernFPUsersAnalytics({
             topMethod: topMethods(monthly[month]),
         }));
 
-        const utilizationRate = totals.allClients
-            ? `${((totals.clientUsers / totals.allClients) * 100).toFixed(1)}%`
-            : "N/A";
+        // the month with the most modern FP users in the selected period
+        const peakMonth = monthlySummary.reduce(
+            (best, row) => (row.total > (best?.total ?? 0) ? row : best),
+            null
+        );
 
         return {
             monthly,
@@ -484,14 +487,14 @@ function ModernFPUsersAnalytics({
             methodCounts,
             monthlySummary,
             totalUsers: totals.total,
-            utilizationRate,
+            peakMonth,
             topMethod: topMethods(totals),
         };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [clients, selectedYear, importedReports, selectedPeriod]);
 
-    const { monthly, totals, methodCounts, monthlySummary, totalUsers, utilizationRate, topMethod } = analytics;
+    const { monthly, totals, methodCounts, monthlySummary, totalUsers, peakMonth, topMethod } = analytics;
 
     const usesImported = isAllYears
         ? Object.keys(importedReports).length > 0
@@ -547,7 +550,7 @@ function ModernFPUsersAnalytics({
         } catch (err) {
 
             console.error("Failed to export Modern FP Users PDF:", err);
-            alert("Failed to export Modern FP Users PDF.");
+            notify("Failed to export Modern FP Users PDF.");
 
         }
 
@@ -607,7 +610,7 @@ function ModernFPUsersAnalytics({
         } catch (err) {
 
             console.error(err);
-            alert("Failed to export Modern FP Users Excel.");
+            notify("Failed to export Modern FP Users Excel.");
 
         }
 
@@ -815,8 +818,8 @@ function ModernFPUsersAnalytics({
                 </div>
 
                 <div className="modernfp-card purple">
-                    <small>Modern FP Utilization</small>
-                    <h2>{utilizationRate}</h2>
+                    <small>Peak Month{peakMonth ? ` · ${peakMonth.total.toLocaleString()} users` : ""}</small>
+                    <h2>{peakMonth ? peakMonth.month : "N/A"}</h2>
                 </div>
 
                 <div className="modernfp-card green">

@@ -1,30 +1,52 @@
+import { notify } from "../../utils/notify";
 import "./inventory.css"
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { db } from "../../firebase-config"
-import { CheckCircle, RefreshCw, Plus, X, SquarePen,SquarePlus, SquareMinus } from "lucide-react";
-import { doc, getDoc, getDocs, updateDoc, setDoc, collection, addDoc, increment, serverTimestamp,onSnapshot } from "firebase/firestore";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, Cell } from "recharts";
+import { CheckCircle, RefreshCw, Plus, X, SquarePen, SquarePlus, SquareMinus, Boxes, TriangleAlert, Building2, Users, MapPin, FileText, FileSpreadsheet } from "lucide-react";
+import { doc, getDoc, getDocs, updateDoc, setDoc, collection, addDoc, increment, runTransaction, serverTimestamp,onSnapshot } from "firebase/firestore";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, Cell, CartesianGrid } from "recharts";
 import { exportInventoryExcel, exportInventoryPDF } from "../../utils/inventory-exports.js";
+import { INVENTORY_FP_METHODS as FP_METHODS } from "../../data/inventoryMethods.js";
+import ExportConfirmModal from "../Reports/ExportConfirmModal.jsx";
+import ReportSelect from "../../components/ReportSelect/ReportSelect";
+import PageHeader from "../../components/PageHeader/PageHeader";
 
 const VISIBLE_LOW_METHODS = 1;
 
-const FP_METHODS = [
-    { id: "condom", label: "Condom" },
-    { id: "iud", label: "IUD" },
-    { id: "pills", label: "Pills" },
-    { id: "injectable", label: "Injectable" },
-    { id: "vasectomy", label: "Vasectomy" },
-    { id: "tubal_ligation", label: "Tubal Ligation" },
-    { id: "implant", label: "Implant" },
-    { id: "cmm_billings", label: "CMM/Billings" },
-    { id: "bbt", label: "Basal Body Temperature(BBT)" },
-    { id: "stm", label: "Sympto-Thermal Method(STM)" },
-    { id: "sdm", label: "Standard Days Method(SDM)" },
-    { id: "lam", label: "Lactational Amenorrhea Method(LAM)" },
-];
+// blue = fine, orange-red = a method at or below its limit (checked for color-blind separation)
+const CHART_COLORS = { normal: "#2f5bff", low: "#E0563D" };
+
+
+function PopulationTooltip({ active, payload }) {
+    if (!active || !payload?.length) return null;
+    return (
+        <div className="chart-tooltip">
+            <p className="chart-tooltip-label">{payload[0].payload.name}</p>
+            <p className="chart-tooltip-value">
+                {Number(payload[0].value).toLocaleString()} residents
+            </p>
+        </div>
+    );
+}
+
+function StockTooltip({ active, payload }) {
+    if (!active || !payload?.length) return null;
+    return (
+        <div className="chart-tooltip">
+            <p className="chart-tooltip-label">{payload[0].payload.name}</p>
+            <p className="chart-tooltip-value">
+                {Number(payload[0].value).toLocaleString()} stocks
+            </p>
+        </div>
+    );
+}
+
 function Inventory() {
     const [editingRHUId, setEditingRHUId] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [viewRHUId, setViewRHUId] = useState(null);
+    const [exportFormat, setExportFormat] = useState(null);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [showAllocateError, setShowAllocateError] = useState(false);
     const [showConfirmAllocate, setShowConfirmAllocate] = useState(false);
@@ -97,7 +119,7 @@ function Inventory() {
         if (!Number.isInteger(qty) || qty <= 0) return setAllocError("Enter a whole number greater than 0.");
 
         setAllocError("");
-        setShowConfirmAllocate(true); // Opens confirmation overlay
+        setShowConfirmAllocate(true);
     }
 
     // 2. Triggered when clicking "Confirm" inside the confirmation overlay
@@ -128,11 +150,9 @@ function Inventory() {
 
             const label = FP_METHODS.find(m => m.id === allocMethod)?.label;
 
-            // Close both confirmation and allocation modals
             setShowConfirmAllocate(false);
             closeRhuAllocate();
 
-            // Trigger Toast Notification
             setToastTitle("Allocation Successful");
             setToastMessage(`${qty} units of ${label} allocated to ${allocRHU.name}.`);
             setShowToast(true);
@@ -385,11 +405,23 @@ function Inventory() {
 
     }
 
-    const sortedRHUData = [...rhuData].sort((a, b) => {
+    const sortedRHUData = useMemo(() => [...rhuData].sort((a, b) => {
         const numA = parseInt(a.name.replace(/\D/g, ""));
         const numB = parseInt(b.name.replace(/\D/g, ""));
         return numA - numB;
-    });
+    }), [rhuData]);
+
+    // Chart data is rebuilt only when the stock data changes. A fresh array on every render
+    // made the charts replay their animation (and re-show the labels) whenever a modal opened.
+    const populationChartData = useMemo(() => sortedRHUData.map((item) => ({
+        name: item.name,
+        population: Number(item.total_population || 0),
+    })), [sortedRHUData]);
+
+    const stockChartData = useMemo(() => sortedRHUData.map((item) => ({
+        name: item.name,
+        stock: FP_METHODS.reduce((sum, m) => sum + Number(item.stockByMethod?.[m.id] ?? 0), 0),
+    })), [sortedRHUData]);
 
     const population = (value) => {
         return value.replace(/[^\d]/g, '');
@@ -408,6 +440,14 @@ function Inventory() {
         const updatedBarangays = [...(selectedRHU.barangays || [])];
         updatedBarangays[index] = value;
         setSelectedRHU({ ...selectedRHU, barangays: updatedBarangays });
+    }
+
+    function handleRemoveBarangay(index) {
+        if (!selectedRHU) return;
+        setSelectedRHU({
+            ...selectedRHU,
+            barangays: (selectedRHU.barangays || []).filter((_, i) => i !== index)
+        });
     }
 
     function handleAddBarangay() {
@@ -448,417 +488,559 @@ function Inventory() {
             }, 4000);
         } catch (err) {
             console.error("Failed to update RHU:", err);
-            alert("Failed to save changes.");
+            notify("Failed to save changes.");
         }
 
 
     }
-    function PopulationTooltip({ active, payload }) {
-        if (!active || !payload?.length) return null;
-        return (
-            <div className="chart-tooltip">
-                <p className="chart-tooltip-label">{payload[0].payload.name}</p>
-                <p className="chart-tooltip-value">
-                    {Number(payload[0].value).toLocaleString()} residents
-                </p>
-            </div>
-        );
+    const stockTotal = (item) => FP_METHODS.reduce((sum, m) => sum + Number(item.stockByMethod?.[m.id] ?? 0), 0);
+    const maxStock = Math.max(...sortedRHUData.map(stockTotal), 1);
+
+    // An RHU is low when any method is at or under the limit set for it in Settings
+    const isRhuLow = (item) => FP_METHODS.some((m) => {
+        const limit = Number(limitsByMethod?.[m.id] ?? 0);
+        return limit > 0 && Number(item.stockByMethod?.[m.id] ?? 0) <= limit;
+    });
+
+    // keeps the refresh visible for a moment even when the data comes back instantly
+    async function handleRefresh() {
+        setIsRefreshing(true);
+        await Promise.all([fetchRHUData(), new Promise((resolve) => setTimeout(resolve, 700))]);
+        setIsRefreshing(false);
     }
 
-    function StockTooltip({ active, payload }) {
-        if (!active || !payload?.length) return null;
-        return (
-            <div className="chart-tooltip">
-                <p className="chart-tooltip-label">{payload[0].payload.name}</p>
-                <p className="chart-tooltip-value">
-                    {Number(payload[0].value).toLocaleString()} stocks
-                </p>
-            </div>
-        );
-    }
+    // the RHU whose details are open, read from the live list so it stays current
+    const viewedRHU = rhuData.find((item) => item.id === viewRHUId) || null;
+    const viewedMethods = viewedRHU
+        ? FP_METHODS.map((m) => {
+            const qty = Number(viewedRHU.stockByMethod?.[m.id] ?? 0);
+            const limit = Number(limitsByMethod?.[m.id] ?? 0);
+            return { ...m, qty, limit, isLow: limit > 0 && qty <= limit };
+        })
+        : [];
+    const viewedMaxQty = Math.max(...viewedMethods.map((m) => m.qty), 1);
+    const viewedLowCount = viewedMethods.filter((m) => m.isLow).length;
 
-    
+    const summaryCards = [
+        {
+            label: "Overall Stocks",
+            value: rhuData.reduce((total, item) => total + stockTotal(item), 0),
+            note: "Units on hand across all RHUs",
+            icon: Boxes,
+            tone: "navy",
+        },
+        {
+            label: "RHU with Low Stocks",
+            value: rhuData.filter(isRhuLow).length,
+            note: "Need restocking",
+            icon: TriangleAlert,
+            tone: "red",
+        },
+        {
+            label: "Total RHU",
+            value: rhuData.length,
+            note: "Rural health units",
+            icon: Building2,
+            tone: "green",
+        },
+        {
+            label: "Overall Population",
+            value: rhuData.reduce((sum, item) => sum + Number(item.total_population || 0), 0),
+            note: "Residents covered",
+            icon: Users,
+            tone: "violet",
+        },
+    ];
 
     return (
         <>
-            <div id="inventory-container">
-                <div id="inventory-topbar">
-                    <h1>CHC Stocks</h1>
-                    <button id="refresh-button" onClick={fetchRHUData}>
-                        <RefreshCw className={isLoading ? "spin-icon" : ""} />
-                        {isLoading ? "Refreshing..." : "Refresh Data"}
+            <div className="inv-page">
+                <PageHeader title="Inventory">
+                    <button
+                        type="button"
+                        className="page-head-btn"
+                        onClick={handleRefresh}
+                        disabled={isRefreshing || isLoading}
+                    >
+                        <RefreshCw size={14} className={isRefreshing || isLoading ? "page-head-spin" : ""} />
+                        {isRefreshing || isLoading ? "Refreshing..." : "Refresh Data"}
                     </button>
+                </PageHeader>
 
-                </div>
-
-                <div id="inventory-report-label">
-                    <h3>Inventory Report</h3>
-                </div>
-
-                <div className="cards-container">
-                    <div className="inventory-header-content" id="overall-stocks-card">
-                        <h3 >Overall Stocks</h3>
-                        <h2>{rhuData.reduce((totalSum, item) => totalSum + FP_METHODS.reduce((mSum, m) => mSum + Number(item.stockByMethod?.[m.id] ?? 0), 0), 0).toLocaleString()}</h2>
+                <div className={`inv-content${isRefreshing ? " is-refreshing" : ""}${isLoading && !isRefreshing ? " is-loading" : ""}`}>
+                    <div className="inv-kpis">
+                        {summaryCards.map(({ label, value, note, icon: Icon, tone }) => (
+                            <div className={`inv-kpi inv-kpi--${tone}`} key={label}>
+                                <span className="inv-kpi-icon"><Icon size={20} /></span>
+                                <div>
+                                    <span className="inv-kpi-label">{label}</span>
+                                    <span className="inv-kpi-value">{value.toLocaleString()}</span>
+                                    <span className="inv-kpi-note">{note}</span>
+                                </div>
+                            </div>
+                        ))}
                     </div>
 
-                    <div className="inventory-header-content" id="low-stock-card">
-                        <h3 >RHU with Low Stocks</h3>
-                        <h2>{rhuData.filter((item) => {
-                            const itemTotal = FP_METHODS.reduce((sum, m) => sum
-                                + Number(item.stockByMethod?.[m.id] ?? 0), 0); return itemTotal <= lowStockLimit;
-                        }).length}</h2>
-                    </div>
-
-                    <div className="inventory-header-content" id="overall-rhu-card">
-                        <h3 >Total RHU</h3>
-                        <h2>{rhuData.length}</h2>
-                    </div>
-
-                    <div className="inventory-header-content" id="overall-population-card">
-                        <h3 >Overall Population</h3>
-                        <h2>{rhuData.reduce((sum, item) => sum + Number(item.total_population || 0), 0).toLocaleString()}</h2>
-                    </div>
-
-                </div>
-
-                <div id="inventory-chart-container">
-                    <div id="population-chart-section" className="chart-card">
-                        <h3 id="rhu-title">Population per RHU</h3>
-                        <ResponsiveContainer width="100%" height={290}>
-                            <BarChart key={`population-${chartRefreshKey}`}
-                                layout="vertical"
-                                data={sortedRHUData.map((item) => ({
-                                    name: item.name,
-                                    population: Number(item.total_population || 0),
-                                }))}
-                                margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
-                                barCategoryGap="20%"
-                            >
-                                <XAxis type="number" hide />
-                                <YAxis
-                                    type="category"
-                                    dataKey="name"
-                                    width={70}
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fontSize: 12, fontWeight: 600, fill: "#1B1B2F" }}
-                                />
-                                <Tooltip cursor={{ fill: "rgba(20, 8, 109, 0.04)" }} content={<PopulationTooltip />} />
-                                <Bar
-                                    dataKey="population"
-                                    fill="url(#indigoGradient)"
-                                    radius={[0, 8, 8, 0]}
-                                    maxBarSize={20}
-                                    isAnimationActive={true}
-                                    animationDuration={300}
-                                    animationEasing="ease-out"
-
+                    <div className="inv-charts">
+                        <section className="inv-panel">
+                            <div className="inv-panel-head">
+                                <h2>Population per RHU</h2>
+                                <p>Residents covered by each health unit</p>
+                            </div>
+                            <ResponsiveContainer width="100%" height={300}>
+                                <BarChart key={`population-${chartRefreshKey}`}
+                                    layout="vertical"
+                                    data={populationChartData}
+                                    margin={{ top: 0, right: 56, left: 0, bottom: 0 }}
+                                    barCategoryGap="28%"
                                 >
-                                    <LabelList
-                                        dataKey="population"
-                                        position="right"
-                                        formatter={(val) => Number(val).toLocaleString()}
-                                        style={{ fontSize: 11, fontWeight: 600, fill: "#5B5B76" }}
+                                    <XAxis type="number" hide />
+                                    <YAxis
+                                        type="category"
+                                        dataKey="name"
+                                        width={64}
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fontSize: 12, fontWeight: 600, fill: "#334155" }}
                                     />
-                                </Bar>
-                                <defs>
-                                    <linearGradient id="indigoGradient" x1="0" y1="0" x2="1" y2="0">
-                                        <stop offset="0%" stopColor="#14086D" />
-                                        <stop offset="100%" stopColor="#4B3FD1" />
-                                    </linearGradient>
-                                </defs>
-                            </BarChart>
-                        </ResponsiveContainer>
+                                    <Tooltip cursor={{ fill: "rgba(47, 91, 255, 0.06)" }} content={<PopulationTooltip />} />
+                                    <Bar
+                                        dataKey="population"
+                                        fill={CHART_COLORS.normal}
+                                        radius={[0, 4, 4, 0]}
+                                        maxBarSize={14}
+                                        background={{ fill: "#eef1f8", radius: [0, 4, 4, 0] }}
+                                        isAnimationActive={true}
+                                        animationDuration={500}
+                                        animationEasing="ease-out"
+                                    >
+                                        <LabelList
+                                            dataKey="population"
+                                            position="right"
+                                            offset={10}
+                                            formatter={(val) => Number(val).toLocaleString()}
+                                            style={{ fontSize: 12, fontWeight: 600, fill: "#0f172a" }}
+                                        />
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </section>
+
+                        <section className="inv-panel">
+                            <div className="inv-panel-head">
+                                <h2>Stock per RHU</h2>
+                                <p>Units on hand in each health unit</p>
+                            </div>
+                            <div className="inv-chart-legend">
+                                <span><i style={{ backgroundColor: CHART_COLORS.normal }}></i> Sufficient</span>
+                                <span><i style={{ backgroundColor: CHART_COLORS.low }}></i> Has a method at or below its limit</span>
+                            </div>
+                            <ResponsiveContainer width="100%" height={300}>
+                                <BarChart key={`stock-${chartRefreshKey}`}
+                                    data={stockChartData}
+                                    margin={{ top: 22, right: 8, left: 0, bottom: 0 }}
+                                    barCategoryGap="30%"
+                                >
+                                    <CartesianGrid vertical={false} stroke="#eef1f6" />
+                                    <XAxis
+                                        dataKey="name"
+                                        axisLine={{ stroke: "#d5dbe9" }}
+                                        tickLine={false}
+                                        tick={{ fontSize: 11, fontWeight: 600, fill: "#475569" }}
+                                        interval={0}
+                                    />
+                                    <YAxis
+                                        type="number"
+                                        width={34}
+                                        allowDecimals={false}
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fontSize: 11, fill: "#64748b" }}
+                                    />
+                                    <Tooltip cursor={{ fill: "rgba(47, 91, 255, 0.06)" }} content={<StockTooltip />} />
+                                    <Bar
+                                        dataKey="stock"
+                                        radius={[4, 4, 0, 0]}
+                                        maxBarSize={32}
+                                        isAnimationActive={true}
+                                        animationDuration={500}
+                                        animationEasing="ease-out"
+                                    >
+                                        {sortedRHUData.map((item) => {
+                                            const hasLowMethod = FP_METHODS.some((m) => {
+                                                const limit = Number(limitsByMethod?.[m.id] ?? 0);
+                                                const qty = Number(item.stockByMethod?.[m.id] ?? 0);
+                                                return limit > 0 && qty <= limit;
+                                            });
+
+                                            return (
+                                                <Cell
+                                                    key={item.id}
+                                                    fill={hasLowMethod ? CHART_COLORS.low : CHART_COLORS.normal}
+                                                />
+                                            );
+                                        })}
+                                        <LabelList
+                                            dataKey="stock"
+                                            position="top"
+                                            formatter={(val) => (Number(val) > 0 ? Number(val).toLocaleString() : "")}
+                                            style={{ fontSize: 12, fontWeight: 600, fill: "#0f172a" }}
+                                        />
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </section>
                     </div>
 
-                    <div id="stock-chart-section" className="chart-card">
-                        <h3 id="rhu-title">Stock per RHU</h3>
-                        <ResponsiveContainer width="100%" height={290}>
-                            <BarChart key={`stock-${chartRefreshKey}`}
-                                data={sortedRHUData.map((item) => ({
-                                    name: item.name,
-                                    stock: FP_METHODS.reduce((sum, m) => sum + Number(item.stockByMethod?.[m.id] ?? 0), 0),
-                                }))}
-                                margin={{ top: 20, right: 6, left: 0, bottom: 0 }}
-                                barCategoryGap="20%"
-                            >
-                                <XAxis
-                                    dataKey="name"
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fontSize: 11, fontWeight: 600, fill: "#5B5B76" }}
-                                    interval={0}
-                                />
-                                <YAxis type="number" hide />
-                                <Tooltip cursor={{ fill: "rgba(20, 8, 109, 0.04)" }} content={<StockTooltip />} />
-                                <Bar
-                                    dataKey="stock"
-                                    radius={[6, 6, 0, 0]}
-                                    maxBarSize={28}
-                                    isAnimationActive={true}
-                                    animationDuration={300}
-                                    animationEasing="ease-out"
-                                >
+                    <section className="inv-card">
+                        <div className="inv-card-head">
+                            <div>
+                                <h2>City Health Center</h2>
+                            </div>
+                        </div>
+
+                        <div className="inv-table-scroll">
+                            <table className="inv-table inv-table--units">
+                                <thead>
+                                    <tr>
+                                        <th>RHU</th>
+                                        <th>Population</th>
+                                        <th>Current Stocks</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
                                     {sortedRHUData.map((item) => {
-                                        const hasLowMethod = FP_METHODS.some((m) => {
-                                            const limit = Number(limitsByMethod?.[m.id] ?? 0);
-                                            const qty = Number(item.stockByMethod?.[m.id] ?? 0);
-                                            return limit > 0 && qty <= limit;
-                                        });
+                                        const rowTotal = stockTotal(item);
+
+                                        const lowMethods = FP_METHODS
+                                            .map((m) => ({
+                                                id: m.id,
+                                                label: m.label,
+                                                qty: Number(item.stockByMethod?.[m.id] ?? 0),
+                                                limit: Number(limitsByMethod?.[m.id] ?? 0),
+                                            }))
+                                            .filter((m) => m.limit > 0 && m.qty <= m.limit)
+                                            .sort((a, b) => a.qty - b.qty);
+
+                                        const hiddenCount = lowMethods.length - VISIBLE_LOW_METHODS;
 
                                         return (
-                                            <Cell
+                                            <tr
                                                 key={item.id}
-                                                fill={hasLowMethod ? "var(--amber)" : "url(#indigoGradientVertical)"}
-                                            />
+                                                className="inv-row-clickable"
+                                                tabIndex={0}
+                                                aria-label={`View ${item.name} details`}
+                                                onClick={() => setViewRHUId(item.id)}
+                                                onKeyDown={(event) => {
+                                                    if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) {
+                                                        event.preventDefault();
+                                                        setViewRHUId(item.id);
+                                                    }
+                                                }}
+                                            >
+                                                <td className="inv-rhu-name">{item.name}</td>
+                                                <td className="inv-num">{Number(item.total_population).toLocaleString()}</td>
+                                                <td>
+                                                    <div className="inv-stock">
+                                                        <div className="inv-stock-track">
+                                                            <div
+                                                                className={`inv-stock-fill${lowMethods.length > 0 ? " is-low" : ""}`}
+                                                                style={{ width: `${(rowTotal / maxStock) * 100}%` }}
+                                                            ></div>
+                                                        </div>
+                                                        <span className="inv-stock-count">{rowTotal.toLocaleString()} stocks</span>
+                                                    </div>
+                                                </td>
+
+                                                <td>
+                                                    {lowMethods.length > 0 ? (
+                                                        <div className="low-methods">
+                                                            {lowMethods.slice(0, VISIBLE_LOW_METHODS).map((m) => (
+                                                                <span key={m.id} className="low-chip">
+                                                                    {m.label} <small>{m.qty} left</small>
+                                                                </span>
+                                                            ))}
+
+                                                            {hiddenCount > 0 && (
+                                                                <button
+                                                                    type="button"
+                                                                    className="low-more-btn"
+                                                                    onClick={(event) => { event.stopPropagation(); setLowStockModal({ rhuName: item.name, methods: lowMethods }); }}
+                                                                    title="View all low stock methods"
+                                                                >
+                                                                    <Plus size={12} /> {hiddenCount} more
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="inv-ok-chip">Sufficient</span>
+                                                    )}
+                                                </td>
+
+                                                <td>
+                                                    <div className="inv-actions">
+                                                        <button type="button" className="inv-btn inv-btn--icon inv-btn--primary" title="Allocate stock" aria-label={`Allocate stock to ${item.name}`} onClick={(event) => { event.stopPropagation(); openRhuAllocate(item); }}>
+                                                            <SquarePlus size={16} />
+                                                        </button>
+                                                        <button type="button" className="inv-btn inv-btn--icon inv-btn--danger" title="Deduct stock" aria-label={`Deduct stock from ${item.name}`} onClick={(event) => { event.stopPropagation(); openRhuDeduct(item); }}>
+                                                            <SquareMinus size={16} />
+                                                        </button>
+                                                        <button type="button" className="inv-btn inv-btn--icon inv-btn--outline" title="Edit details" aria-label={`Edit ${item.name}`} onClick={(event) => { event.stopPropagation(); setSelectedRHU(item); setshowRHUInfo(true); setEditingRHUId(null); }}>
+                                                            <SquarePen size={16} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
                                         );
                                     })}
-                                    <LabelList
-                                        dataKey="stock"
-                                        position="top"
-                                        formatter={(val) => Number(val).toLocaleString()}
-                                        style={{ fontSize: 11, fontWeight: 600, fill: "#1B1B2F" }}
-                                    />
-                                </Bar>
-                                <defs>
-                                    <linearGradient id="indigoGradientVertical" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stopColor="#4B3FD1" />
-                                        <stop offset="100%" stopColor="#14086D" />
-                                    </linearGradient>
-                                    <linearGradient id="amberGradientVertical" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stopColor="#EF8264" />
-                                        <stop offset="100%" stopColor="#E0563D" />
-                                    </linearGradient>
-                                </defs>
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-
-                <div id="inventory-content">
-                    <h3 id="rhu-title">City Health Center</h3>
-
-                    <table className="rhu-table">
-                        <thead>
-                            <tr>
-                                <th>RHU</th>
-                                <th>POPULATION</th>
-                                <th>CURRENT STOCKS</th>
-                                <th>STATUS</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            {sortedRHUData.map((item) => {
-                                const rowTotal = FP_METHODS.reduce(
-                                    (sum, m) => sum + Number(item.stockByMethod?.[m.id] ?? 0),
-                                    0
-                                    
-                                );
-
-                                 const lowMethods = FP_METHODS
-                                    .map((m) => ({
-                                        id: m.id,
-                                        label: m.label,
-                                        qty: Number(item.stockByMethod?.[m.id] ?? 0),
-                                        limit: Number(limitsByMethod?.[m.id] ?? 0),
-                                    }))
-                                    .filter((m) => m.limit > 0 && m.qty <= m.limit)
-                                    .sort((a, b) => a.qty - b.qty);
-
-                                const hiddenCount = lowMethods.length - VISIBLE_LOW_METHODS;
-
-                                return (
-                                    <tr key={item.id}>
-                                        <td className="rhu-name">{item.name}</td>
-                                        <td className="rhu-population">{Number(item.total_population).toLocaleString()}</td>
-                                        <td>
-                                            <div className="rhu-progress-container">
-                                                <progress
-                                                    className="rhu-progress"
-                                                    value={rowTotal}
-                                                    max={Math.max(
-                                                        ...sortedRHUData.map((r) =>
-                                                            FP_METHODS.reduce(
-                                                                (sum, m) => sum + Number(r.stockByMethod?.[m.id] ?? 0),
-                                                                0
-                                                            )
-                                                        ),
-                                                        1
-                                                    )}
-                                                ></progress>
-                                                <span className="rhu-stock-count">{rowTotal} stocks</span>
-                                            </div>
-                                        </td>
-
-                                        <td>
-                                            
-
-                                            {lowMethods.length > 0 && (
-                                                <div className="low-methods">
-                                                    {lowMethods.slice(0, VISIBLE_LOW_METHODS).map((m) => (
-                                                        <span key={m.id} className="low-chip">
-                                                            {m.label} <small>{m.qty} left</small>
-                                                        </span>
-                                                    ))}
-
-                                                    {hiddenCount > 0 && (
-                                                        <button
-                                                            type="button"
-                                                            className="low-more-btn"
-                                                            onClick={() => setLowStockModal({ rhuName: item.name, methods: lowMethods })}
-                                                            title="View all low stock methods"
-                                                        >
-                                                            <Plus size={12} /> {hiddenCount} more
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </td>
-
-                                        <td>
-                                            <div className="rhu-row-actions">
-                                                <button className="row-btn row-btn-allocate" onClick={() => openRhuAllocate(item)} title="Allocate">
-                                                    <SquarePlus size={14} />
-                                                </button>
-                                                <button className="row-btn row-btn-deduct" onClick={() => openRhuDeduct(item)} title="Deduct">
-                                                    <SquareMinus size={14} />
-                                                </button>
-
-                                                <button className="rhu-edit-icon" onClick={() => { setSelectedRHU(item); setshowRHUInfo(true); setEditingRHUId(null); }} title="Edit">
-                                                    <SquarePen color="#14086d" size={16} strokeWidth={1.5} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div id="inventory-matrix-content">
-                    <div className="matrix-header">
-                        <h3 id="rhu-title">Stocks Matrix by FP Method</h3>
-                        <div className="matrix-export-buttons">
-                            <button type="button" className="matrix-btn-pdf" onClick={() => exportInventoryPDF(sortedRHUData, FP_METHODS)}>Export PDF</button>
-                            <button type="button" className="matrix-btn-excel" onClick={() => exportInventoryExcel(sortedRHUData, FP_METHODS)}>Export Excel</button>
+                                </tbody>
+                            </table>
                         </div>
-                    </div>
-                    <div className="table-responsive">
-                        <table className="rhu-table matrix-table">
-                            <thead>
-                                <tr>
-                                    <th>RHU</th>
-                                    {FP_METHODS.map((method) => (
-                                        <th key={method.id} className="text-center">
-                                            {method.label}
-                                        </th>
-                                    ))}
-                                    <th>TOTAL</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {sortedRHUData.map((item) => {
-                                    const rowTotal = FP_METHODS.reduce(
-                                        (sum, m) => sum + Number(item.stockByMethod?.[m.id] ?? 0),
-                                        0
-                                    );
+                    </section>
 
-                                    return (
+                    <section className="inv-card">
+                        <div className="inv-card-head">
+                            <div>
+                                <h2>Stocks Matrix by FP Method</h2>
+                            </div>
+                            <div className="inv-card-actions">
+                                <button type="button" className="inv-btn inv-btn--pdf" onClick={() => setExportFormat("pdf")}>
+                                    <FileText size={14} /> Export PDF
+                                </button>
+                                <button type="button" className="inv-btn inv-btn--excel" onClick={() => setExportFormat("excel")}>
+                                    <FileSpreadsheet size={14} /> Export Excel
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="inv-table-scroll">
+                            <table className="inv-table inv-table--matrix">
+                                <thead>
+                                    <tr>
+                                        <th>RHU</th>
+                                        {FP_METHODS.map((method) => (
+                                            <th key={method.id} className="inv-center">{method.label}</th>
+                                        ))}
+                                        <th className="inv-center">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {sortedRHUData.map((item) => (
                                         <tr key={item.id}>
-                                            <td className="rhu-name">{item.name}</td>
+                                            <td className="inv-rhu-name">{item.name}</td>
                                             {FP_METHODS.map((method) => {
                                                 const count = Number(item.stockByMethod?.[method.id] ?? 0);
                                                 return (
-                                                    <td key={method.id} className="text-center">
-                                                        <span className={count === 0 ? "stock-zero" : "stock-active"}>
-                                                            {count}
-                                                        </span>
+                                                    <td key={method.id} className={`inv-center inv-num${count === 0 ? " is-zero" : ""}`}>
+                                                        {count.toLocaleString()}
                                                     </td>
                                                 );
                                             })}
-                                            <td className="font-bold">{rowTotal}</td>
+                                            <td className="inv-center inv-num inv-total">{stockTotal(item).toLocaleString()}</td>
                                         </tr>
-                                    );
-                                })}
-                            </tbody>
-                            <tfoot>
-                                <tr className="matrix-footer-row">
-                                    <td>Total</td>
-                                    {FP_METHODS.map((method) => {
-                                        const colTotal = sortedRHUData.reduce(
-                                            (sum, item) => sum + Number(item.stockByMethod?.[method.id] ?? 0),
-                                            0
-                                        );
-                                        return (
-                                            <td key={method.id} className="text-center font-bold">
-                                                {colTotal}
+                                    ))}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td>Total</td>
+                                        {FP_METHODS.map((method) => (
+                                            <td key={method.id} className="inv-center inv-num">
+                                                {sortedRHUData
+                                                    .reduce((sum, item) => sum + Number(item.stockByMethod?.[method.id] ?? 0), 0)
+                                                    .toLocaleString()}
                                             </td>
-                                        );
-                                    })}
-                                    <td className="font-bold">
-                                        {sortedRHUData.reduce((total, item) => {
-                                            const rowTotal = FP_METHODS.reduce(
-                                                (sum, m) => sum + Number(item.stockByMethod?.[m.id] ?? 0),
-                                                0
-                                            );
-                                            return total + rowTotal;
-                                        }, 0)}
-                                    </td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
+                                        ))}
+                                        <td className="inv-center inv-num">
+                                            {sortedRHUData.reduce((total, item) => total + stockTotal(item), 0).toLocaleString()}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </section>
                 </div>
 
+                {exportFormat && (
+                    <ExportConfirmModal
+                        format={exportFormat}
+                        reportName="Stocks Matrix"
+                        defaultFileName="Inventory_Stocks_Matrix"
+                        onCancel={() => setExportFormat(null)}
+                        onConfirm={(fileName) => {
+                            const exportFile = exportFormat === "pdf" ? exportInventoryPDF : exportInventoryExcel;
+                            setExportFormat(null);
+                            exportFile(sortedRHUData, FP_METHODS, fileName);
+                        }}
+                    />
+                )}
 
+                {viewedRHU && (
+                    <div className="inv-detail-overlay" onClick={() => setViewRHUId(null)}>
+                        <div className="inv-detail" role="dialog" aria-modal="true" aria-label={`${viewedRHU.name} details`} onClick={(e) => e.stopPropagation()}>
+                            <div className="inv-detail-head">
+                                <div className="inv-detail-head-text">
+                                    <h3>{viewedRHU.name}</h3>
+                                    <p>Rural health unit overview</p>
+                                </div>
+                                <span className={`inv-detail-status${viewedLowCount > 0 ? " is-low" : ""}`}>
+                                    {viewedLowCount > 0
+                                        ? <><TriangleAlert size={14} /> {viewedLowCount} of {viewedMethods.length} low</>
+                                        : <><CheckCircle size={14} /> All stocked</>}
+                                </span>
+                                <button type="button" className="inv-detail-close" onClick={() => setViewRHUId(null)} aria-label="Close">
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            <div className="inv-detail-body">
+                                <div className="inv-detail-stats">
+                                    <div>
+                                        <span className="inv-detail-stat-icon"><Users size={18} /></span>
+                                        <div>
+                                            <strong>{Number(viewedRHU.total_population || 0).toLocaleString()}</strong>
+                                            <span>Population</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span className="inv-detail-stat-icon"><Boxes size={18} /></span>
+                                        <div>
+                                            <strong>{stockTotal(viewedRHU).toLocaleString()}</strong>
+                                            <span>Total stocks</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span className="inv-detail-stat-icon"><MapPin size={18} /></span>
+                                        <div>
+                                            <strong>{(viewedRHU.barangays || []).length}</strong>
+                                            <span>Barangays</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <section className="inv-detail-section">
+                                    <h4 className="inv-detail-title">Stocks by FP method</h4>
+                                    <ul className="inv-detail-methods">
+                                        {viewedMethods.map((m) => (
+                                            <li key={m.id} className={m.isLow ? (m.qty === 0 ? "is-low is-out" : "is-low") : ""}>
+                                                <div className="inv-detail-method-top">
+                                                    <span className="inv-detail-method-name">{m.label}</span>
+                                                    {m.isLow
+                                                        ? <span className={`low-chip${m.qty === 0 ? "" : " low-chip--warn"}`}>{m.qty === 0 ? "Out of stock" : "Low"}</span>
+                                                        : <span className="inv-ok-chip">OK</span>}
+                                                </div>
+                                                <div className="inv-detail-qty">
+                                                    <strong>{m.qty.toLocaleString()}</strong>
+                                                    <span>units{m.limit > 0 ? ` · limit ${m.limit.toLocaleString()}` : ""}</span>
+                                                </div>
+                                                <div className="inv-stock-track">
+                                                    <div
+                                                        className={`inv-stock-fill${m.isLow ? " is-low" : ""}`}
+                                                        style={{ width: `${(m.qty / viewedMaxQty) * 100}%` }}
+                                                    ></div>
+                                                </div>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </section>
+
+                                <section className="inv-detail-section">
+                                    <h4 className="inv-detail-title">
+                                        Barangays covered
+                                        <span>{(viewedRHU.barangays || []).length}</span>
+                                    </h4>
+                                    {(viewedRHU.barangays || []).length > 0 ? (
+                                        <div className="inv-detail-barangays">
+                                            {viewedRHU.barangays.map((barangay, index) => (
+                                                <span key={`${barangay}-${index}`}>{barangay}</span>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="inv-detail-empty">No barangays listed for this unit yet. Use Edit details to add them.</p>
+                                    )}
+                                </section>
+                            </div>
+
+                            <div className="inv-detail-foot">
+                                <button type="button" className="inv-btn inv-btn--outline" onClick={() => { setViewRHUId(null); setSelectedRHU(viewedRHU); setshowRHUInfo(true); setEditingRHUId(null); }}>
+                                    <SquarePen size={15} /> Edit details
+                                </button>
+                                <div className="inv-detail-foot-stock">
+                                    <button type="button" className="inv-btn inv-btn--danger" onClick={() => { setViewRHUId(null); openRhuDeduct(viewedRHU); }}>
+                                        <SquareMinus size={15} /> Deduct stock
+                                    </button>
+                                    <button type="button" className="inv-btn inv-btn--primary" onClick={() => { setViewRHUId(null); openRhuAllocate(viewedRHU); }}>
+                                        <SquarePlus size={15} /> Allocate stock
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {showRHUInfo && selectedRHU && (
                     <div className="modal-overlay">
-                        <div className="modal-content rhu-info-box">
+                        <div className="modal-content rhu-allocate-box inv-edit-box">
+                            <div className="modal-header-inventory">
+                                <h3 className="modal-title-with-tag">
+                                    Edit Details
+                                    <span className="modal-title-tag">{selectedRHU.name}</span>
+                                </h3>
+                            </div>
 
-                            <div className="rhu-detail-header">
-                                <p className="rhu-detail-name"> {selectedRHU.name}</p>
+                            <div className="inv-edit-body">
+                                <label className="inv-edit-label" htmlFor="inv-edit-population">Total population</label>
+                                <input
+                                    id="inv-edit-population"
+                                    type="text"
+                                    inputMode="numeric"
+                                    className="allocate-input"
+                                    value={selectedRHU ? selectedRHU.total_population : 0}
+                                    onChange={(e) => handleTotalPopulation(e.target.value)}
+                                />
 
-                                <div className="rhu-stat-card">
-                                    <p className="rhu-stat">Total Population:</p>
-                                    <input type="text" className="rhu-stat" value={selectedRHU ? selectedRHU.total_population : 0} onChange={(e) => handleTotalPopulation(e.target.value)} />
+                                <div className="inv-edit-row">
+                                    <span className="inv-edit-label">Barangays covered</span>
+                                    <span className="inv-edit-count">{(selectedRHU.barangays || []).length}</span>
                                 </div>
 
-                                <div className="barangay-section">
-                                    <div className="barangay-header">
-                                        <p>Barangays: </p>
-
-                                    </div>
-
-
-                                    <div className="barangay-edit-list">
-                                        {selectedRHU.barangays?.map((brgy, index) => (
+                                <div className="inv-edit-barangays">
+                                    {selectedRHU.barangays?.map((brgy, index) => (
+                                        <div className="inv-edit-barangay" key={index}>
                                             <input
-                                                key={index}
                                                 value={brgy}
                                                 onChange={(e) => handleBarangay(index, e.target.value)}
-                                                className="barangay-input"
+                                                className="allocate-input"
+                                                placeholder="Barangay name"
+                                                aria-label={`Barangay ${index + 1}`}
                                             />
-                                        ))}
-                                        <button onClick={handleAddBarangay} className="add-barangay-link">
-                                            + Add Barangay
-                                        </button>
-
-
-                                    </div>
-
+                                            <button
+                                                type="button"
+                                                className="inv-edit-remove"
+                                                title="Remove barangay"
+                                                aria-label={`Remove ${brgy || "barangay"}`}
+                                                onClick={() => handleRemoveBarangay(index)}
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    ))}
                                 </div>
+
+                                <button type="button" onClick={handleAddBarangay} className="inv-edit-add">
+                                    <Plus size={15} /> Add barangay
+                                </button>
                             </div>
+
                             <div className="modal-footer">
                                 <button className="btn-cancel" onClick={() => { setshowRHUInfo(false); setSelectedRHU(null); setEditingRHUId(null); }}>
                                     Cancel
                                 </button>
 
                                 <button className="btn-save-changes" onClick={handleSaveBarangayChanges}>
-                                    Update Changes
+                                    Save changes
                                 </button>
                             </div>
                         </div>
@@ -869,22 +1051,23 @@ function Inventory() {
                     <div className="modal-overlay">
                         <div className="modal-content allocate-box rhu-allocate-box">
                             <div className="modal-header-inventory">
-                                <h3>Allocate Stock — {allocRHU.name}</h3>
-                                <p className="modal-subtext-inventory">Choose the FP method and quantity to add to this RHU.</p>
+                                <h3 className="modal-title-with-tag">
+                                    Allocate Stock
+                                    <span className="modal-title-tag">{allocRHU.name}</span>
+                                </h3>
                             </div>
 
                             <div className="allocate-input-section">
                                 <h3>FP Method:</h3>
-                                <select
-                                    className="allocate-input allocate-select"
-                                    value={allocMethod}
-                                    onChange={(e) => { setAllocMethod(e.target.value); setAllocError(""); }}
-                                >
-                                    <option value="" disabled>Select FP method</option>
-                                    {FP_METHODS.map(m => (
-                                        <option key={m.id} value={m.id}>{m.label}</option>
-                                    ))}
-                                </select>
+                                <div className="inv-method-select">
+                                    <ReportSelect
+                                        value={allocMethod}
+                                        onChange={(e) => { setAllocMethod(e.target.value); setAllocError(""); }}
+                                        options={FP_METHODS.map((m) => ({ value: m.id, label: m.label }))}
+                                        ariaLabel="FP method"
+                                        placeholder="Select FP method"
+                                    />
+                                </div>
 
                                 <h3>Quantity to Allocate:</h3>
                                 <input
@@ -934,27 +1117,28 @@ function Inventory() {
 
             {showRhuDeduct && deductRHU && (
                 <div className="modal-overlay">
-                    <div className="modal-content allocate-box rhu-allocate-box">
+                    <div className="modal-content allocate-box rhu-allocate-box is-deduct">
                         <div className="modal-header-inventory">
-                            <h3>Deduct Stock — {deductRHU.name}</h3>
-                            <p className="modal-subtext-inventory">Choose the FP method and quantity to deduct from this RHU.</p>
+                            <h3 className="modal-title-with-tag">
+                                Deduct Stock
+                                <span className="modal-title-tag">{deductRHU.name}</span>
+                            </h3>
                         </div>
 
                         <div className="allocate-input-section">
                             <h3>FP METHOD:</h3>
-                            <select
-                                className="allocate-input allocate-select"
-                                value={singleDeductMethod}
-                                onChange={(e) => {
-                                    setSingleDeductMethod(e.target.value);
-                                    setSingleDeductError("");
-                                }}
-                            >
-                                <option value="" disabled>Select FP method</option>
-                                {FP_METHODS.map(m => (
-                                    <option key={m.id} value={m.id}>{m.label}</option>
-                                ))}
-                            </select>
+                            <div className="inv-method-select">
+                                <ReportSelect
+                                    value={singleDeductMethod}
+                                    onChange={(e) => {
+                                        setSingleDeductMethod(e.target.value);
+                                        setSingleDeductError("");
+                                    }}
+                                    options={FP_METHODS.map((m) => ({ value: m.id, label: m.label }))}
+                                    ariaLabel="FP method"
+                                    placeholder="Select FP method"
+                                />
+                            </div>
 
                             <h3>QUANTITY TO DEDUCT:</h3>
                             <input
@@ -1016,7 +1200,6 @@ function Inventory() {
 
                         <div className="modal-table-wrapper">
                             <table className="modal-table">
-                                {/* head */}
                                 <thead>
                                     <tr>
                                         <th></th>
@@ -1093,16 +1276,15 @@ function Inventory() {
                         <div className="modal-header-inventory">
                             <div className="allocate-input-section">
                                 <h3>FP Method:</h3>
-                                <select
-                                    className="allocate-input allocate-select"
-                                    value={bulkDeductMethod}
-                                    onChange={(e) => { setBulkDeductMethod(e.target.value); setDeductError(""); }}
-                                >
-                                    <option value="" disabled>Select FP method</option>
-                                    {FP_METHODS.map((m) => (
-                                        <option key={m.id} value={m.id}>{m.label}</option>
-                                    ))}
-                                </select>
+                                <div className="inv-method-select">
+                                    <ReportSelect
+                                        value={bulkDeductMethod}
+                                        onChange={(e) => { setBulkDeductMethod(e.target.value); setDeductError(""); }}
+                                        options={FP_METHODS.map((m) => ({ value: m.id, label: m.label }))}
+                                        ariaLabel="FP method"
+                                        placeholder="Select FP method"
+                                    />
+                                </div>
                             </div>
                             <h3>Deduct Stock</h3>
                             <p className="modal-subtext-inventory">Enter deduction quantities for each health unit below</p>
@@ -1110,7 +1292,6 @@ function Inventory() {
 
                         <div className="modal-table-wrapper">
                             <table className="modal-table">
-                                {/* head */}
                                 <thead>
                                     <tr>
                                         <th>#</th>
@@ -1122,7 +1303,6 @@ function Inventory() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {/* row 1 */}
                                     {sortedRHUData.map((item, index) => (
                                         <tr key={item.id}>
                                             <th>{index + 1}</th>
@@ -1130,12 +1310,11 @@ function Inventory() {
                                             <td>{item.stock} stocks</td>
 
                                             <td>
-                                                <span className={`status-badge ${item.stock <= lowStockLimit ? "status-low" : "status-sufficient"}`}>
-                                                    {item.stock <= lowStockLimit ? 'Low Stock' : 'Sufficient'}
+                                                <span className={`status-badge ${isRhuLow(item) ? "status-low" : "status-sufficient"}`}>
+                                                    {isRhuLow(item) ? 'Low Stock' : 'Sufficient'}
                                                 </span>
                                             </td>
 
-                                            {/* Added cell after Status */}
                                             <td>
                                                 {bulkDeductMethod ? Number(item.stockByMethod?.[bulkDeductMethod] ?? 0) : "-"}
                                             </td>
@@ -1208,11 +1387,13 @@ function Inventory() {
 
             {lowStockModal && (
                 <div className="low-modal-overlay" onClick={() => setLowStockModal(null)}>
-                    <div className="low-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+                    <div className="low-modal" role="dialog" aria-modal="true" aria-label={`Low stock methods for ${lowStockModal.rhuName}`} onClick={(e) => e.stopPropagation()}>
                         <div className="low-modal-header">
                             <div>
-                                <h4>Low Stock Methods</h4>
-                                <p>{lowStockModal.rhuName}</p>
+                                <h4>
+                                    Low Stock Methods
+                                    <span className="low-modal-tag">{lowStockModal.rhuName}</span>
+                                </h4>
                             </div>
                             <button type="button" className="low-modal-close" onClick={() => setLowStockModal(null)} aria-label="Close">
                                 <X size={18} />
@@ -1220,12 +1401,20 @@ function Inventory() {
                         </div>
 
                         <ul className="low-modal-list">
-                            {lowStockModal.methods.map((m) => (
-                                <li key={m.id}>
-                                    <span className="low-modal-name">{m.label}</span>
-                                    <span className="low-chip">{m.qty} left <small>/ min {m.limit}</small></span>
-                                </li>
-                            ))}
+                            {lowStockModal.methods.map((m) => {
+                                const isOut = m.qty === 0;
+                                return (
+                                    <li key={m.id} className={isOut ? "is-out" : ""}>
+                                        <div className="low-modal-row">
+                                            <span className="low-modal-name">{m.label}</span>
+                                            <span className="low-modal-qty">
+                                                <strong>{m.qty.toLocaleString()}</strong> of {m.limit.toLocaleString()} limit
+                                            </span>
+                                            <span className={`low-chip${isOut ? "" : " low-chip--warn"}`}>{isOut ? "Out of stock" : "Low"}</span>
+                                        </div>
+                                    </li>
+                                );
+                            })}
                         </ul>
                     </div>
                 </div>
