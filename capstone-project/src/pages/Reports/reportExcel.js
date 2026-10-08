@@ -20,6 +20,28 @@ export function restyleCell(cell, { font, alignment }) {
 export function tidyReportHeader(sheet) {
     centerProgramHeading(sheet);
     fitFormTitle(sheet);
+    stampDateCreated(sheet);
+}
+
+/*
+    "Date Created: October 8, 2026" in A10, the empty row between the form title
+    and the table: small, light and left-aligned on one line.
+*/
+function stampDateCreated(sheet, cellAddress = "A10") {
+    const cell = sheet.getCell(cellAddress);
+
+    const today = new Date().toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+    });
+
+    cell.value = `Date Created: ${today}`;
+
+    restyleCell(cell, {
+        font: { size: 9, bold: false, color: { argb: "FF9CA3AF" } },
+        alignment: { horizontal: "left", vertical: "middle", wrapText: false },
+    });
 }
 
 /*

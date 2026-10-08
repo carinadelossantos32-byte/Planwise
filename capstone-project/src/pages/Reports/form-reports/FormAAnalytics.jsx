@@ -4,7 +4,7 @@ import "./FormAAnalytics.css";
 
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
-import { tidyReportHeader, restyleCell } from "../reportExcel.js";
+import { tidyReportHeader } from "../reportExcel.js";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { getClientDate } from "../reportData";
@@ -602,14 +602,6 @@ function FormAAnalytics({
     ====================================================
     */
 
-    const getExportDate = () => {
-        return new Date().toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-        });
-    };
-
     // Default export file name (without extension); it can be changed in the confirmation
     const exportBaseName = `Official_Form_A_Report_${yearLabel}`;
 
@@ -706,15 +698,6 @@ function FormAAnalytics({
             // Stamp the year into the header (template has "FORM A" in A9)
             sheet.getCell("A9").value = `FORM A - CY ${yearLabel}`;
             tidyReportHeader(sheet);
-
-
-            // Small, light, left-aligned on one line (the template styles this row like the 16pt title)
-            const dateCell = sheet.getCell("A10");
-            dateCell.value = `Date Created: ${getExportDate()}`;
-            restyleCell(dateCell, {
-                font: { size: 9, bold: false, color: { argb: "FF9CA3AF" } },
-                alignment: { horizontal: "left", vertical: "middle", wrapText: false },
-            });
 
             // Writes one label + the 21 data values (columns B to V)
             const writeRow = (rowNumber, label, record) => {
