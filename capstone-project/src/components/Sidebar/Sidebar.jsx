@@ -67,7 +67,7 @@ export default function Sidebar() {
       <div className="brand">
         <div className="logo-wrapper">
           <img
-            src={isCpdUser() ? "/planwise-logo-white.svg" : "/planwise-logo-yellow.svg"}
+            src={isCpdUser() ? "/planwise-logo-white.svg" : "/planwise-logo-yellow-gradient.svg"}
             alt="PlanWise logo"
             className="logo"
             onError={(e) => {

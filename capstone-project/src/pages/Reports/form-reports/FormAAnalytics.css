@@ -617,7 +617,7 @@
     color: #ffffff !important;
     font-size: 10px !important;
     font-weight: 650;
-    line-height: 1.25;
+    line-height: 1.4;
     letter-spacing: 0.01em;
     text-align: center;
     vertical-align: middle;
@@ -633,12 +633,12 @@
 /* ---------- Body ---------- */
 
 .form-a-container .official-report .official-table tbody td {
-    padding: 11px 6px;
+    padding: 15px 6px;
     background: var(--fa-surface);
     color: var(--fa-text-2);
     font-size: 11px !important;
     font-weight: 500;
-    line-height: 1.25;
+    line-height: 1.5;
     text-align: center;
     border: 0;
     border-right: 1px solid #f0f2f8;
@@ -670,7 +670,7 @@
 
 .form-a-container .official-report .official-table .quarter-subtotal th,
 .form-a-container .official-report .official-table .quarter-subtotal td {
-    padding: 11px 6px;
+    padding: 15px 6px;
     background: var(--fa-blue-soft) !important;
     color: var(--fa-navy) !important;
     font-size: 11px !important;
