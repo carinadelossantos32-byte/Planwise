@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import ReportSelect from "../../components/ReportSelect/ReportSelect";
+// The modal's own styles live in these sheets. They are imported here because
+// Client Records and Inventory also use this modal, and pages load lazily.
+import "./form-reports/FormAAnalytics.css";
+import "./report-forms.css";
 
 /*
     Confirmation shown before a report is exported. It shows what the file
