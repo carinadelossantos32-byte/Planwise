@@ -1,4 +1,5 @@
 import { notify } from "../../utils/notify";
+import { checkAddressBarangay } from "../../utils/geoHelper";
 import { useState } from "react";
 import { collection, addDoc, doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -79,6 +80,13 @@ function ClientAddModalReferred({ onClose, onSuccess }) {
       }
     });
     if (!isValid) { setErrors(newErrors); return; }
+
+    const location = checkAddressBarangay(formData.address, formData.barangay);
+    if (!location.ok) {
+      setErrors({ address: location.message, barangay: location.message });
+      notify(location.message);
+      return;
+    }
 
     try {
       const duplicate = await findDuplicate("clients_referred", "referred", formData);

@@ -1,4 +1,5 @@
 import { notify } from "../../utils/notify";
+import { checkAddressBarangay } from "../../utils/geoHelper";
 import { useState } from "react";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -76,6 +77,13 @@ function ClientEditModalReferred({ client, onClose, onSuccess }) {
 
     if (!isValid) {
       setErrors(newErrors);
+      return;
+    }
+
+    const location = checkAddressBarangay(formData.address, formData.barangay);
+    if (!location.ok) {
+      setErrors({ address: location.message, barangay: location.message });
+      notify(location.message);
       return;
     }
 

@@ -1,4 +1,6 @@
+import { notify } from "../../utils/notify";
 import { useState } from "react";
+import { checkAddressBarangay } from "../../utils/geoHelper";
 import { collection, addDoc, doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebase-config";
 import { findDuplicate } from "../../utils/checkDuplicates";
@@ -35,6 +37,13 @@ function ClientAddModalPrivate({ onClose, onSuccess }) {
       }
     });
     if (!isValid) { setErrors(newErrors); return; }
+
+    const location = checkAddressBarangay(formData.address, formData.barangay);
+    if (!location.ok) {
+      setErrors({ address: location.message, barangay: location.message });
+      notify(location.message);
+      return;
+    }
 
     const duplicate = await findDuplicate("clients_private", "private", formData);
     if (duplicate) {

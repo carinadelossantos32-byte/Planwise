@@ -1,4 +1,6 @@
+import { notify } from "../../utils/notify";
 import { useState } from "react";
+import { checkAddressBarangay } from "../../utils/geoHelper";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebase-config";
 import '../ClientEditModal/client-edit-modal.css';
@@ -34,6 +36,13 @@ function ClientEditModalPrivate({ client, onClose, onSuccess }) {
 
     if (!isValid) {
       setErrors(newErrors);
+      return;
+    }
+
+    const location = checkAddressBarangay(formData.address, formData.barangay);
+    if (!location.ok) {
+      setErrors({ address: location.message, barangay: location.message });
+      notify(location.message);
       return;
     }
 
