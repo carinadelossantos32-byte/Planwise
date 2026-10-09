@@ -1,3 +1,4 @@
+import ReportSelect from "../ReportSelect/ReportSelect";
 import { notify } from "../../utils/notify";
 import { checkAddressBarangay } from "../../utils/geoHelper";
 import { useState, useEffect } from "react";
@@ -326,46 +327,52 @@ return (
                   <div className="cfpr-paired-cols">
                     <div className="cfpr-group">
                       <span className="cfpr-tag cfpr-tag-male">Male</span>
-                      <select
+                      <ReportSelect
+                        className="form-select"
                         name="educational_attainment_male"
+                        ariaLabel="educational attainment male"
                         value={formData.educational_attainment_male}
                         onChange={handleInputChange}
-                        className={`cfpr-select ${errors.educational_attainment_male ? "cfpr-input-error" : ""}`}
-                      >
-                        <option value="">Select</option>
-                        <option value="No Education">1 - No Education</option>
-                        <option value="Elementary Level">2 - Elementary Level</option>
-                        <option value="Elementary Graduate">3 - Elementary Graduate</option>
-                        <option value="High School Level">4 - High School Level</option>
-                        <option value="High School Graduate">5 - High School Graduate</option>
-                        <option value="Vocational">6 - Vocational</option>
-                        <option value="College Level">7 - College Level</option>
-                        <option value="College Graduate">8 - College Graduate</option>
-                        <option value="Post Graduate">9 - Post Graduate</option>
-                      </select>
+                        hasError={Boolean(errors.educational_attainment_male)}
+                        options={[
+                          { value: "", label: "Select" },
+                          { value: "No Education", label: "1 - No Education" },
+                          { value: "Elementary Level", label: "2 - Elementary Level" },
+                          { value: "Elementary Graduate", label: "3 - Elementary Graduate" },
+                          { value: "High School Level", label: "4 - High School Level" },
+                          { value: "High School Graduate", label: "5 - High School Graduate" },
+                          { value: "Vocational", label: "6 - Vocational" },
+                          { value: "College Level", label: "7 - College Level" },
+                          { value: "College Graduate", label: "8 - College Graduate" },
+                          { value: "Post Graduate", label: "9 - Post Graduate" },
+                        ]}
+                      />
                       {errors.educational_attainment_male && (
                         <span className="cfpr-error-text">{errors.educational_attainment_male}</span>
                       )}
                     </div>
                     <div className="cfpr-group">
                       <span className="cfpr-tag cfpr-tag-female">Female</span>
-                      <select
+                      <ReportSelect
+                        className="form-select"
                         name="educational_attainment_female"
+                        ariaLabel="educational attainment female"
                         value={formData.educational_attainment_female}
                         onChange={handleInputChange}
-                        className={`cfpr-select ${errors.educational_attainment_female ? "cfpr-input-error" : ""}`}
-                      >
-                        <option value="">Select</option>
-                        <option value="No Education">1 - No Education</option>
-                        <option value="Elementary Level">2 - Elementary Level</option>
-                        <option value="Elementary Graduate">3 - Elementary Graduate</option>
-                        <option value="High School Level">4 - High School Level</option>
-                        <option value="High School Graduate">5 - High School Graduate</option>
-                        <option value="Vocational">6 - Vocational</option>
-                        <option value="College Level">7 - College Level</option>
-                        <option value="College Graduate">8 - College Graduate</option>
-                        <option value="Post Graduate">9 - Post Graduate</option>
-                      </select>
+                        hasError={Boolean(errors.educational_attainment_female)}
+                        options={[
+                          { value: "", label: "Select" },
+                          { value: "No Education", label: "1 - No Education" },
+                          { value: "Elementary Level", label: "2 - Elementary Level" },
+                          { value: "Elementary Graduate", label: "3 - Elementary Graduate" },
+                          { value: "High School Level", label: "4 - High School Level" },
+                          { value: "High School Graduate", label: "5 - High School Graduate" },
+                          { value: "Vocational", label: "6 - Vocational" },
+                          { value: "College Level", label: "7 - College Level" },
+                          { value: "College Graduate", label: "8 - College Graduate" },
+                          { value: "Post Graduate", label: "9 - Post Graduate" },
+                        ]}
+                      />
                       {errors.educational_attainment_female && (
                         <span className="cfpr-error-text">{errors.educational_attainment_female}</span>
                       )}
@@ -378,36 +385,42 @@ return (
                   <div className="cfpr-paired-cols">
                     <div className="cfpr-group">
                       <span className="cfpr-tag cfpr-tag-male">Male</span>
-                      <select
+                      <ReportSelect
+                        className="form-select"
                         name="civil_status_male"
+                        ariaLabel="civil status male"
                         value={formData.civil_status_male}
                         onChange={handleInputChange}
-                        className={`cfpr-select ${errors.civil_status_male ? "cfpr-input-error" : ""}`}
-                      >
-                        <option value="">Select</option>
-                        <option value="Single">1 - Single</option>
-                        <option value="Married">2 - Married</option>
-                        <option value="Widowed">3 - Widowed</option>
-                        <option value="Separated">4 - Separated</option>
-                        <option value="Live-In">5 - Live-In</option>
-                      </select>
+                        hasError={Boolean(errors.civil_status_male)}
+                        options={[
+                          { value: "", label: "Select" },
+                          { value: "Single", label: "1 - Single" },
+                          { value: "Married", label: "2 - Married" },
+                          { value: "Widowed", label: "3 - Widowed" },
+                          { value: "Separated", label: "4 - Separated" },
+                          { value: "Live-In", label: "5 - Live-In" },
+                        ]}
+                      />
                       {errors.civil_status_male && <span className="cfpr-error-text">{errors.civil_status_male}</span>}
                     </div>
                     <div className="cfpr-group">
                       <span className="cfpr-tag cfpr-tag-female">Female</span>
-                      <select
+                      <ReportSelect
+                        className="form-select"
                         name="civil_status_female"
+                        ariaLabel="civil status female"
                         value={formData.civil_status_female}
                         onChange={handleInputChange}
-                        className={`cfpr-select ${errors.civil_status_female ? "cfpr-input-error" : ""}`}
-                      >
-                        <option value="">Select</option>
-                        <option value="Single">1 - Single</option>
-                        <option value="Married">2 - Married</option>
-                        <option value="Widowed">3 - Widowed</option>
-                        <option value="Separated">4 - Separated</option>
-                        <option value="Live-In">5 - Live-In</option>
-                      </select>
+                        hasError={Boolean(errors.civil_status_female)}
+                        options={[
+                          { value: "", label: "Select" },
+                          { value: "Single", label: "1 - Single" },
+                          { value: "Married", label: "2 - Married" },
+                          { value: "Widowed", label: "3 - Widowed" },
+                          { value: "Separated", label: "4 - Separated" },
+                          { value: "Live-In", label: "5 - Live-In" },
+                        ]}
+                      />
                       {errors.civil_status_female && <span className="cfpr-error-text">{errors.civil_status_female}</span>}
                     </div>
                   </div>
@@ -515,100 +528,134 @@ return (
 
                   <div className="cfpr-group">
                     <label className="cfpr-label">Method Used</label>
-                    <select
+                    <ReportSelect
+                      className="form-select"
                       name="fp_method"
+                      ariaLabel="fp method"
                       value={formData.fp_method}
                       onChange={handleInputChange}
-                      className={`cfpr-select ${errors.fp_method ? "cfpr-input-error" : ""}`}
-                    >
-                      <option value="">Select</option>
-                      <option value="Condom">1 - Condom</option>
-                      <option value="IUD">2 - IUD</option>
-                      <option value="Pills">3 - Pills</option>
-                      <option value="Injectable">4 - Injectable</option>
-                      <option value="Vasectomy">5 - Vasectomy</option>
-                      <option value="Tubal Ligation">6 - Tubal Ligation</option>
-                      <option value="Implant">7 - Implant</option>
-                      <option value="CMM/Billings">8 - CMM/Billings</option>
-                      <option value="BBT">9 - BBT</option>
-                      <option value="Symptothermal">10 - Symptothermal</option>
-                      <option value="SDM">11 - SDM</option>
-                      <option value="LAM">12 - LAM</option>
-                    </select>
+                      hasError={Boolean(errors.fp_method)}
+                      options={[
+                        { value: "", label: "Select" },
+                        { value: "Condom", label: "1 - Condom" },
+                        { value: "IUD", label: "2 - IUD" },
+                        { value: "Pills", label: "3 - Pills" },
+                        { value: "Injectable", label: "4 - Injectable" },
+                        { value: "Vasectomy", label: "5 - Vasectomy" },
+                        { value: "Tubal Ligation", label: "6 - Tubal Ligation" },
+                        { value: "Implant", label: "7 - Implant" },
+                        { value: "CMM/Billings", label: "8 - CMM/Billings" },
+                        { value: "BBT", label: "9 - BBT" },
+                        { value: "Symptothermal", label: "10 - Symptothermal" },
+                        { value: "SDM", label: "11 - SDM" },
+                        { value: "LAM", label: "12 - LAM" },
+                      ]}
+                    />
                     {errors.fp_method && <span className="cfpr-error-text">{errors.fp_method}</span>}
                   </div>
 
                   <div className="cfpr-group">
                     <label className="cfpr-label">Intention to Shift</label>
-                    <select name="intention_to_shift" value={formData.intention_to_shift} onChange={handleInputChange} className="cfpr-select">
-                      <option value="">Select</option>
-                      <option value="Condom">1 - Condom</option>
-                      <option value="IUD">2 - IUD</option>
-                      <option value="Pills">3 - Pills</option>
-                      <option value="Injectable">4 - Injectable</option>
-                      <option value="Vasectomy">5 - Vasectomy</option>
-                      <option value="Tubal Ligation">6 - Tubal Ligation</option>
-                      <option value="Implant">7 - Implant</option>
-                      <option value="CMM/Billings">8 - CMM/Billings</option>
-                      <option value="BBT">9 - BBT</option>
-                      <option value="Symptothermal">10 - Symptothermal</option>
-                      <option value="SDM">11 - SDM</option>
-                      <option value="LAM">12 - LAM</option>
-                    </select>
+                    <ReportSelect
+                      className="form-select"
+                      name="intention_to_shift"
+                      ariaLabel="intention to shift"
+                      value={formData.intention_to_shift}
+                      onChange={handleInputChange}
+                      options={[
+                        { value: "", label: "Select" },
+                        { value: "Condom", label: "1 - Condom" },
+                        { value: "IUD", label: "2 - IUD" },
+                        { value: "Pills", label: "3 - Pills" },
+                        { value: "Injectable", label: "4 - Injectable" },
+                        { value: "Vasectomy", label: "5 - Vasectomy" },
+                        { value: "Tubal Ligation", label: "6 - Tubal Ligation" },
+                        { value: "Implant", label: "7 - Implant" },
+                        { value: "CMM/Billings", label: "8 - CMM/Billings" },
+                        { value: "BBT", label: "9 - BBT" },
+                        { value: "Symptothermal", label: "10 - Symptothermal" },
+                        { value: "SDM", label: "11 - SDM" },
+                        { value: "LAM", label: "12 - LAM" },
+                      ]}
+                    />
                   </div>
 
                   <div className="cfpr-group">
                     <label className="cfpr-label">Traditional FP User: Type</label>
-                    <select name="type" value={formData.type} onChange={handleInputChange} className="cfpr-select">
-                      <option value="">Select</option>
-                      <option value="Withdrawal">1 - Withdrawal</option>
-                      <option value="Rhythm">2 - Rhythm</option>
-                      <option value="Calendar">3 - Calendar</option>
-                      <option value="Abstinence">4 - Abstinence</option>
-                      <option value="Herbal">5 - Herbal</option>
-                      <option value="No Method">6 - No Method</option>
-                    </select>
+                    <ReportSelect
+                      className="form-select"
+                      name="type"
+                      ariaLabel="type"
+                      value={formData.type}
+                      onChange={handleInputChange}
+                      options={[
+                        { value: "", label: "Select" },
+                        { value: "Withdrawal", label: "1 - Withdrawal" },
+                        { value: "Rhythm", label: "2 - Rhythm" },
+                        { value: "Calendar", label: "3 - Calendar" },
+                        { value: "Abstinence", label: "4 - Abstinence" },
+                        { value: "Herbal", label: "5 - Herbal" },
+                        { value: "No Method", label: "6 - No Method" },
+                      ]}
+                    />
                   </div>
 
                   <div className="cfpr-group">
                     <label className="cfpr-label">Traditional FP User: Status</label>
-                    <select name="status" value={formData.status} onChange={handleInputChange} className="cfpr-select">
-                      <option value="">Select</option>
-                      <option value="Expressing Intention to Use Modern FP">A - Expressing Intention to Use Modern FP</option>
-                      <option value="Undecided">B - Undecided</option>
-                      <option value="Currently Pregnant">C - Currently Pregnant</option>
-                      <option value="No Intention to Use">D - No Intention to Use</option>
-                    </select>
+                    <ReportSelect
+                      className="form-select"
+                      name="status"
+                      ariaLabel="status"
+                      value={formData.status}
+                      onChange={handleInputChange}
+                      options={[
+                        { value: "", label: "Select" },
+                        { value: "Expressing Intention to Use Modern FP", label: "A - Expressing Intention to Use Modern FP" },
+                        { value: "Undecided", label: "B - Undecided" },
+                        { value: "Currently Pregnant", label: "C - Currently Pregnant" },
+                        { value: "No Intention to Use", label: "D - No Intention to Use" },
+                      ]}
+                    />
                   </div>
 
                   <div className="cfpr-group">
                     <label className="cfpr-label">Reason</label>
-                    <select name="reason" value={formData.reason} onChange={handleInputChange} className="cfpr-select">
-                      <option value="">Select</option>
-                      <option value="Spacing">1 - Spacing</option>
-                      <option value="Limiting">2 - Limiting</option>
-                      <option value="Achieving">3 - Achieving</option>
-                    </select>
+                    <ReportSelect
+                      className="form-select"
+                      name="reason"
+                      ariaLabel="reason"
+                      value={formData.reason}
+                      onChange={handleInputChange}
+                      options={[
+                        { value: "", label: "Select" },
+                        { value: "Spacing", label: "1 - Spacing" },
+                        { value: "Limiting", label: "2 - Limiting" },
+                        { value: "Achieving", label: "3 - Achieving" },
+                      ]}
+                    />
                   </div>
 
                   <div className="cfpr-group cfpr-span-2">
                     <label className="cfpr-label">Classes Held</label>
-                    <select
+                    <ReportSelect
+                      className="form-select"
                       name="classes_held"
+                      ariaLabel="classes held"
                       value={formData.classes_held}
                       onChange={handleInputChange}
-                      className={`cfpr-select ${errors.classes_held ? "cfpr-input-error" : ""}`}
-                    >
-                      <option value="">Select</option>
-                      <option value="4Ps">4Ps</option>
-                      <option value="Non-4Ps">Non-4Ps</option>
-                      <option value="Faith-Based Organization">Faith-Based Organization</option>
-                      <option value="USAPAN">USAPAN</option>
-                      <option value="PMOC">PMOC</option>
-                      <option value="House to House">House to House</option>
-                      <option value="Profiled Only">Profiled Only</option>
-                      <option value="Others">Others</option>
-                    </select>
+                      hasError={Boolean(errors.classes_held)}
+                      options={[
+                        { value: "", label: "Select" },
+                        { value: "4Ps", label: "4Ps" },
+                        { value: "Non-4Ps", label: "Non-4Ps" },
+                        { value: "Faith-Based Organization", label: "Faith-Based Organization" },
+                        { value: "USAPAN", label: "USAPAN" },
+                        { value: "PMOC", label: "PMOC" },
+                        { value: "House to House", label: "House to House" },
+                        { value: "Profiled Only", label: "Profiled Only" },
+                        { value: "Others", label: "Others" },
+                      ]}
+                    />
                     {errors.classes_held && <span className="cfpr-error-text">{errors.classes_held}</span>}
                   </div>
                 </div>

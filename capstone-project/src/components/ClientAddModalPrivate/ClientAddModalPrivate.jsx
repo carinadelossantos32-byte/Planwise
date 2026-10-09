@@ -1,3 +1,4 @@
+import ReportSelect from "../ReportSelect/ReportSelect";
 import { notify } from "../../utils/notify";
 import { useState } from "react";
 import { checkAddressBarangay } from "../../utils/geoHelper";
@@ -168,26 +169,29 @@ function ClientAddModalPrivate({ onClose, onSuccess }) {
                 
                   <div className="cfpr-group-2">
                     <label className="cfpr-label">Method Used</label>
-                    <select
+                    <ReportSelect
+                      className="form-select"
                       name="fp_method"
+                      ariaLabel="fp method"
                       value={formData.fp_method}
                       onChange={handleInputChange}
-                      className={`cfpr-input ${errors.fp_method ? "cfpr-input-error" : ""}`}
-                    >
-                      <option value="">Select</option>
-                      <option value="Condom">Condom</option>
-                      <option value="IUD">IUD</option>
-                      <option value="Pills">Pills</option>
-                      <option value="Injectable">Injectable</option>
-                      <option value="Vasectomy">Vasectomy</option>
-                      <option value="Tubal Ligation">Tubal Ligation</option>
-                      <option value="Implant">Implant</option>
-                      <option value="CMM/Billings">CMM/Billings</option>
-                      <option value="BBT">BBT</option>
-                      <option value="Symptothermal">Symptothermal</option>
-                      <option value="SDM">SDM</option>
-                      <option value="LAM">LAM</option>
-                    </select>
+                      hasError={Boolean(errors.fp_method)}
+                      options={[
+                        { value: "", label: "Select" },
+                        { value: "Condom", label: "Condom" },
+                        { value: "IUD", label: "IUD" },
+                        { value: "Pills", label: "Pills" },
+                        { value: "Injectable", label: "Injectable" },
+                        { value: "Vasectomy", label: "Vasectomy" },
+                        { value: "Tubal Ligation", label: "Tubal Ligation" },
+                        { value: "Implant", label: "Implant" },
+                        { value: "CMM/Billings", label: "CMM/Billings" },
+                        { value: "BBT", label: "BBT" },
+                        { value: "Symptothermal", label: "Symptothermal" },
+                        { value: "SDM", label: "SDM" },
+                        { value: "LAM", label: "LAM" },
+                      ]}
+                    />
                     {errors.fp_method && <span className="cfpr-error-text">{errors.fp_method}</span>}
                   </div>
                   </div>
