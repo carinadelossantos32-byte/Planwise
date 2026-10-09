@@ -20,7 +20,8 @@ const LEGEND_GROUPS = [
   { id: 'implant', label: 'Implant', color: '#0D9488' },
   { id: 'pills', label: 'Pills', color: '#DB2777' },
   { id: 'condom', label: 'Condom', color: '#F97316' },
-  { id: 'dmpa', label: 'DMPA', color: '#16A34A' },
+  // not listed in the legend; its clients are still plotted and counted
+  { id: 'dmpa', label: 'DMPA', color: '#16A34A', hidden: true },
   { id: 'nfp', label: 'NFP', color: '#CA8A04' },
   { id: 'traditional', label: 'Traditional', color: '#92400E' },
   { id: 'pregnant', label: 'Pregnant', color: '#DC2626' },
@@ -133,7 +134,9 @@ export default function MapExportModal({
       const id = legendGroupOf(f);
       counts[id] = (counts[id] || 0) + 1;
     });
-    return LEGEND_GROUPS.map(group => ({ ...group, count: counts[group.id] || 0 }));
+    return LEGEND_GROUPS
+      .filter(group => !group.hidden)
+      .map(group => ({ ...group, count: counts[group.id] || 0 }));
   }, [barangayFamilies]);
 
   if (!isOpen) return null;
