@@ -2,7 +2,7 @@ import { notify } from "../../utils/notify";
 import "./inventory.css"
 import { useEffect, useMemo, useState } from "react";
 import { db } from "../../firebase-config"
-import { CheckCircle, RefreshCw, Plus, X, SquarePen, SquarePlus, SquareMinus, Boxes, TriangleAlert, Building2, Users, FileText, FileSpreadsheet } from "lucide-react";
+import { CheckCircle, RefreshCw, Plus, X, SquarePlus, SquareMinus, Boxes, TriangleAlert, Building2, Users, FileText, FileSpreadsheet } from "lucide-react";
 import { doc, getDoc, getDocs, updateDoc, setDoc, collection, addDoc, increment, runTransaction, serverTimestamp,onSnapshot } from "firebase/firestore";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, Cell, CartesianGrid } from "recharts";
 import { exportInventoryExcel, exportInventoryPDF } from "../../utils/inventory-exports.js";
@@ -941,15 +941,12 @@ function Inventory() {
                                             ))}
                                         </div>
                                     ) : (
-                                        <p className="inv-detail-empty">No barangays listed for this unit yet. Use Edit details to add them.</p>
+                                        <p className="inv-detail-empty">No barangays are listed for this unit yet.</p>
                                     )}
                                 </section>
                             </div>
 
                             <div className="inv-detail-foot">
-                                <button type="button" className="inv-btn inv-btn--outline" onClick={() => { setViewRHUId(null); setSelectedRHU(viewedRHU); setshowRHUInfo(true); setEditingRHUId(null); }}>
-                                    <SquarePen size={15} /> Edit details
-                                </button>
                                 <div className="inv-detail-foot-stock">
                                     <button type="button" className="inv-btn inv-btn--danger" onClick={() => { setViewRHUId(null); openRhuDeduct(viewedRHU); }}>
                                         <SquareMinus size={15} /> Deduct stock
