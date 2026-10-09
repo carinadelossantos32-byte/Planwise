@@ -2,7 +2,7 @@ import { notify } from "../../utils/notify";
 import "./inventory.css"
 import { useEffect, useMemo, useState } from "react";
 import { db } from "../../firebase-config"
-import { CheckCircle, RefreshCw, Plus, X, SquarePen, SquarePlus, SquareMinus, Boxes, TriangleAlert, Building2, Users, MapPin, FileText, FileSpreadsheet } from "lucide-react";
+import { CheckCircle, RefreshCw, Plus, X, SquarePen, SquarePlus, SquareMinus, Boxes, TriangleAlert, Building2, Users, FileText, FileSpreadsheet } from "lucide-react";
 import { doc, getDoc, getDocs, updateDoc, setDoc, collection, addDoc, increment, runTransaction, serverTimestamp,onSnapshot } from "firebase/firestore";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, Cell, CartesianGrid } from "recharts";
 import { exportInventoryExcel, exportInventoryPDF } from "../../utils/inventory-exports.js";
@@ -896,51 +896,34 @@ function Inventory() {
                             </div>
 
                             <div className="inv-detail-body">
-                                <div className="inv-detail-stats">
+                                <dl className="inv-detail-stats">
                                     <div>
-                                        <span className="inv-detail-stat-icon"><Users size={18} /></span>
-                                        <div>
-                                            <strong>{Number(viewedRHU.total_population || 0).toLocaleString()}</strong>
-                                            <span>Population</span>
-                                        </div>
+                                        <dt>Population</dt>
+                                        <dd>{Number(viewedRHU.total_population || 0).toLocaleString()}</dd>
                                     </div>
                                     <div>
-                                        <span className="inv-detail-stat-icon"><Boxes size={18} /></span>
-                                        <div>
-                                            <strong>{stockTotal(viewedRHU).toLocaleString()}</strong>
-                                            <span>Total stocks</span>
-                                        </div>
+                                        <dt>Total stocks</dt>
+                                        <dd>{stockTotal(viewedRHU).toLocaleString()}</dd>
                                     </div>
                                     <div>
-                                        <span className="inv-detail-stat-icon"><MapPin size={18} /></span>
-                                        <div>
-                                            <strong>{(viewedRHU.barangays || []).length}</strong>
-                                            <span>Barangays</span>
-                                        </div>
+                                        <dt>Barangays</dt>
+                                        <dd>{(viewedRHU.barangays || []).length}</dd>
                                     </div>
-                                </div>
+                                </dl>
 
                                 <section className="inv-detail-section">
                                     <h4 className="inv-detail-title">Stocks by FP method</h4>
                                     <ul className="inv-detail-methods">
                                         {viewedMethods.map((m) => (
                                             <li key={m.id} className={m.isLow ? (m.qty === 0 ? "is-low is-out" : "is-low") : ""}>
-                                                <div className="inv-detail-method-top">
-                                                    <span className="inv-detail-method-name">{m.label}</span>
-                                                    {m.isLow
-                                                        ? <span className={`low-chip${m.qty === 0 ? "" : " low-chip--warn"}`}>{m.qty === 0 ? "Out of stock" : "Low"}</span>
-                                                        : <span className="inv-ok-chip">OK</span>}
-                                                </div>
-                                                <div className="inv-detail-qty">
+                                                <span className="inv-detail-method-name">{m.label}</span>
+                                                <span className="inv-detail-qty">
                                                     <strong>{m.qty.toLocaleString()}</strong>
-                                                    <span>units{m.limit > 0 ? ` · limit ${m.limit.toLocaleString()}` : ""}</span>
-                                                </div>
-                                                <div className="inv-stock-track">
-                                                    <div
-                                                        className={`inv-stock-fill${m.isLow ? " is-low" : ""}`}
-                                                        style={{ width: `${(m.qty / viewedMaxQty) * 100}%` }}
-                                                    ></div>
-                                                </div>
+                                                    {m.limit > 0 ? ` of ${m.limit.toLocaleString()} limit` : " units"}
+                                                </span>
+                                                {m.isLow
+                                                    ? <span className={`low-chip${m.qty === 0 ? "" : " low-chip--warn"}`}>{m.qty === 0 ? "Out of stock" : "Low"}</span>
+                                                    : <span className="inv-ok-chip">OK</span>}
                                             </li>
                                         ))}
                                     </ul>

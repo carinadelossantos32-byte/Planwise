@@ -1,4 +1,6 @@
+import ReportSelect from "../ReportSelect/ReportSelect";
 import { notify } from "../../utils/notify";
+import { checkAddressBarangay } from "../../utils/geoHelper";
 import { useState } from "react";
 import { collection, addDoc, doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -79,6 +81,13 @@ function ClientAddModalReferred({ onClose, onSuccess }) {
       }
     });
     if (!isValid) { setErrors(newErrors); return; }
+
+    const location = checkAddressBarangay(formData.address, formData.barangay);
+    if (!location.ok) {
+      setErrors({ address: location.message, barangay: location.message });
+      notify(location.message);
+      return;
+    }
 
     try {
       const duplicate = await findDuplicate("clients_referred", "referred", formData);
@@ -180,27 +189,30 @@ function ClientAddModalReferred({ onClose, onSuccess }) {
                   </div>
                   <div className="cfpr-group-2">
                     <label className="cfpr-label">FP Method</label>
-                    <select
+                    <ReportSelect
+                      className="form-select"
                       name="fp_method"
+                      ariaLabel="fp method"
                       value={formData.fp_method || ""}
                       onChange={handleInputChange}
                       placeholder="Select FP Method"
-                      className={`cfpr-input ${errors.fp_method ? "cfpr-input-error" : ""}`}
-                    >
-                      <option value="">Select</option>
-                      <option value="Condom">Condom</option>
-                      <option value="IUD">IUD</option>
-                      <option value="Pills">Pills</option>
-                      <option value="Injectable">Injectable</option>
-                      <option value="Vasectomy">Vasectomy</option>
-                      <option value="Tubal Ligation">Tubal Ligation</option>
-                      <option value="Implant">Implant</option>
-                      <option value="CMM/Billings">CMM/Billings</option>
-                      <option value="BBT">BBT</option>
-                      <option value="Symptothermal">Symptothermal</option>
-                      <option value="SDM">SDM</option>
-                      <option value="LAM">LAM</option>
-                    </select>
+                      hasError={Boolean(errors.fp_method)}
+                      options={[
+                        { value: "", label: "Select" },
+                        { value: "Condom", label: "Condom" },
+                        { value: "IUD", label: "IUD" },
+                        { value: "Pills", label: "Pills" },
+                        { value: "Injectable", label: "Injectable" },
+                        { value: "Vasectomy", label: "Vasectomy" },
+                        { value: "Tubal Ligation", label: "Tubal Ligation" },
+                        { value: "Implant", label: "Implant" },
+                        { value: "CMM/Billings", label: "CMM/Billings" },
+                        { value: "BBT", label: "BBT" },
+                        { value: "Symptothermal", label: "Symptothermal" },
+                        { value: "SDM", label: "SDM" },
+                        { value: "LAM", label: "LAM" },
+                      ]}
+                    />
                     {errors.fp_method && <span className="cfpr-error-text">{errors.fp_method}</span>}
                   </div>
                 </div>
@@ -208,27 +220,30 @@ function ClientAddModalReferred({ onClose, onSuccess }) {
                 <div className="cfpr-paired-cols">
                   <div className="cfpr-group-2">
                     <label className="cfpr-label">With Intention to Shift</label>
-                    <select
+                    <ReportSelect
+                      className="form-select"
                       name="with_intention_to_shift"
+                      ariaLabel="with intention to shift"
                       value={formData.with_intention_to_shift}
                       onChange={handleInputChange}
-                      className={`cfpr-input ${errors.with_intention_to_shift ? "cfpr-input-error" : ""}`}
-                    >
-                      <option value="">Select</option>
-                      <option value="No Intention">No Intention</option>
-                      <option value="Condom">Condom</option>
-                      <option value="IUD">IUD</option>
-                      <option value="Pills">Pills</option>
-                      <option value="Injectable">Injectable</option>
-                      <option value="Vasectomy">Vasectomy</option>
-                      <option value="Tubal Ligation">Tubal Ligation</option>
-                      <option value="Implant">Implant</option>
-                      <option value="CMM/Billings">CMM/Billings</option>
-                      <option value="BBT">BBT</option>
-                      <option value="Symptothermal">Symptothermal</option>
-                      <option value="SDM">SDM</option>
-                      <option value="LAM">LAM</option>
-                    </select>
+                      hasError={Boolean(errors.with_intention_to_shift)}
+                      options={[
+                        { value: "", label: "Select" },
+                        { value: "No Intention", label: "No Intention" },
+                        { value: "Condom", label: "Condom" },
+                        { value: "IUD", label: "IUD" },
+                        { value: "Pills", label: "Pills" },
+                        { value: "Injectable", label: "Injectable" },
+                        { value: "Vasectomy", label: "Vasectomy" },
+                        { value: "Tubal Ligation", label: "Tubal Ligation" },
+                        { value: "Implant", label: "Implant" },
+                        { value: "CMM/Billings", label: "CMM/Billings" },
+                        { value: "BBT", label: "BBT" },
+                        { value: "Symptothermal", label: "Symptothermal" },
+                        { value: "SDM", label: "SDM" },
+                        { value: "LAM", label: "LAM" },
+                      ]}
+                    />
                     {errors.with_intention_to_shift && <span className="cfpr-error-text">{errors.with_intention_to_shift}</span>}
                   </div>
                   <div className="cfpr-group-2">

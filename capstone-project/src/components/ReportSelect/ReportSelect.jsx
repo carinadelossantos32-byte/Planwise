@@ -10,12 +10,16 @@ import "./report-select.css";
              label. An entry may instead be
              { group: "Title", options: [{ value, label }] } to render a titled section.
     placeholder: muted text shown while nothing is selected.
+    name:     passed back on change, so one handler can serve many fields.
+    hasError: marks the field red (form validation).
+    className: extra class on the wrapper, e.g. "form-select" for form sizing.
     onChange: receives { target: { value } } (value is a string), same shape a
               native <select> gives, so existing handlers keep working.
 */
-function ReportSelect({ value, onChange, options, ariaLabel, placeholder }) {
+function ReportSelect({ value, onChange, options, ariaLabel, placeholder, name, hasError = false, className = "" }) {
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [opensUp, setOpensUp] = useState(false);
   const rootRef = useRef(null);
   const listRef = useRef(null);
   const listId = useId();
@@ -43,6 +47,13 @@ function ReportSelect({ value, onChange, options, ariaLabel, placeholder }) {
   }, [open, activeIndex]);
 
   const openMenu = () => {
+    // open upward when the list would not fit below but does fit above
+    const box = rootRef.current?.getBoundingClientRect();
+    if (box) {
+      const listHeight = Math.min(280, flat.length * 40 + 12);
+      const below = window.innerHeight - box.bottom;
+      setOpensUp(below < listHeight + 12 && box.top > below);
+    }
     setActiveIndex(selectedIndex >= 0 ? selectedIndex : 0);
     setOpen(true);
   };
@@ -50,7 +61,7 @@ function ReportSelect({ value, onChange, options, ariaLabel, placeholder }) {
   const choose = (option) => {
     setOpen(false);
     if (String(option.value) !== String(value)) {
-      onChange({ target: { value: String(option.value) } });
+      onChange({ target: { name, value: String(option.value) } });
     }
   };
 
@@ -115,7 +126,10 @@ function ReportSelect({ value, onChange, options, ariaLabel, placeholder }) {
   };
 
   return (
-    <div className={`report-select${open ? " is-open" : ""}`} ref={rootRef}>
+    <div
+      className={`report-select${open ? " is-open" : ""}${opensUp ? " opens-up" : ""}${hasError ? " has-error" : ""}${className ? ` ${className}` : ""}`}
+      ref={rootRef}
+    >
       <button
         type="button"
         className="report-select-trigger"
@@ -129,7 +143,9 @@ function ReportSelect({ value, onChange, options, ariaLabel, placeholder }) {
         onKeyDown={handleKeyDown}
       >
         <span className="report-select-value">
-          {selected ? selected.label : <span className="report-select-placeholder">{placeholder}</span>}
+          {selected && String(selected.value) !== ""
+            ? selected.label
+            : <span className="report-select-placeholder">{selected ? selected.label : placeholder}</span>}
           {selected?.hint && <small className="report-select-hint">{selected.hint}</small>}
         </span>
         <ChevronDown size={16} className="report-select-chevron" />

@@ -1,4 +1,7 @@
+import ReportSelect from "../ReportSelect/ReportSelect";
+import { notify } from "../../utils/notify";
 import { useState, useEffect } from "react";
+import { checkAddressBarangay } from "../../utils/geoHelper";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebase-config";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
@@ -134,6 +137,13 @@ function ClientEditModal({ client, onClose, onSuccess }) {
       return; 
     }
 
+    const location = checkAddressBarangay(formData.address, formData.barangay);
+    if (!location.ok) {
+      setErrors({ address: location.message, barangay: location.message });
+      notify(location.message);
+      return;
+    }
+
     try {
       const docRef = doc(db, "clients_public", client.id);
       
@@ -228,46 +238,52 @@ function ClientEditModal({ client, onClose, onSuccess }) {
                 <div className="efpr-paired-cols">
                   <div className="efpr-group-public">
                     <span className="efpr-tag efpr-tag-male">Male</span>
-                    <select
+                    <ReportSelect
+                      className="form-select"
                       name="educational_attainment_male"
+                      ariaLabel="educational attainment male"
                       value={formData.educational_attainment_male || ""}
                       onChange={handleInputChange}
-                      className={`efpr-select ${errors.educational_attainment_male ? "efpr-input-error" : ""}`}
-                    >
-                      <option value="">Select</option>
-                      <option value="No Education">1 - No Education</option>
-                      <option value="Elementary Level">2 - Elementary Level</option>
-                      <option value="Elementary Graduate">3 - Elementary Graduate</option>
-                      <option value="High School Level">4 - High School Level</option>
-                      <option value="High School Graduate">5 - High School Graduate</option>
-                      <option value="Vocational">6 - Vocational</option>
-                      <option value="College Level">7 - College Level</option>
-                      <option value="College Graduate">8 - College Graduate</option>
-                      <option value="Post Graduate">9 - Post Graduate</option>
-                    </select>
+                      hasError={Boolean(errors.educational_attainment_male)}
+                      options={[
+                        { value: "", label: "Select" },
+                        { value: "No Education", label: "1 - No Education" },
+                        { value: "Elementary Level", label: "2 - Elementary Level" },
+                        { value: "Elementary Graduate", label: "3 - Elementary Graduate" },
+                        { value: "High School Level", label: "4 - High School Level" },
+                        { value: "High School Graduate", label: "5 - High School Graduate" },
+                        { value: "Vocational", label: "6 - Vocational" },
+                        { value: "College Level", label: "7 - College Level" },
+                        { value: "College Graduate", label: "8 - College Graduate" },
+                        { value: "Post Graduate", label: "9 - Post Graduate" },
+                      ]}
+                    />
                     {errors.educational_attainment_male && (
                       <span className="efpr-error-text">{errors.educational_attainment_male}</span>
                     )}
                   </div>
                   <div className="efpr-group-public">
                     <span className="efpr-tag efpr-tag-female">Female</span>
-                    <select
+                    <ReportSelect
+                      className="form-select"
                       name="educational_attainment_female"
+                      ariaLabel="educational attainment female"
                       value={formData.educational_attainment_female || ""}
                       onChange={handleInputChange}
-                      className={`efpr-select ${errors.educational_attainment_female ? "efpr-input-error" : ""}`}
-                    >
-                      <option value="">Select</option>
-                      <option value="No Education">1 - No Education</option>
-                      <option value="Elementary Level">2 - Elementary Level</option>
-                      <option value="Elementary Graduate">3 - Elementary Graduate</option>
-                      <option value="High School Level">4 - High School Level</option>
-                      <option value="High School Graduate">5 - High School Graduate</option>
-                      <option value="Vocational">6 - Vocational</option>
-                      <option value="College Level">7 - College Level</option>
-                      <option value="College Graduate">8 - College Graduate</option>
-                      <option value="Post Graduate">9 - Post Graduate</option>
-                    </select>
+                      hasError={Boolean(errors.educational_attainment_female)}
+                      options={[
+                        { value: "", label: "Select" },
+                        { value: "No Education", label: "1 - No Education" },
+                        { value: "Elementary Level", label: "2 - Elementary Level" },
+                        { value: "Elementary Graduate", label: "3 - Elementary Graduate" },
+                        { value: "High School Level", label: "4 - High School Level" },
+                        { value: "High School Graduate", label: "5 - High School Graduate" },
+                        { value: "Vocational", label: "6 - Vocational" },
+                        { value: "College Level", label: "7 - College Level" },
+                        { value: "College Graduate", label: "8 - College Graduate" },
+                        { value: "Post Graduate", label: "9 - Post Graduate" },
+                      ]}
+                    />
                     {errors.educational_attainment_female && (
                       <span className="efpr-error-text">{errors.educational_attainment_female}</span>
                     )}
@@ -280,36 +296,42 @@ function ClientEditModal({ client, onClose, onSuccess }) {
                 <div className="efpr-paired-cols">
                   <div className="efpr-group-public">
                     <span className="efpr-tag efpr-tag-male">Male</span>
-                    <select
+                    <ReportSelect
+                      className="form-select"
                       name="civil_status_male"
+                      ariaLabel="civil status male"
                       value={formData.civil_status_male || ""}
                       onChange={handleInputChange}
-                      className={`efpr-select ${errors.civil_status_male ? "efpr-input-error" : ""}`}
-                    >
-                      <option value="">Select</option>
-                      <option value="Single">1 - Single</option>
-                      <option value="Married">2 - Married</option>
-                      <option value="Widowed">3 - Widowed</option>
-                      <option value="Separated">4 - Separated</option>
-                      <option value="Live-In">5 - Live-In</option>
-                    </select>
+                      hasError={Boolean(errors.civil_status_male)}
+                      options={[
+                        { value: "", label: "Select" },
+                        { value: "Single", label: "1 - Single" },
+                        { value: "Married", label: "2 - Married" },
+                        { value: "Widowed", label: "3 - Widowed" },
+                        { value: "Separated", label: "4 - Separated" },
+                        { value: "Live-In", label: "5 - Live-In" },
+                      ]}
+                    />
                     {errors.civil_status_male && <span className="efpr-error-text">{errors.civil_status_male}</span>}
                   </div>
                   <div className="efpr-group-public">
                     <span className="efpr-tag efpr-tag-female">Female</span>
-                    <select
+                    <ReportSelect
+                      className="form-select"
                       name="civil_status_female"
+                      ariaLabel="civil status female"
                       value={formData.civil_status_female || ""}
                       onChange={handleInputChange}
-                      className={`efpr-select ${errors.civil_status_female ? "efpr-input-error" : ""}`}
-                    >
-                      <option value="">Select</option>
-                      <option value="Single">1 - Single</option>
-                      <option value="Married">2 - Married</option>
-                      <option value="Widowed">3 - Widowed</option>
-                      <option value="Separated">4 - Separated</option>
-                      <option value="Live-In">5 - Live-In</option>
-                    </select>
+                      hasError={Boolean(errors.civil_status_female)}
+                      options={[
+                        { value: "", label: "Select" },
+                        { value: "Single", label: "1 - Single" },
+                        { value: "Married", label: "2 - Married" },
+                        { value: "Widowed", label: "3 - Widowed" },
+                        { value: "Separated", label: "4 - Separated" },
+                        { value: "Live-In", label: "5 - Live-In" },
+                      ]}
+                    />
                     {errors.civil_status_female && <span className="efpr-error-text">{errors.civil_status_female}</span>}
                   </div>
                 </div>
@@ -416,119 +438,132 @@ function ClientEditModal({ client, onClose, onSuccess }) {
 
                 <div className="efpr-group-public">
                   <label className="efpr-label">Method Used</label>
-                  <select
+                  <ReportSelect
+                    className="form-select"
                     name="fp_method"
+                    ariaLabel="fp method"
                     value={formData.fp_method || ""}
                     onChange={handleInputChange}
-                    className="efpr-select"
-                  >
-                    <option value="">Select</option>
-                    <option value="Condom">1 - Condom</option>
-                    <option value="IUD">2 - IUD</option>
-                    <option value="Pills">3 - Pills</option>
-                    <option value="Injectable">4 - Injectable</option>
-                    <option value="Vasectomy">5 - Vasectomy</option>
-                    <option value="Tubal Ligation">6 - Tubal Ligation</option>
-                    <option value="Implant">7 - Implant</option>
-                    <option value="CMM/Billings">8 - CMM/Billings</option>
-                    <option value="BBT">9 - BBT</option>
-                    <option value="Symptothermal">10 - Symptothermal</option>
-                    <option value="SDM">11 - SDM</option>
-                    <option value="LAM">12 - LAM</option>
-                  </select>
+                    options={[
+                      { value: "", label: "Select" },
+                      { value: "Condom", label: "1 - Condom" },
+                      { value: "IUD", label: "2 - IUD" },
+                      { value: "Pills", label: "3 - Pills" },
+                      { value: "Injectable", label: "4 - Injectable" },
+                      { value: "Vasectomy", label: "5 - Vasectomy" },
+                      { value: "Tubal Ligation", label: "6 - Tubal Ligation" },
+                      { value: "Implant", label: "7 - Implant" },
+                      { value: "CMM/Billings", label: "8 - CMM/Billings" },
+                      { value: "BBT", label: "9 - BBT" },
+                      { value: "Symptothermal", label: "10 - Symptothermal" },
+                      { value: "SDM", label: "11 - SDM" },
+                      { value: "LAM", label: "12 - LAM" },
+                    ]}
+                  />
                 </div>
 
                 <div className="efpr-group-public">
                   <label className="efpr-label">Intention to Shift</label>
-                  <select
+                  <ReportSelect
+                    className="form-select"
                     name="intention_to_shift"
+                    ariaLabel="intention to shift"
                     value={formData.intention_to_shift || ""}
                     onChange={handleInputChange}
-                    className="efpr-select"
-                  >
-                    <option value="">Select</option>
-                    <option value="Condom">1 - Condom</option>
-                    <option value="IUD">2 - IUD</option>
-                    <option value="Pills">3 - Pills</option>
-                    <option value="Injectable">4 - Injectable</option>
-                    <option value="Vasectomy">5 - Vasectomy</option>
-                    <option value="Tubal Ligation">6 - Tubal Ligation</option>
-                    <option value="Implant">7 - Implant</option>
-                    <option value="CMM/Billings">8 - CMM/Billings</option>
-                    <option value="BBT">9 - BBT</option>
-                    <option value="Symptothermal">10 - Symptothermal</option>
-                    <option value="SDM">11 - SDM</option>
-                    <option value="LAM">12 - LAM</option>
-                  </select>
+                    options={[
+                      { value: "", label: "Select" },
+                      { value: "Condom", label: "1 - Condom" },
+                      { value: "IUD", label: "2 - IUD" },
+                      { value: "Pills", label: "3 - Pills" },
+                      { value: "Injectable", label: "4 - Injectable" },
+                      { value: "Vasectomy", label: "5 - Vasectomy" },
+                      { value: "Tubal Ligation", label: "6 - Tubal Ligation" },
+                      { value: "Implant", label: "7 - Implant" },
+                      { value: "CMM/Billings", label: "8 - CMM/Billings" },
+                      { value: "BBT", label: "9 - BBT" },
+                      { value: "Symptothermal", label: "10 - Symptothermal" },
+                      { value: "SDM", label: "11 - SDM" },
+                      { value: "LAM", label: "12 - LAM" },
+                    ]}
+                  />
                 </div>
 
                 <div className="efpr-group-public">
                   <label className="efpr-label">Traditional FP User: Type</label>
-                  <select
+                  <ReportSelect
+                    className="form-select"
                     name="type"
+                    ariaLabel="type"
                     value={formData.type || ""}
                     onChange={handleInputChange}
-                    className="efpr-select"
-                  >
-                    <option value="">Select</option>
-                    <option value="Withdrawal">1 - Withdrawal</option>
-                    <option value="Rhythm">2 - Rhythm</option>
-                    <option value="Calendar">3 - Calendar</option>
-                    <option value="Abstinence">4 - Abstinence</option>
-                    <option value="Herbal">5 - Herbal</option>
-                    <option value="No Method">6 - No Method</option>
-                  </select>
+                    options={[
+                      { value: "", label: "Select" },
+                      { value: "Withdrawal", label: "1 - Withdrawal" },
+                      { value: "Rhythm", label: "2 - Rhythm" },
+                      { value: "Calendar", label: "3 - Calendar" },
+                      { value: "Abstinence", label: "4 - Abstinence" },
+                      { value: "Herbal", label: "5 - Herbal" },
+                      { value: "No Method", label: "6 - No Method" },
+                    ]}
+                  />
                 </div>
 
                 <div className="efpr-group-public">
                   <label className="efpr-label">Traditional FP User: Status</label>
-                  <select
+                  <ReportSelect
+                    className="form-select"
                     name="status"
+                    ariaLabel="status"
                     value={formData.status || ""}
                     onChange={handleInputChange}
-                    className="efpr-select"
-                  >
-                    <option value="">Select</option>
-                    <option value="Expressing Intention to Use Modern FP">A - Expressing Intention to Use Modern FP</option>
-                    <option value="Undecided">B - Undecided</option>
-                    <option value="Currently Pregnant">C - Currently Pregnant</option>
-                    <option value="No Intention to Use">D - No Intention to Use</option>
-                  </select>
+                    options={[
+                      { value: "", label: "Select" },
+                      { value: "Expressing Intention to Use Modern FP", label: "A - Expressing Intention to Use Modern FP" },
+                      { value: "Undecided", label: "B - Undecided" },
+                      { value: "Currently Pregnant", label: "C - Currently Pregnant" },
+                      { value: "No Intention to Use", label: "D - No Intention to Use" },
+                    ]}
+                  />
                 </div>
 
                 <div className="efpr-group-public">
                   <label className="efpr-label">Reason</label>
-                  <select
+                  <ReportSelect
+                    className="form-select"
                     name="reason"
+                    ariaLabel="reason"
                     value={formData.reason || ""}
                     onChange={handleInputChange}
-                    className="efpr-select"
-                  >
-                    <option value="">Select</option>
-                    <option value="Spacing">1 - Spacing</option>
-                    <option value="Limiting">2 - Limiting</option>
-                    <option value="Achieving">3 - Achieving</option>
-                  </select>
+                    options={[
+                      { value: "", label: "Select" },
+                      { value: "Spacing", label: "1 - Spacing" },
+                      { value: "Limiting", label: "2 - Limiting" },
+                      { value: "Achieving", label: "3 - Achieving" },
+                    ]}
+                  />
                 </div>
 
                 <div className="efpr-group-public efpr-span-2">
                   <label className="efpr-label">Classes Held</label>
-                  <select
+                  <ReportSelect
+                    className="form-select"
                     name="classes_held"
+                    ariaLabel="classes held"
                     value={formData.classes_held || ""}
                     onChange={handleInputChange}
-                    className={`efpr-select ${errors.classes_held ? "efpr-input-error" : ""}`}
-                  >
-                    <option value="">Select</option>
-                    <option value="4Ps">4Ps</option>
-                    <option value="Non-4Ps">Non-4Ps</option>
-                    <option value="Faith-Based Organization">Faith-Based Organization</option>
-                    <option value="USAPAN">USAPAN</option>
-                    <option value="PMOC">PMOC</option>
-                    <option value="House to House">House to House</option>
-                    <option value="Profiled Only">Profiled Only</option>
-                    <option value="Others">Others</option>
-                  </select>
+                    hasError={Boolean(errors.classes_held)}
+                    options={[
+                      { value: "", label: "Select" },
+                      { value: "4Ps", label: "4Ps" },
+                      { value: "Non-4Ps", label: "Non-4Ps" },
+                      { value: "Faith-Based Organization", label: "Faith-Based Organization" },
+                      { value: "USAPAN", label: "USAPAN" },
+                      { value: "PMOC", label: "PMOC" },
+                      { value: "House to House", label: "House to House" },
+                      { value: "Profiled Only", label: "Profiled Only" },
+                      { value: "Others", label: "Others" },
+                    ]}
+                  />
                   {errors.classes_held && <span className="efpr-error-text">{errors.classes_held}</span>}
                 </div>
               </div>

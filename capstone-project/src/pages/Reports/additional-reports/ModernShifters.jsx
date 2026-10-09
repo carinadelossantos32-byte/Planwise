@@ -5,6 +5,7 @@ import MethodName from "../MethodName";
 import { useMemo, useState, useEffect, useRef } from "react";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import { tidyReportHeader } from "../reportExcel.js";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { getClientDate, canonicalMethod, methodLabel } from "../reportData";
@@ -520,6 +521,8 @@ function ModernShifters({
             await workbook.xlsx.load(buffer);
 
             const sheet = workbook.worksheets[0];
+
+            tidyReportHeader(sheet);
 
             const writeRow = (rowNumber, label, record) => {
                 sheet.getCell(rowNumber, 1).value = label;

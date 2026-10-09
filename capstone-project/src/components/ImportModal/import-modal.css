@@ -142,7 +142,7 @@ background: rgba(15, 23, 42, 0.55);
 }
 
 .import-preview-table tbody td {
-  padding: 9px 12px;
+  padding: 12px 12px;
   color: #111827;
   white-space: nowrap;
 }

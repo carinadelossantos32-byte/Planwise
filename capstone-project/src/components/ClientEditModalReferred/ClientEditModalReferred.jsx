@@ -1,4 +1,6 @@
+import ReportSelect from "../ReportSelect/ReportSelect";
 import { notify } from "../../utils/notify";
+import { checkAddressBarangay } from "../../utils/geoHelper";
 import { useState } from "react";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -79,6 +81,13 @@ function ClientEditModalReferred({ client, onClose, onSuccess }) {
       return;
     }
 
+    const location = checkAddressBarangay(formData.address, formData.barangay);
+    if (!location.ok) {
+      setErrors({ address: location.message, barangay: location.message });
+      notify(location.message);
+      return;
+    }
+
     try {
       const docRef = doc(db, "clients_referred", client.id);
       const { id, created_at, ...updateData } = formData;
@@ -145,25 +154,28 @@ function ClientEditModalReferred({ client, onClose, onSuccess }) {
                 </div>
                 <div className="efpr-group">
                   <span className="efpr-paired-label">FP Method</span>
-                  <select
+                  <ReportSelect
+                    className="form-select"
                     name="fp_method"
+                    ariaLabel="fp method"
                     value={formData.fp_method || ""}
                     onChange={handleInputChange}
-                    className={`efpr-input   ${errors.fp_method ? "efpr-select-error" : ""}`}
-                  >
-                    <option value="Condom">Condom</option>
-                    <option value="IUD">IUD</option>
-                    <option value="Pills">Pills</option>
-                    <option value="Injectable">Injectable</option>
-                    <option value="Vasectomy">Vasectomy</option>
-                    <option value="Tubal Ligation">Tubal Ligation</option>
-                    <option value="Implant">Implant</option>
-                    <option value="CMM/Billings">CMM/Billings</option>
-                    <option value="BBT">BBT</option>
-                    <option value="Symptothermal">Symptothermal</option>
-                    <option value="SDM">SDM</option>
-                    <option value="LAM">LAM</option>
-                  </select>
+                    hasError={Boolean(errors.fp_method)}
+                    options={[
+                      { value: "Condom", label: "Condom" },
+                      { value: "IUD", label: "IUD" },
+                      { value: "Pills", label: "Pills" },
+                      { value: "Injectable", label: "Injectable" },
+                      { value: "Vasectomy", label: "Vasectomy" },
+                      { value: "Tubal Ligation", label: "Tubal Ligation" },
+                      { value: "Implant", label: "Implant" },
+                      { value: "CMM/Billings", label: "CMM/Billings" },
+                      { value: "BBT", label: "BBT" },
+                      { value: "Symptothermal", label: "Symptothermal" },
+                      { value: "SDM", label: "SDM" },
+                      { value: "LAM", label: "LAM" },
+                    ]}
+                  />
                   {errors.fp_method && <span className="error-text">{errors.fp_method}</span>}
                 </div>
               </div>
@@ -171,26 +183,29 @@ function ClientEditModalReferred({ client, onClose, onSuccess }) {
               <div className="efpr-paired-cols">
                 <div className="efpr-group">
                   <span className="efpr-paired-label">With Intention to Shift</span>
-                  <select
+                  <ReportSelect
+                    className="form-select"
                     name="with_intention_to_shift"
+                    ariaLabel="with intention to shift"
                     value={formData.with_intention_to_shift || ""}
                     onChange={handleInputChange}
-                    className={`efpr-input   ${errors.with_intention_to_shift ? "efpr-select-error" : ""}`}
-                  >
-                    <option value="No Intention">No Intention</option>
-                    <option value="Condom">Condom</option>
-                    <option value="IUD">IUD</option>
-                    <option value="Pills">Pills</option>
-                    <option value="Injectable">Injectable</option>
-                    <option value="Vasectomy">Vasectomy</option>
-                    <option value="Tubal Ligation">Tubal Ligation</option>
-                    <option value="Implant">Implant</option>
-                    <option value="CMM/Billings">CMM/Billings</option>
-                    <option value="BBT">BBT</option>
-                    <option value="Symptothermal">Symptothermal</option>
-                    <option value="SDM">SDM</option>
-                    <option value="LAM">LAM</option>
-                  </select>
+                    hasError={Boolean(errors.with_intention_to_shift)}
+                    options={[
+                      { value: "No Intention", label: "No Intention" },
+                      { value: "Condom", label: "Condom" },
+                      { value: "IUD", label: "IUD" },
+                      { value: "Pills", label: "Pills" },
+                      { value: "Injectable", label: "Injectable" },
+                      { value: "Vasectomy", label: "Vasectomy" },
+                      { value: "Tubal Ligation", label: "Tubal Ligation" },
+                      { value: "Implant", label: "Implant" },
+                      { value: "CMM/Billings", label: "CMM/Billings" },
+                      { value: "BBT", label: "BBT" },
+                      { value: "Symptothermal", label: "Symptothermal" },
+                      { value: "SDM", label: "SDM" },
+                      { value: "LAM", label: "LAM" },
+                    ]}
+                  />
                   {errors.with_intention_to_shift && <span className="error-text">{errors.with_intention_to_shift}</span>}
                 </div>
                 <div className="efpr-group">

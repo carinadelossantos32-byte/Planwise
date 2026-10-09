@@ -63,11 +63,11 @@ html, body, #root {
   box-shadow: 0 24px 48px -12px rgba(3, 10, 48, 0.6);
 }
 
-/* Wordmark: a light "Plan" against a heavy gold "Wise" */
+/* Wordmark: a heavy white "Plan" beside a heavy gold "Wise" */
 .login-brand-name {
   font-family: 'Outfit', 'Inter', 'Segoe UI', system-ui, sans-serif;
   font-size: clamp(64px, 6vw, 88px);
-  font-weight: 300;
+  font-weight: 800;
   letter-spacing: -0.035em;
   line-height: 1;
   color: #ffffff;

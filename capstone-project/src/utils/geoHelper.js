@@ -87,3 +87,29 @@ export const extractLocationFromAddress = (addressText = "") => {
     isMatched: false,
   };
 };
+
+// 5. Tinitiyak na ang barangay na pinili ay siya ring nakasulat sa address
+const containsWord = (text, word) => {
+  const escaped = word.replace(/[\\^$*+?.()|[\]{}]/g, "\\$&");
+  return new RegExp(`(?<![a-z0-9ñ])${escaped}(?![a-z0-9ñ])`, "i").test(text);
+};
+
+export const checkAddressBarangay = (address = "", barangay = "") => {
+  const cleanAddr = cleanStr(address);
+  const cleanBgy = cleanStr(barangay);
+  // Ang mga blangkong field ay hinahawakan na ng required-field validation
+  if (!cleanAddr || !cleanBgy) return { ok: true, message: "" };
+
+  const known = LOOKUP_LIST.find((item) => item.patterns.includes(cleanBgy));
+  const patterns = known ? known.patterns : [cleanBgy];
+  if (patterns.some((pat) => containsWord(cleanAddr, pat))) return { ok: true, message: "" };
+
+  const inAddress = extractLocationFromAddress(address);
+  const selected = String(barangay).trim();
+  const detail =
+    inAddress.isMatched && inAddress.barangay !== (known?.name ?? selected)
+      ? `The address mentions Barangay ${inAddress.barangay}, but the barangay is set to ${selected}.`
+      : `The address does not mention Barangay ${selected}.`;
+
+  return { ok: false, message: `${detail} Edit the address or the barangay so they match.` };
+};

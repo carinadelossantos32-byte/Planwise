@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MALOLOS_BARANGAY_LIST, extractLocationFromAddress, getCoordinatesByBarangay } from "./geoHelper";
+import { MALOLOS_BARANGAY_LIST, checkAddressBarangay, extractLocationFromAddress, getCoordinatesByBarangay } from "./geoHelper";
 
 const CITY_CENTER = { latitude: 14.8436, longitude: 120.8114 };
 
@@ -36,5 +36,38 @@ describe("extractLocationFromAddress", () => {
 
   it("marks an empty address as unassigned at the city center", () => {
     expect(extractLocationFromAddress("")).toEqual({ barangay: "Unassigned", ...CITY_CENTER, isMatched: false });
+  });
+});
+
+describe("checkAddressBarangay", () => {
+  const [first, second] = MALOLOS_BARANGAY_LIST;
+
+  it("accepts an address that mentions the selected barangay", () => {
+    expect(checkAddressBarangay(`123 Purok 2, ${first.name}, Malolos, Bulacan`, first.name).ok).toBe(true);
+    expect(checkAddressBarangay(`purok 2 ${first.name.toUpperCase()} malolos`, first.name).ok).toBe(true);
+  });
+
+  it("accepts the Sto. abbreviation for a Santo barangay", () => {
+    const santo = MALOLOS_BARANGAY_LIST.find((b) => b.name.startsWith("Santo "));
+    const abbreviated = santo.name.replace("Santo ", "Sto. ");
+    expect(checkAddressBarangay(`45 Rizal St., ${abbreviated}, Malolos`, santo.name).ok).toBe(true);
+  });
+
+  it("rejects an address that names a different barangay", () => {
+    const result = checkAddressBarangay(`123 Purok 2, ${second.name}, Malolos, Bulacan`, first.name);
+    expect(result.ok).toBe(false);
+    expect(result.message).toContain(second.name);
+    expect(result.message).toContain(first.name);
+  });
+
+  it("rejects an address that names no barangay at all", () => {
+    const result = checkAddressBarangay("123 Unknown Street", first.name);
+    expect(result.ok).toBe(false);
+    expect(result.message).toContain("does not mention");
+  });
+
+  it("leaves empty fields to the required-field validation", () => {
+    expect(checkAddressBarangay("", first.name).ok).toBe(true);
+    expect(checkAddressBarangay("123 Purok 2", "").ok).toBe(true);
   });
 });

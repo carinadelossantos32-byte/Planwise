@@ -4,6 +4,7 @@ import { collection, writeBatch, doc, serverTimestamp, query, where, getDocs } f
 import { db, auth } from "../../firebase-config";
 import { AlertCircle, CheckCircle, FileText } from "lucide-react";
 import { findDuplicate } from "../../utils/checkDuplicates";
+import { MALOLOS_BARANGAY_LIST, checkAddressBarangay } from "../../utils/geoHelper";
 import "../ImportModal/import-modal.css";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "../../firebase-config";
@@ -43,6 +44,10 @@ const processSignatureQueue = async (items, collectionName) => {
         });
     }
 };
+
+const hasLocationMismatch = (client) => !checkAddressBarangay(client.address, client.barangay).ok;
+const countFlagged = (clients) =>
+    clients.filter((c) => c._errors.length > 0 || hasLocationMismatch(c)).length;
 
 function KoboSyncModal({ onClose, onSuccess, config }) {
     const [step, setStep] = useState("fetching");
@@ -215,9 +220,14 @@ function KoboSyncModal({ onClose, onSuccess, config }) {
                     }
                 }
 
+                // 5. Rows whose address and barangay disagree stay editable in the preview
+                records.forEach((record) => {
+                    record._needsLocationFix = hasLocationMismatch(record);
+                });
+
                 setParsedClients(records);
                 setDuplicates(dupResults);
-                setErrorCount(records.filter((c) => c._errors.length > 0).length);
+                setErrorCount(countFlagged(records));
                 setStep("preview");
             } catch (err) {
                 console.error("Kobo data retrieval failure:", err.message);
@@ -238,7 +248,16 @@ function KoboSyncModal({ onClose, onSuccess, config }) {
 
         setParsedClients(updatedClients);
         setDuplicates(updatedDuplicates);
-        setErrorCount(updatedClients.filter((c) => c._errors.length > 0).length);
+        setErrorCount(countFlagged(updatedClients));
+    };
+
+    // Lets the user correct a typo in the address or a wrong barangay before saving
+    const handleLocationEdit = (index, field, value) => {
+        const updatedClients = parsedClients.map((client, idx) =>
+            idx === index ? { ...client, [field]: value } : client
+        );
+        setParsedClients(updatedClients);
+        setErrorCount(countFlagged(updatedClients));
     };
 
     const handleSave = async () => {
@@ -258,6 +277,7 @@ function KoboSyncModal({ onClose, onSuccess, config }) {
                         _existingRecord,
                         _skip,
                         _overwrite,
+                        _needsLocationFix,
                         _signatureDownloadUrl,
                         _signatureFilename,
                         ...clean
@@ -352,6 +372,16 @@ function KoboSyncModal({ onClose, onSuccess, config }) {
                             </div>
                         )}
 
+                        {parsedClients.some(hasLocationMismatch) && (
+                            <div className="import-warning">
+                                <AlertCircle size={16} />
+                                <span>
+                                    {parsedClients.filter(hasLocationMismatch).length} record(s) have an address and barangay
+                                    that do not match. Edit the address or the barangay in the highlighted rows, or skip them.
+                                </span>
+                            </div>
+                        )}
+
                         <div className="import-preview-table-wrapper">
                             <table className="import-preview-table">
                                 <thead>
@@ -362,8 +392,13 @@ function KoboSyncModal({ onClose, onSuccess, config }) {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {parsedClients.map((client, index) => (
-                                        <tr key={index} className={client._errors.length > 0 ? "row-error" : client._isDuplicate ? "row-duplicate" : ""}>
+                                    {parsedClients.map((client, index) => {
+                                        const mismatch = hasLocationMismatch(client);
+                                        const problems = mismatch
+                                            ? [...client._errors, "Address and barangay do not match"]
+                                            : client._errors;
+                                        return (
+                                        <tr key={index} className={problems.length > 0 ? "row-error" : client._isDuplicate ? "row-duplicate" : ""}>
                                             {config.columns.map((col) => (
                                                 <td key={col.key}>
                                                     {col.key === "_index" ? (
@@ -376,14 +411,36 @@ function KoboSyncModal({ onClose, onSuccess, config }) {
                                                         ) : (
                                                             <span style={{ fontSize: "11px", color: "#9ca3af" }}>None</span>
                                                         )
+                                                    ) : client._needsLocationFix && col.key === "address" ? (
+                                                        <input
+                                                            type="text"
+                                                            aria-label="Address"
+                                                            value={client.address || ""}
+                                                            onChange={(e) => handleLocationEdit(index, "address", e.target.value)}
+                                                            style={{ minWidth: 260, padding: "4px 6px", border: `1px solid ${mismatch ? "#dc2626" : "#16a34a"}`, borderRadius: 4 }}
+                                                        />
+                                                    ) : client._needsLocationFix && col.key === "barangay" ? (
+                                                        <select
+                                                            aria-label="Barangay"
+                                                            value={client.barangay || ""}
+                                                            onChange={(e) => handleLocationEdit(index, "barangay", e.target.value)}
+                                                            style={{ padding: "4px 6px", border: `1px solid ${mismatch ? "#dc2626" : "#16a34a"}`, borderRadius: 4 }}
+                                                        >
+                                                            {!MALOLOS_BARANGAY_LIST.some((b) => b.name === client.barangay) && (
+                                                                <option value={client.barangay || ""}>{client.barangay || "Select barangay"}</option>
+                                                            )}
+                                                            {MALOLOS_BARANGAY_LIST.map((b) => (
+                                                                <option key={b.name} value={b.name}>{b.name}</option>
+                                                            ))}
+                                                        </select>
                                                     ) : (
                                                         client[col.key] || "—"
                                                     )}
                                                 </td>
                                             ))}
                                             <td>
-                                                {client._errors.length > 0 ? (
-                                                    <span className="error-badge">{client._errors.join(", ")}</span>
+                                                {problems.length > 0 ? (
+                                                    <span className="error-badge">{problems.join(", ")}</span>
                                                 ) : client._isDuplicate ? (
                                                     <span className="duplicate-badge">Duplicate Detected</span>
                                                 ) : client._overwrite ? (
@@ -393,6 +450,15 @@ function KoboSyncModal({ onClose, onSuccess, config }) {
                                                 )}
                                             </td>
                                             <td>
+                                                {mismatch && !client._isDuplicate && (
+                                                    <button
+                                                        type="button"
+                                                        className="btn-skip-dup"
+                                                        onClick={() => handleSkipRecord(index)}
+                                                    >
+                                                        Skip
+                                                    </button>
+                                                )}
                                                 {client._isDuplicate && (
                                                     <div style={{ display: "flex", gap: 6 }}>
                                                         <button
@@ -419,7 +485,8 @@ function KoboSyncModal({ onClose, onSuccess, config }) {
                                                 )}
                                             </td>
                                         </tr>
-                                    ))}
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>

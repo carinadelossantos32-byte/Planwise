@@ -171,3 +171,33 @@
     animation: none;
   }
 }
+
+/* ---------- Opening upward (not enough room below) ---------- */
+
+.report-select.opens-up .report-select-menu {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+
+/* ---------- As a form field ---------- */
+
+.report-select.form-select {
+  --rs-accent: #2f5bff;
+  --rs-accent-tint: #e8eeff;
+  --rs-ring: #e8eeff;
+  --rs-border: #d5dbe9;
+  --rs-border-hover: #b9c3dd;
+  --rs-text: #0f172a;
+  --rs-height: 42px;
+  --rs-radius: 10px;
+}
+
+.report-select.has-error .report-select-trigger {
+  border-color: #d92d20;
+}
+
+.report-select.has-error .report-select-trigger:focus-visible,
+.report-select.has-error.is-open .report-select-trigger {
+  border-color: #d92d20;
+  box-shadow: 0 0 0 4px #fef3f2;
+}
