@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Routes, Route, useLocation } from "react-route
 import Sidebar from "./components/Sidebar/Sidebar";
 import ErrorBoundary from "./components/ErrorBoundary/ErrorBoundary";
 import Login from "./pages/Login/Login";
+import Landing from "./pages/Landing/Landing";
 import { auth, db, doc, getDoc, onAuthStateChanged } from "./firebase-config";
 import "./app-shell.css";
 
@@ -15,7 +16,7 @@ const Reports = lazy(() => import("./pages/Reports/Reports"));
 const Settings = lazy(() => import("./pages/Settings/Settings"));
 const Inventory = lazy(() => import("./pages/Inventory/Inventory"));
 
-const NO_SIDEBAR_ROUTES = ["/login"];
+const NO_SIDEBAR_ROUTES = ["/", "/login"];
 
 function PageLoader() {
   return (
@@ -104,7 +105,7 @@ function Layout() {
         <ErrorBoundary key={location.pathname}>
         <Suspense fallback={<PageLoader />}>
         <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
 
           <Route
