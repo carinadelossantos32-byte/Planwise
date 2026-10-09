@@ -788,9 +788,9 @@ function Inventory() {
                                                         <button type="button" className="inv-btn inv-btn--icon inv-btn--danger" title="Deduct stock" aria-label={`Deduct stock from ${item.name}`} onClick={(event) => { event.stopPropagation(); openRhuDeduct(item); }}>
                                                             <SquareMinus size={16} />
                                                         </button>
-                                                        <button type="button" className="inv-btn inv-btn--icon inv-btn--outline" title="Edit details" aria-label={`Edit ${item.name}`} onClick={(event) => { event.stopPropagation(); setSelectedRHU(item); setshowRHUInfo(true); setEditingRHUId(null); }}>
+                                                        {/* <button type="button" className="inv-btn inv-btn--icon inv-btn--outline" title="Edit details" aria-label={`Edit ${item.name}`} onClick={(event) => { event.stopPropagation(); setSelectedRHU(item); setshowRHUInfo(true); setEditingRHUId(null); }}>
                                                             <SquarePen size={16} />
-                                                        </button>
+                                                        </button> */}
                                                     </div>
                                                 </td>
                                             </tr>
