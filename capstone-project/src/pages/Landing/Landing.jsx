@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import {
   ArrowRight,
   ClipboardList,
@@ -67,7 +67,9 @@ function scrollToId(event, id) {
 }
 
 function Landing() {
+  const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
+  const [leaving, setLeaving] = useState(null);
 
   // Tab title while this page is open
   useEffect(() => {
@@ -106,8 +108,26 @@ function Landing() {
   }, []);
 
 
+  // Log In buttons: a colour wipe grows from the button, then the login page opens
+  const goToLogin = (event) => {
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const modified = event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0;
+    if (reduce || modified) return;           // plain navigation, or open in a new tab
+    event.preventDefault();
+    if (leaving) return;
+    const box = event.currentTarget.getBoundingClientRect();
+    setLeaving({ x: box.left + box.width / 2, y: box.top + box.height / 2 });
+    setTimeout(() => navigate("/login"), 650);
+  };
+
   return (
     <div className="lp">
+      {leaving && (
+        <div className="lp-leave" style={{ "--x": `${leaving.x}px`, "--y": `${leaving.y}px` }} aria-hidden="true">
+          <img src={LOGO} alt="" width="240" height="240" />
+        </div>
+      )}
+
       <a className="lp-skip" href="#main-content">Skip to content</a>
 
       {/* ── Navigation ── */}
@@ -126,7 +146,7 @@ function Landing() {
             ))}
           </nav>
 
-          <Link to="/login" className="lp-btn lp-btn--gold lp-btn--sm">
+          <Link to="/login" onClick={goToLogin} className="lp-btn lp-btn--gold lp-btn--sm">
             Log In
           </Link>
         </div>
@@ -146,7 +166,7 @@ function Landing() {
                 Health Office.
               </p>
               <div className="lp-actions">
-                <Link to="/login" className="lp-btn lp-btn--gold lp-btn--lg">
+                <Link to="/login" onClick={goToLogin} className="lp-btn lp-btn--gold lp-btn--lg">
                   Log In to PlanWise <ArrowRight size={18} aria-hidden="true" />
                 </Link>
                 <a
@@ -222,7 +242,7 @@ function Landing() {
           <div className="lp-wrap lp-cta-inner lp-reveal">
             <h2 id="lp-cta-title" className="lp-h2">Ready to get started?</h2>
             <p className="lp-sub">Sign in with your CPD or Health Office account.</p>
-            <Link to="/login" className="lp-btn lp-btn--gold lp-btn--lg">
+            <Link to="/login" onClick={goToLogin} className="lp-btn lp-btn--gold lp-btn--lg">
               Log In to PlanWise <ArrowRight size={18} aria-hidden="true" />
             </Link>
           </div>
@@ -251,7 +271,7 @@ function Landing() {
                   <a href={`#${link.id}`} onClick={(e) => scrollToId(e, link.id)}>{link.label}</a>
                 </li>
               ))}
-              <li><Link to="/login">Log In</Link></li>
+              <li><Link to="/login" onClick={goToLogin}>Log In</Link></li>
             </ul>
           </nav>
 
