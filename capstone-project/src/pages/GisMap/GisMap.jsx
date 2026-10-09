@@ -309,7 +309,8 @@ function GisMap({ getCollection }){
                             educationMale: data.educational_attainment_female || data.educational_attainment_male || '',
                             educationFemale: data.educational_attainment_female || '',
                             maleBirthdate: data.birthdate_male || '',
-                            femaleBirthdate: data.birthdate_female || ''
+                            femaleBirthdate: data.birthdate_female || '',
+                            signatureUrl: data.signatureUrl || data.signature || data.signature_url || data.signatureURL || null
                         };
                     })
                     .filter(Boolean);
@@ -523,15 +524,6 @@ function GisMap({ getCollection }){
                 />
             )}
         </div>
-            <div className="pop-up">
-                {selectedFamily && (
-                    <MapPopUp
-                        family={selectedFamily}
-                        onClose={() => setSelectedFamily(null)}
-                    />
-                )}
-            </div>
-
             <PageHeader title="Geographic Coverage Map" flush>
                 <div className="gis-header-right">
                     <div className="search-container">
