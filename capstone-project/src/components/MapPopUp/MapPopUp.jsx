@@ -159,13 +159,55 @@ export default function MapPopUp({ family, onClose }) {
               <tr className="section-title-row">
                 <td colSpan="3">SIGNATURE</td>
               </tr>
+              {/* SECTION: SIGNATURE */}
+              <tr className="section-title-row">
+                <td colSpan="3">SIGNATURE</td>
+              </tr>
               <tr>
-                <td colSpan="3" id="signature">
-                  {family.signatureUrl ? (
-                    <img src={family.signatureUrl} alt="Signature" style={{ maxHeight: '60px' }} />
-                  ) : (
-                    "Signature Verified"
-                  )}
+                <td colSpan="3" id="signature" style={{ textAlign: 'center', padding: '12px' }}>
+                  {(() => {
+                    const sigData = family.signature || family.signatureUrl || family.signature_url;
+                    
+                    if (!sigData) {
+                      return <span style={{ color: '#94A3B8', fontStyle: 'italic' }}>No Signature Recorded</span>;
+                    }
+
+                    // Kung valid image URL o Base64 Data URI
+                    const isBase64OrUrl = typeof sigData === 'string' && (
+                      sigData.startsWith('http') || 
+                      sigData.startsWith('data:image') || 
+                      sigData.startsWith('blob:')
+                    );
+
+                    if (isBase64OrUrl) {
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                          <img 
+                            src={sigData} 
+                            alt="Respondent Signature" 
+                            style={{ 
+                              maxHeight: '80px', 
+                              maxWidth: '220px', 
+                              objectFit: 'contain',
+                              backgroundColor: '#F8FAFC',
+                              padding: '6px 12px',
+                              borderRadius: '6px',
+                              border: '1px solid #E2E8F0'
+                            }} 
+                          />
+                          <span style={{ fontSize: '11px', color: '#16A34A', fontWeight: '600' }}>
+                            ✓ Electronically Signed
+                          </span>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <span style={{ color: '#0F172A', fontWeight: '500' }}>
+                        {String(sigData)}
+                      </span>
+                    );
+                  })()}
                 </td>
               </tr>
             </tbody>
