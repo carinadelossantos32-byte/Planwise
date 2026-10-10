@@ -548,3 +548,23 @@
     animation: none !important;
   }
 }
+
+/* ---------- Summary / Official Report tabs ----------
+   Every report layout holds the same two parts: the summary (cards, charts,
+   monthly table) and the official report table with its import and export
+   buttons. The tab picks which part shows. Status bars, error notices, and
+   the import and export dialogs stay visible on both tabs. */
+
+.report-stage[data-view="summary"] > :is(.form-a-container, .form-b-container, .form-c-container, .modernfp-container, .modern-shifters)
+  > :is(.official-report, .official-report-card, .modernfp-report-card) {
+  display: none;
+}
+
+.report-stage[data-view="official"] > :is(.form-a-container, .form-b-container, .form-c-container, .modernfp-container, .modern-shifters)
+  > :is(
+    .form-a-cards, .form-b-cards, .form-c-cards, .modernfp-cards, .analytics-cards,
+    .summary-grid, .solo-couple-summary, .monthly-summary,
+    .form-c-summary-card, .form-c-monthly-card, .modernfp-distribution-card, .analytics-panel
+  ) {
+  display: none;
+}

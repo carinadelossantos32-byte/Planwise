@@ -47,6 +47,7 @@ function Inventory() {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [viewRHUId, setViewRHUId] = useState(null);
     const [exportFormat, setExportFormat] = useState(null);
+    const [activeTab, setActiveTab] = useState("overview");
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [showAllocateError, setShowAllocateError] = useState(false);
     const [showConfirmAllocate, setShowConfirmAllocate] = useState(false);
@@ -555,7 +556,31 @@ function Inventory() {
     return (
         <>
             <div className="inv-page">
-                <PageHeader title="Inventory">
+                <PageHeader
+                    title="Inventory"
+                    footer={(
+                <div className="page-head-tabs" role="tablist" aria-label="Inventory views">
+                    <button
+                        type="button"
+                        role="tab"
+                        aria-selected={activeTab === "overview"}
+                        className={`page-head-tab${activeTab === "overview" ? " is-active" : ""}`}
+                        onClick={() => setActiveTab("overview")}
+                    >
+                        Overview
+                    </button>
+                    <button
+                        type="button"
+                        role="tab"
+                        aria-selected={activeTab === "matrix"}
+                        className={`page-head-tab${activeTab === "matrix" ? " is-active" : ""}`}
+                        onClick={() => setActiveTab("matrix")}
+                    >
+                        Stocks Matrix
+                    </button>
+                </div>
+                    )}
+                >
                     <button
                         type="button"
                         className="page-head-btn"
@@ -568,6 +593,7 @@ function Inventory() {
                 </PageHeader>
 
                 <div className={`inv-content${isRefreshing ? " is-refreshing" : ""}${isLoading && !isRefreshing ? " is-loading" : ""}`}>
+                    {activeTab === "overview" && (<>
                     <div className="inv-kpis">
                         {summaryCards.map(({ label, value, note, icon: Icon, tone }) => (
                             <div className={`inv-kpi inv-kpi--${tone}`} key={label}>
@@ -801,6 +827,9 @@ function Inventory() {
                         </div>
                     </section>
 
+                    </>)}
+
+                    {activeTab === "matrix" && (
                     <section className="inv-card">
                         <div className="inv-card-head">
                             <div>
@@ -861,6 +890,7 @@ function Inventory() {
                             </table>
                         </div>
                     </section>
+                    )}
                 </div>
 
                 {exportFormat && (

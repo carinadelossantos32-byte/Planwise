@@ -24,6 +24,7 @@ function Reports() {
     const [barangayFilter, setBarangayFilter] = useState("all");
     const [methodFilter, setMethodFilter] = useState("all");
     const [reportType, setReportType] = useState("form-a");
+    const [view, setView] = useState("summary");
     const [clients, setClients] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -458,7 +459,31 @@ function Reports() {
 
     return (
         <>
-            <PageHeader title="Reports & Analytics">
+            <PageHeader
+                title="Reports & Analytics"
+                footer={(
+                    <div className="page-head-tabs" role="tablist" aria-label="Report views">
+                        <button
+                            type="button"
+                            role="tab"
+                            aria-selected={view === "summary"}
+                            className={`page-head-tab${view === "summary" ? " is-active" : ""}`}
+                            onClick={() => setView("summary")}
+                        >
+                            Summary
+                        </button>
+                        <button
+                            type="button"
+                            role="tab"
+                            aria-selected={view === "official"}
+                            className={`page-head-tab${view === "official" ? " is-active" : ""}`}
+                            onClick={() => setView("official")}
+                        >
+                            Official Report
+                        </button>
+                    </div>
+                )}
+            >
                 <button
                     type="button"
                     className="page-head-btn"
@@ -496,7 +521,7 @@ function Reports() {
                         ))}
                     </div>
 
-                    <div ref={stageRef} className={`report-stage${loading || refreshing ? " is-loading" : ""}`}>
+                    <div ref={stageRef} data-view={view} className={`report-stage${loading || refreshing ? " is-loading" : ""}`}>
                         {renderAnalytics()}
                     </div>
                 </div>
