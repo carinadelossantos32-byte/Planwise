@@ -94,12 +94,14 @@ const FP_METHOD_OPTIONS = [
 ];
 
 function GisMap({ getCollection }){
+    //filters
     const [isFiltersOpen, setIsFiltersOpen] = useState(true);
     const [selectedBarangay, setSelectedBarangay] = useState("");
     const [mapTrigger, setMapTrigger] = useState(null);
     const [selectedFPMethod, setSelectedFPMethod] = useState('all');
     const [mapMode, setMapMode] = useState('markers');
 
+    //search and suggestions
     const [searchQuery, setSearchQuery] = useState("");
     const [suggestions, setSuggestions] = useState([]);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -107,16 +109,19 @@ function GisMap({ getCollection }){
 
     const [isExportOpen, setIsExportOpen] = useState(false);
 
+    //map and location states
     const [zoom, setZoom] = useState(13);
     const [userLocation, setUserLocation] = useState(null);
     const [activeLayer, setActiveLayer] = useState('standard');
     const [isLayerMenuOpen, setIsLayerMenuOpen] = useState(false);
 
+    //selected family for popup
     const [selectedFamily, setSelectedFamily] = useState(null);
     const [showInfo, setShowInfo] = useState(true);
 
     const [families, setFamilies] = useState([]);
 
+    //rhu data and low stock alert states
     const [rhu, setRhu] = useState([]);
     const [isLowStockEnabled, setIsLowStockEnabled] = useState(true);
     const [methodLimits, setMethodLimits] = useState({});
