@@ -162,6 +162,8 @@ ul.suggestions-list {
     border-radius: 14px;
     padding: 0px 0px 6px 0px;
     box-shadow: 0 8px 24px -8px rgba(15, 23, 42, 0.25);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+
 }
 
 .map-filters p, option, label {

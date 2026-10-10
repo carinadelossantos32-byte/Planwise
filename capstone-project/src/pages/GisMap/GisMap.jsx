@@ -171,12 +171,13 @@ function GisMap({ getCollection }){
         if (!isLowStockEnabled || !rhu || !rhu.length) return [];
 
         const markers = [];
-        const normalizeKey = (k) => k.toLowerCase().replace(/[/\s-]/g, '_');
+        const normalizeKey = (k) => (k || '').toString().toLowerCase().trim().replace(/[/\s-]/g, '_');
 
         rhu.forEach((rhuDoc) => {
-            const stockMap = rhuDoc.stockByMethod;
+            const stockMap = rhuDoc.stockByMethod || {};
             const depletedMethods = [];
 
+            // KASO 1: Walang inventory record kahit ano
             if (!stockMap || typeof stockMap !== 'object' || Object.keys(stockMap).length === 0) {
                 depletedMethods.push({
                     method: "NO INVENTORY RECORDED",
@@ -185,26 +186,33 @@ function GisMap({ getCollection }){
                     isUninitialized: true
                 });
             } else {
-                Object.entries(stockMap).forEach(([methodName, qty]) => {
-                    const count = Number(qty);
+                // KASO 2: Isa-isahin ang bawat opisyal na method sa INVENTORY_FP_METHODS
+                INVENTORY_FP_METHODS.forEach((invMethod) => {
+                    const normInvId = normalizeKey(invMethod.id || invMethod.name);
+
+                    // Hanapin kung may existing key sa stockMap ng RHU
+                    const matchedKey = Object.keys(stockMap).find(
+                        k => normalizeKey(k) === normInvId || normalizeKey(k).includes(normInvId)
+                    );
+
+                    // KUNG WALA SA DB, 0 ANG STOCK (Tulad ng Pills, IUD, at Implant ni RHU 8)
+                    const count = matchedKey !== undefined ? Number(stockMap[matchedKey]) : 0;
                     if (isNaN(count)) return;
 
-                    const normName = normalizeKey(methodName);
-                    // only the methods tracked in Inventory can be low on stock
-                    if (!INVENTORY_FP_METHODS.some((m) => m.id === normName)) return;
+                    // Kunin ang limit mula sa settings
                     let limitForThisMethod = defaultThreshold;
-
                     if (methodLimits && typeof methodLimits === 'object') {
-                        if (methodLimits[methodName] !== undefined) {
-                            limitForThisMethod = Number(methodLimits[methodName]);
-                        } else if (methodLimits[normName] !== undefined) {
-                            limitForThisMethod = Number(methodLimits[normName]);
+                        if (methodLimits[normInvId] !== undefined) {
+                            limitForThisMethod = Number(methodLimits[normInvId]);
+                        } else if (matchedKey && methodLimits[matchedKey] !== undefined) {
+                            limitForThisMethod = Number(methodLimits[matchedKey]);
                         }
                     }
 
+                    // Kapag count <= limit (hal. 0 <= 8 para sa Pills), idagdag sa babala
                     if (count <= limitForThisMethod) {
                         depletedMethods.push({
-                            method: methodName.toUpperCase().replace(/_/g, ' '),
+                            method: (invMethod.name || normInvId).toUpperCase().replace(/_/g, ' '),
                             count: count,
                             limit: limitForThisMethod,
                             isUninitialized: false
@@ -215,9 +223,16 @@ function GisMap({ getCollection }){
 
             if (depletedMethods.length === 0) return;
 
+            // Kunin ang coordinates mula sa GeoPoint object (location o coordinates)
             const geo = rhuDoc.coordinates || rhuDoc.location;
-            const rhuLat = Number(geo?.latitude ?? rhuDoc.lat ?? rhuDoc.latitude);
-            const rhuLng = Number(geo?.longitude ?? rhuDoc.lng ?? rhuDoc.longitude);
+            let rhuLat = Number(geo?.latitude ?? geo?._lat ?? rhuDoc.lat ?? rhuDoc.latitude);
+            let rhuLng = Number(geo?.longitude ?? geo?._long ?? rhuDoc.lng ?? rhuDoc.longitude);
+
+            // Fallback kung sakaling array ang format
+            if ((isNaN(rhuLat) || isNaN(rhuLng)) && Array.isArray(geo)) {
+                rhuLat = parseFloat(geo[0]);
+                rhuLng = parseFloat(geo[1]);
+            }
 
             if (!isNaN(rhuLat) && !isNaN(rhuLng) && rhuLat !== 0 && rhuLng !== 0) {
                 markers.push({
