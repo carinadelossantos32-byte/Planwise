@@ -113,3 +113,63 @@ export const checkAddressBarangay = (address = "", barangay = "") => {
 
   return { ok: false, message: `${detail} Edit the address or the barangay so they match.` };
 };
+
+// 6. Normalizes a barangay as written in a Kobo choice list ("san_agustin", "Sto. Rosario") to the exact name the app uses
+const stripMarks = (text) => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+const normalizeBarangayText = (text) =>
+  stripMarks(String(text || ""))
+    .toLowerCase()
+    .replace(/[_-]/g, " ")
+    .replace(/\(pob\.?\)/g, " ")
+    .replace(/\bpob\.?(?=\s|$)/g, " ")
+    .replace(/\b(barangay|brgy|bgy)\b\.?/g, " ")
+    .replace(/[_\-.,()]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const BARANGAY_VARIANTS = MALOLOS_BARANGAY_LIST.map((bgy) => {
+  const base = normalizeBarangayText(bgy.name);
+  const variants = new Set([base]);
+  if (base.startsWith("santo ")) variants.add(base.replace("santo ", "sto "));
+  if (base.startsWith("santa ")) variants.add(base.replace("santa ", "sta "));
+  // the Kobo form drops the ñ from its choice values: "santo_ni_o"
+  if (base.includes("nino")) variants.add(base.replace("nino", "ni o"));
+  return { name: bgy.name, variants };
+});
+
+// The app's barangay name, or "" when the value matches none of the 51
+export const canonicalBarangayName = (value) => {
+  const normalized = normalizeBarangayText(value);
+  if (!normalized) return "";
+  return BARANGAY_VARIANTS.find((bgy) => bgy.variants.has(normalized))?.name ?? "";
+};
+
+// Center of a barangay, or null when the name is unknown (never the city-center fallback)
+export const findBarangayCenter = (barangayName) => {
+  const found = MALOLOS_BARANGAY_LIST.find((b) => b.name === barangayName);
+  return found ? { latitude: found.lat, longitude: found.lng } : null;
+};
+
+export const isMalolos = (value) => normalizeBarangayText(value).includes("malolos");
+
+// One readable address from the pieces a respondent filled in; blank pieces are left out.
+// forSearch drops the "(Pob.)" tag and assumes Malolos when no municipality was given, which is what a geocoder needs.
+export const buildAddressLabel = (parts = {}, { forSearch = false } = {}) => {
+  const clean = (v) => String(v ?? "").trim().replace(/\s+/g, " ");
+  const barangay = forSearch ? clean(parts.barangay).replace(/\s*\(pob\.?\)/i, "") : clean(parts.barangay);
+  const municipality = clean(parts.municipality) || (forSearch ? "Malolos" : "");
+  return [clean(parts.houseNumber), clean(parts.street), barangay, municipality, "Bulacan", "Philippines"]
+    .filter(Boolean)
+    .join(", ");
+};
+
+// True when a coordinate is just the city center or a barangay center, which marks a location that was never found for the address
+export const isPlaceholderCoordinate = (lat, lng) => {
+  const la = Number(lat);
+  const lo = Number(lng);
+  if (!Number.isFinite(la) || !Number.isFinite(lo)) return true;
+  const near = (a, b) => Math.abs(a - b) < 0.00002;
+  if (near(la, 14.8436) && near(lo, 120.8114)) return true;
+  return MALOLOS_BARANGAY_LIST.some((b) => near(la, b.lat) && near(lo, b.lng));
+};

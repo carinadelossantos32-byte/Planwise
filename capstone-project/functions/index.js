@@ -9,6 +9,8 @@ if (!admin.apps.length) {
 }
 
 const KOBO_TOKEN = defineSecret("KOBO_TOKEN");
+const GOOGLE_MAPS_KEY = defineSecret("GOOGLE_MAPS_KEY"); // Geocoding API
+const GOOGLE_STATIC_KEY = defineSecret("GOOGLE_STATIC_KEY"); // Maps Static API (the exported barangay map)
 const KOBO_FORM_ID = "a97Fh5NxbpGbDkHENH3qfG";
 const FORM_2_ID = "aW7kYXty3e9JZ9on94eZYk";
 const NOMINATIM_MIN_INTERVAL_MS = 1100;
@@ -438,6 +440,303 @@ exports.reverseGeocodeBatch = onCall(
     return {
       addresses: normalizedLocations.map((location) => addressByKey.get(location.key)),
     };
+  }
+);
+
+// ========================================
+// GEOCODE KOBO ADDRESSES (address -> latitude and longitude)
+// ========================================
+// Search area: the bounding box of Malolos, with a little margin. Results outside it are never returned,
+// and the app checks every answer against the barangay boundaries again.
+const MALOLOS_VIEWBOX = "120.77,14.90,120.88,14.745"; // left,top,right,bottom
+
+function geocodePrecision(place) {
+  const address = place.address || {};
+  // a numbered house, a building, or a named place such as a school or a store is one specific spot
+  const specificPlace = ["amenity", "shop", "building", "office", "tourism", "leisure", "craft", "healthcare"];
+  if (address.house_number || ["house", "building"].includes(place.addresstype) || specificPlace.includes(place.category)) {
+    return "house";
+  }
+  if (place.category === "highway" || ["road", "street"].includes(place.addresstype)) return "street";
+  return "area";
+}
+
+// "left,top,right,bottom" inside the Malolos search area, or "" when it is not a usable box
+function cleanViewbox(viewbox) {
+  if (typeof viewbox !== "string") return "";
+  const parts = viewbox.split(",").map(Number);
+  if (parts.length !== 4 || parts.some((n) => !Number.isFinite(n))) return "";
+  const [left, top, right, bottom] = parts;
+  if (left < 120.77 || right > 120.88 || top > 14.90 || bottom < 14.745 || left >= right || bottom >= top) return "";
+  return parts.map((n) => n.toFixed(5)).join(",");
+}
+
+// Up to five matches for one search text inside one search box
+async function searchPlaces(query, viewbox) {
+  const crypto = require("crypto");
+  const key = crypto.createHash("sha1").update(`v2|${viewbox}|${query.toLowerCase().trim()}`).digest("hex");
+  const cache = admin.firestore().collection("geocodeCache").doc(key);
+
+  const cached = await cache.get();
+  if (cached.exists && cached.data().found) return cached.data();
+
+  const params = new URLSearchParams({
+    format: "jsonv2",
+    q: query,
+    limit: "5",
+    addressdetails: "1",
+    countrycodes: "ph",
+    viewbox,
+    bounded: "1",
+  });
+  const response = await queueNominatimRequest(`https://nominatim.openstreetmap.org/search?${params}`);
+  const places = Array.isArray(response.data) ? response.data : [];
+  if (places.length === 0) return null;
+
+  const candidates = places.map((place) => ({
+    lat: Number(place.lat),
+    lon: Number(place.lon),
+    displayName: place.display_name || "",
+    precision: geocodePrecision(place),
+  }));
+  const result = { found: true, ...candidates[0], candidates, queryUsed: query };
+  await cache.set({ ...result, updated_at: admin.firestore.FieldValue.serverTimestamp() });
+  return result;
+}
+
+// Google Geocoding API. Google only lets latitude and longitude be cached for 30 days, so cached answers expire after that.
+const GEOCODE_CACHE_MS = 30 * 24 * 60 * 60 * 1000;
+
+function googlePrecision(result) {
+  const types = result.types || [];
+  const kind = result.geometry?.location_type;
+  if (kind === "ROOFTOP") return "house";
+  if (types.some((t) => ["street_address", "premise", "subpremise", "establishment", "point_of_interest"].includes(t))) return "house";
+  if (kind === "RANGE_INTERPOLATED" || types.includes("route")) return "street";
+  return "area";
+}
+
+async function searchGoogle(query, viewbox, key) {
+  const crypto = require("crypto");
+  const cacheKey = crypto.createHash("sha1").update(`google-v1|${viewbox}|${query.toLowerCase().trim()}`).digest("hex");
+  const cache = admin.firestore().collection("geocodeCache").doc(cacheKey);
+
+  const cached = await cache.get();
+  if (cached.exists && cached.data().found && Number(cached.data().expires_at) > Date.now()) return cached.data();
+
+  // the app sends "left,top,right,bottom"; Google wants "south,west|north,east", and only uses it as a hint
+  const [left, top, right, bottom] = viewbox.split(",");
+  const params = new URLSearchParams({
+    address: query,
+    components: "country:PH|administrative_area:Bulacan",
+    bounds: `${bottom},${left}|${top},${right}`,
+    region: "ph",
+    language: "en",
+    key,
+  });
+  const response = await require("axios").get(
+    `https://maps.googleapis.com/maps/api/geocode/json?${params}`,
+    { timeout: 10000 }
+  );
+
+  const status = response.data?.status;
+  if (status === "ZERO_RESULTS") return null;
+  if (status !== "OK") {
+    // a key, billing, or quota problem: report it as the service not answering
+    console.warn("Google geocoding status:", status, response.data?.error_message || "");
+    throw new Error(`Google geocoding returned ${status}`);
+  }
+
+  const candidates = (response.data.results || []).slice(0, 5).map((result) => ({
+    lat: Number(result.geometry?.location?.lat),
+    lon: Number(result.geometry?.location?.lng),
+    precision: googlePrecision(result),
+  })).filter((c) => Number.isFinite(c.lat) && Number.isFinite(c.lon));
+  if (candidates.length === 0) return null;
+
+  const result = { found: true, ...candidates[0], candidates, queryUsed: query, provider: "google" };
+  await cache.set({ ...result, expires_at: Date.now() + GEOCODE_CACHE_MS, updated_at: admin.firestore.FieldValue.serverTimestamp() });
+  return result;
+}
+
+exports.geocodeAddressBatch = onCall(
+  {
+    secrets: [GOOGLE_MAPS_KEY],
+    region: "asia-southeast1",
+    invoker: "public",
+    timeoutSeconds: 180,
+    maxInstances: 1,
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "You must be signed in to look up addresses.");
+    }
+
+    const items = request.data?.items;
+    if (!Array.isArray(items) || items.length > 10) {
+      throw new HttpsError("invalid-argument", "Provide up to 10 addresses per request.");
+    }
+
+    const results = [];
+    for (const item of items) {
+      const queries = [item?.query, item?.fallbackQuery]
+        .filter((q) => typeof q === "string" && q.trim() && q.length <= 300);
+      if (queries.length === 0) {
+        throw new HttpsError("invalid-argument", "Each item needs an address to look up.");
+      }
+
+      // The barangay's own area is searched first, then the whole of Malolos
+      const barangayBox = cleanViewbox(item?.viewbox);
+      const boxes = barangayBox ? [barangayBox, MALOLOS_VIEWBOX] : [MALOLOS_VIEWBOX];
+
+      // Google is asked first; OpenStreetMap is the backup, and also knows some landmarks Google does not
+      const googleKey = GOOGLE_MAPS_KEY.value();
+      const providers = [
+        ...(googleKey ? [(query, box) => searchGoogle(query, box, googleKey)] : []),
+        (query, box) => searchPlaces(query, box),
+      ];
+
+      let result = null;
+      let failures = 0;
+      search: for (const search of providers) {
+        for (const box of boxes) {
+          for (const query of queries) {
+            try {
+              result = await search(query, box);
+            } catch (error) {
+              console.warn("Address lookup failed:", error.response?.status || error.message);
+              failures += 1;
+              continue search; // this service is not answering, so move on to the next one
+            }
+            if (result) break search;
+          }
+        }
+      }
+
+      // every service failed, so say so instead of reporting "not found"
+      if (!result && failures === providers.length) {
+        throw new HttpsError("unavailable", "The address lookup service is not responding.");
+      }
+      results.push(result || { found: false });
+    }
+
+    return { results };
+  }
+);
+
+// ========================================
+// STATIC MAP IMAGE (barangay map export)
+// ========================================
+// Google's map cannot be photographed from the page, so the export asks Google for a picture of the same view.
+function encodePolyline(points) {
+  let lastLat = 0;
+  let lastLng = 0;
+  let out = "";
+  const push = (value) => {
+    let v = value < 0 ? ~(value << 1) : value << 1;
+    while (v >= 0x20) {
+      out += String.fromCharCode((0x20 | (v & 0x1f)) + 63);
+      v >>= 5;
+    }
+    out += String.fromCharCode(v + 63);
+  };
+  for (const [lat, lng] of points) {
+    const la = Math.round(lat * 1e5);
+    const lo = Math.round(lng * 1e5);
+    push(la - lastLat);
+    push(lo - lastLng);
+    lastLat = la;
+    lastLng = lo;
+  }
+  return out;
+}
+
+exports.staticMapImage = onCall(
+  {
+    secrets: [GOOGLE_STATIC_KEY],
+    region: "asia-southeast1",
+    invoker: "public",
+    timeoutSeconds: 60,
+    maxInstances: 2,
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "You must be signed in to export a map.");
+    }
+
+    const { center, zoom, width, height, boundary, markers } = request.data || {};
+    const inMalolos = (lat, lng) => lat > 14.70 && lat < 14.95 && lng > 120.73 && lng < 120.93;
+    const lat = Number(center?.lat);
+    const lng = Number(center?.lng);
+    const z = Math.round(Number(zoom));
+    const w = Math.round(Number(width));
+    const h = Math.round(Number(height));
+    if (!inMalolos(lat, lng) || !(z >= 10 && z <= 20) || !(w >= 100 && w <= 640) || !(h >= 100 && h <= 640)) {
+      throw new HttpsError("invalid-argument", "The map view is not valid.");
+    }
+
+    const parts = [
+      `center=${lat.toFixed(6)},${lng.toFixed(6)}`,
+      `zoom=${z}`,
+      `size=${w}x${h}`,
+      "scale=2",
+      "maptype=roadmap",
+      // the map's own place and transit markers are kept but washed out, so only the client markers stand out
+      `style=${encodeURIComponent("feature:poi|element:labels|saturation:-100|lightness:60")}`,
+      `style=${encodeURIComponent("feature:transit|element:labels|saturation:-100|lightness:60")}`,
+    ];
+
+    // The barangay is drawn in full color. Everything around it is covered by a white veil: one big square joined to
+    // the barangay's outline by a zero-width bridge, which leaves the barangay itself uncovered.
+    if (Array.isArray(boundary) && boundary.length >= 3) {
+      const points = boundary.slice(0, 600).map(([a, b]) => [Number(a), Number(b)]).filter(([a, b]) => inMalolos(a, b));
+      if (points.length >= 3) {
+        const around = 0.4;
+        const square = [
+          [14.844782 - around, 120.812683 - around],
+          [14.844782 - around, 120.812683 + around],
+          [14.844782 + around, 120.812683 + around],
+          [14.844782 + around, 120.812683 - around],
+        ];
+        const area = (ring) => ring.reduce((sum, p, i) => {
+          const q = ring[(i + 1) % ring.length];
+          return sum + (p[1] * q[0] - q[1] * p[0]);
+        }, 0);
+        const ring = area(points) * area(square) > 0 ? [...points].reverse() : points;
+        const closed = ring[0][0] === ring[ring.length - 1][0] && ring[0][1] === ring[ring.length - 1][1] ? ring : [...ring, ring[0]];
+        const veil = [...square, square[0], closed[0], ...closed.slice(1), square[0]];
+
+        parts.push(`path=${encodeURIComponent(`fillcolor:0xffffff66|weight:0|enc:${encodePolyline(veil)}`)}`);
+        parts.push(`path=${encodeURIComponent(`color:0x0f172aff|weight:3|enc:${encodePolyline(closed)}`)}`);
+      }
+    }
+
+    // one group of small dots per color
+    const byColor = new Map();
+    for (const m of Array.isArray(markers) ? markers.slice(0, 400) : []) {
+      const a = Number(m?.lat);
+      const b = Number(m?.lng);
+      const color = /^[0-9a-fA-F]{6}$/.test(String(m?.color)) ? String(m.color) : "64748B";
+      if (!inMalolos(a, b)) continue;
+      if (!byColor.has(color)) byColor.set(color, []);
+      byColor.get(color).push(`${a.toFixed(5)},${b.toFixed(5)}`);
+    }
+    for (const [color, spots] of byColor) {
+      parts.push(`markers=${encodeURIComponent(`size:mid|color:0x${color}|${spots.join("|")}`)}`);
+    }
+
+    const url = `https://maps.googleapis.com/maps/api/staticmap?${parts.join("&")}&key=${GOOGLE_STATIC_KEY.value()}`;
+    if (url.length > 16000) {
+      throw new HttpsError("invalid-argument", "This barangay has too much detail for one map image.");
+    }
+
+    try {
+      const response = await require("axios").get(url, { responseType: "arraybuffer", timeout: 20000 });
+      return { image: `data:image/png;base64,${Buffer.from(response.data).toString("base64")}` };
+    } catch (error) {
+      console.warn("Static map failed:", error.response?.status || error.message);
+      throw new HttpsError("unavailable", "The map image could not be created.");
+    }
   }
 );
 

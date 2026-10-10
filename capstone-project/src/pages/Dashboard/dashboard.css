@@ -601,13 +601,6 @@ body {
   overflow: hidden;
 }
 
-.dash-map .leaflet-container {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  font-family: 'Inter', sans-serif;
-}
-
 
 /* ---------- FP method cards ---------- */
 

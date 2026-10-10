@@ -1,11 +1,11 @@
-import { useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router';
 import { ArrowUpRight, RefreshCw } from 'lucide-react';
 import PageHeader from '../../components/PageHeader/PageHeader';
-import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
+import { AdvancedMarker, AdvancedMarkerAnchorPoint, InfoWindow } from '@vis.gl/react-google-maps';
+import GoogleMapShell from '../../components/GoogleMap/GoogleMapShell';
 
-const MALOLOS_CENTER = [14.8527, 120.8160];
+const MALOLOS_CENTER = { lat: 14.8527, lng: 120.8160 };
 
 export const DashboardHeader = ({ title, refreshing, onRefresh }) => (
   <PageHeader title={title}>
@@ -69,17 +69,49 @@ export const GeoDistributionPanel = ({ data, subtitle }) => {
   );
 };
 
-// Leaflet only re-measures on window resize; the map box also changes size when the panel beside it grows
-const MapAutoResize = () => {
-  const map = useMap();
+// One small dot per client; clicking a dot shows who and where
+const ClientDots = ({ clients }) => {
+  const [openIndex, setOpenIndex] = useState(null);
+  const located = clients.filter(c => c.latitude && c.longitude);
+  const open = openIndex !== null ? located[openIndex] : null;
 
-  useEffect(() => {
-    const observer = new ResizeObserver(() => map.invalidateSize());
-    observer.observe(map.getContainer());
-    return () => observer.disconnect();
-  }, [map]);
+  return (
+    <>
+      {located.map((client, idx) => (
+        <AdvancedMarker
+          key={idx}
+          position={{ lat: Number(client.latitude), lng: Number(client.longitude) }}
+          anchorPoint={AdvancedMarkerAnchorPoint.CENTER}
+          onClick={() => setOpenIndex(idx)}
+        >
+          <span style={{
+            display: 'block',
+            width: '20px',
+            height: '20px',
+            boxSizing: 'border-box',
+            borderRadius: '50%',
+            background: '#E0563D',
+            border: '3px solid #ffffff',
+            boxShadow: '0 0 0 2px #0f172a, 0 0 0 5px rgba(255, 255, 255, 0.9), 0 6px 14px rgba(15, 23, 42, 0.55)',
+          }} />
+        </AdvancedMarker>
+      ))}
 
-  return null;
+      {open && (
+        <InfoWindow
+          position={{ lat: Number(open.latitude), lng: Number(open.longitude) }}
+          pixelOffset={[0, -8]}
+          onCloseClick={() => setOpenIndex(null)}
+        >
+          <div style={{ fontSize: '12px' }}>
+            <strong>{open.name || 'Client'}</strong><br />
+            {open.barangay || 'Malolos'}<br />
+            <span>Method: {open.fp_method || 'N/A'}</span>
+          </div>
+        </InfoWindow>
+      )}
+    </>
+  );
 };
 
 export const RegionalOverviewPanel = ({ clients, subtitle }) => (
@@ -89,42 +121,11 @@ export const RegionalOverviewPanel = ({ clients, subtitle }) => (
     action={<PanelLink to="/gis-map">Open GIS Map</PanelLink>}
   >
     <div className="dash-map">
-      <MapContainer
-        center={MALOLOS_CENTER}
-        zoom={12}
-        scrollWheelZoom={false}
-        style={{ height: '100%', width: '100%' }}
-      >
-        <MapAutoResize />
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-
-        {clients
-          .filter(c => c.latitude && c.longitude)
-          .map((client, idx) => (
-            <CircleMarker
-              key={idx}
-              center={[Number(client.latitude), Number(client.longitude)]}
-              radius={6}
-              pathOptions={{
-                color: '#091F7A',
-                fillColor: '#E0563D',
-                fillOpacity: 0.85,
-                weight: 2
-              }}
-            >
-              <Popup>
-                <div style={{ fontSize: '12px' }}>
-                  <strong>{client.name || 'Client'}</strong><br />
-                  {client.barangay || 'Malolos'}<br />
-                  <span>Method: {client.fp_method || 'N/A'}</span>
-                </div>
-              </Popup>
-            </CircleMarker>
-          ))}
-      </MapContainer>
+      <div style={{ position: 'absolute', inset: 0 }}>
+        <GoogleMapShell defaultCenter={MALOLOS_CENTER} defaultZoom={12} zoomControl faded gestureHandling="cooperative">
+          <ClientDots clients={clients} />
+        </GoogleMapShell>
+      </div>
     </div>
   </Panel>
 );

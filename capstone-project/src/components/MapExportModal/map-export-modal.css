@@ -344,7 +344,7 @@ select.custom-select {
   border-right: 2px solid #0f172a;
 }
 
-.mx-sheet-map .leaflet-container {
+.mx-sheet-map > div:first-child {
   position: absolute;
   inset: 0;
   background: #ffffff;

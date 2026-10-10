@@ -1,0 +1,60 @@
+/* The map fills whatever box it is placed in */
+.gm-map-root {
+  width: 100%;
+  height: 100%;
+}
+
+/* Shown in place of a map when the Google Maps key is missing */
+.gm-unavailable {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  height: 100%;
+  min-height: 120px;
+  padding: 16px;
+  background: #f1f4fb;
+  color: #475569;
+  font-size: 13px;
+  text-align: center;
+}
+
+.gm-unavailable strong {
+  color: #0f172a;
+  font-size: 14px;
+}
+
+/* A slightly softened base map. Vector maps draw the base map on a canvas, raster maps use tile images; both are covered. */
+.gm-faded-road .gm-style canvas,
+.gm-faded-road .gm-style img[src*="/maps/vt"] {
+  filter: saturate(0.85) opacity(0.9);
+}
+
+.gm-faded-photo .gm-style canvas,
+.gm-faded-photo .gm-style img[src*="/maps/vt"] {
+  filter: saturate(0.92) brightness(0.96);
+}
+
+/* A pin dropped on a form map */
+.gm-pin {
+  width: 22px;
+  height: 22px;
+  border-radius: 50% 50% 50% 0;
+  background: #e5484d;
+  border: 2px solid #ffffff;
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.4);
+  transform: rotate(-45deg);
+}
+
+.gm-pin::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffffff;
+}

@@ -9,6 +9,7 @@ import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { INVENTORY_FP_METHODS } from "../../data/inventoryMethods.js";
 import ReportSelect from "../../components/ReportSelect/ReportSelect";
 import PageHeader from "../../components/PageHeader/PageHeader";
+import { isPlaceholderCoordinate } from "../../utils/geoHelper";
 
 const BARANGAYS = [
     "Anilao", "Atlag", "Babatnin", "Bagna", "Bagong Bayan", "Balayong", "Balite",
@@ -266,6 +267,9 @@ function GisMap({ getCollection }){
                             }
                         }
 
+                        // a location that was never found for the address is shown, but marked as approximate
+                        let usedBarangayFallback = false;
+
                         if ((rawLat === undefined || rawLat === null || isNaN(rawLat) || Number(rawLat) === 0) && cleanBarangay) {
                             const coordsKey = Object.keys(BARANGAY_COORDINATES).find(
                                 k => k.toLowerCase() === cleanBarangay.toLowerCase()
@@ -273,6 +277,7 @@ function GisMap({ getCollection }){
                             if (coordsKey && BARANGAY_COORDINATES[coordsKey]) {
                                 rawLat = BARANGAY_COORDINATES[coordsKey].lat;
                                 rawLng = BARANGAY_COORDINATES[coordsKey].lng;
+                                usedBarangayFallback = true;
                             }
                         }
 
@@ -308,6 +313,9 @@ function GisMap({ getCollection }){
                             address: data.address || '',
                             lat: parsedLat,
                             lng: parsedLng,
+                            approximate: usedBarangayFallback ||
+                                data.location_approximate === true ||
+                                isPlaceholderCoordinate(parsedLat, parsedLng),
                             fp_method: normalizedMethod,
                             status: data.status || '',
                             noOfChildren: Number(data.no_of_children || 0),
@@ -332,7 +340,8 @@ function GisMap({ getCollection }){
 
                         if (coordMap[coordKey] === undefined) {
                             coordMap[coordKey] = 0;
-                        } else {
+                        } else if (item.approximate) {
+                            // only approximate points that sit on top of each other are spread apart; exact ones stay where they are
                             coordMap[coordKey] += 1;
                             const count = coordMap[coordKey];
                             const angle = count * (2 * Math.PI / 6);

@@ -1,29 +1,15 @@
 import ReportSelect from "../ReportSelect/ReportSelect";
 import { notify } from "../../utils/notify";
-import { checkAddressBarangay } from "../../utils/geoHelper";
-import { useState, useEffect } from "react";
+import PinMap from "../GoogleMap/PinMap";
+import { checkAddressBarangay, canonicalBarangayName, findBarangayCenter } from "../../utils/geoHelper";
+import { lookupAddressLocation, locationHint, checkPinLocation, round6 } from "../../utils/geocodeKobo";
+import { useState, useEffect, useRef } from "react";
 import { collection, addDoc, doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebase-config";
 import { findDuplicate } from "../../utils/checkDuplicates";
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
 import "./client-add-modal.css";
 
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 
-const DefaultIcon = L.icon({
-  iconUrl: markerIcon,
-  iconRetinaUrl: markerIcon2x,
-  shadowUrl: markerShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-L.Marker.prototype.options.icon = DefaultIcon;
 
 function ClientAddModal({ onClose, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -43,8 +29,10 @@ function ClientAddModal({ onClose, onSuccess }) {
     type: "",
     status: "",
     reason: "",
-    latitude: 14.8436,
-    longitude: 120.8114,
+    latitude: "",
+    longitude: "",
+    location_precision: "",
+    location_approximate: false,
     classes_held: ""
   });
 
@@ -52,35 +40,45 @@ function ClientAddModal({ onClose, onSuccess }) {
   const [dupModalOpen, setDupModalOpen] = useState(false);
   const [existingRecord, setExistingRecord] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [locationNote, setLocationNote] = useState("");
+  const manualPin = useRef(false); // a pin placed by hand is never replaced by a lookup
 
   // Auto-geocode based on Address + Barangay
   useEffect(() => {
-    if (!formData.address.trim() && !formData.barangay.trim()) return;
+    if (manualPin.current || (!formData.address.trim() && !formData.barangay.trim())) return;
 
     const delayDebounceFn = setTimeout(async () => {
       setIsSearching(true);
-      const combinedAddress = `${formData.address}, ${formData.barangay}`;
-
       try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(combinedAddress)}&limit=1`,
-          { headers: { "User-Agent": "Planwise-Capstone" } }
-        );
-        const data = await response.json();
-
-        if (data && data.length > 0) {
-          const { lat, lon } = data[0];
+        const outcome = await lookupAddressLocation(formData.address, formData.barangay);
+        if (outcome.status === "exact" || outcome.status === "street") {
           setFormData((prev) => ({
             ...prev,
-            latitude: parseFloat(parseFloat(lat).toFixed(6)),
-            longitude: parseFloat(parseFloat(lon).toFixed(6))
+            latitude: round6(outcome.lat),
+            longitude: round6(outcome.lon),
+            location_precision: outcome.status === "exact" ? "address" : "street",
+            location_approximate: false
           }));
-          if (errors.latitude || errors.longitude) {
-            setErrors((prev) => ({ ...prev, latitude: "", longitude: "" }));
-          }
+          setErrors((prev) => ({ ...prev, latitude: "", longitude: "" }));
+          setLocationNote(locationHint(outcome));
+        } else {
+          // the exact address was not found, so the pin goes to the barangay that was chosen, never to another one
+          const barangayName = canonicalBarangayName(formData.barangay);
+          const center = findBarangayCenter(barangayName);
+          setFormData((prev) => ({
+            ...prev,
+            latitude: center ? round6(center.latitude) : "",
+            longitude: center ? round6(center.longitude) : "",
+            location_precision: center ? "barangay-center" : "",
+            location_approximate: Boolean(center)
+          }));
+          setLocationNote(center
+            ? `The exact address was not found, so the pin is at the center of Barangay ${barangayName} (approximate). Move the pin to the house if you know where it is.`
+            : locationHint(outcome));
         }
       } catch (err) {
-        console.error("Auto-geocoding failed:", err);
+        console.error("Address lookup failed:", err);
+        setLocationNote(locationHint({ status: "unavailable" }));
       } finally {
         setIsSearching(false);
       }
@@ -89,31 +87,19 @@ function ClientAddModal({ onClose, onSuccess }) {
     return () => clearTimeout(delayDebounceFn);
   }, [formData.address, formData.barangay]);
 
-  function ChangeMapView({ coords }) {
-    const map = useMapEvents({});
-    useEffect(() => {
-      if (coords[0] && coords[1]) {
-        map.setView(coords, 14);
-      }
-    }, [coords, map]);
-    return null;
-  }
-
-  function MapClickHandler() {
-    useMapEvents({
-      click(e) {
-        setFormData((prev) => ({
-          ...prev,
-          latitude: parseFloat(e.latlng.lat.toFixed(6)),
-          longitude: parseFloat(e.latlng.lng.toFixed(6))
-        }));
-        if (errors.latitude || errors.longitude) {
-          setErrors((prev) => ({ ...prev, latitude: "", longitude: "" }));
-        }
-      }
-    });
-    return null;
-  }
+  // a pin placed or dragged by hand is never replaced by a lookup
+  const handlePinPick = (lat, lng) => {
+    manualPin.current = true;
+    setLocationNote("Pin placed by hand.");
+    setFormData((prev) => ({
+      ...prev,
+      latitude: round6(lat),
+      longitude: round6(lng),
+      location_precision: "manual-pin",
+      location_approximate: false
+    }));
+    setErrors((prev) => ({ ...prev, latitude: "", longitude: "" }));
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -126,7 +112,8 @@ function ClientAddModal({ onClose, onSuccess }) {
   const handleCoordinateChange = (e) => {
     const { name, value } = e.target;
     const val = value === "" ? "" : parseFloat(value);
-    setFormData((prev) => ({ ...prev, [name]: val }));
+    manualPin.current = true;
+    setFormData((prev) => ({ ...prev, [name]: val, location_precision: "manual-pin", location_approximate: false }));
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -178,6 +165,13 @@ function ClientAddModal({ onClose, onSuccess }) {
     if (!location.ok) {
       setErrors({ address: location.message, barangay: location.message });
       notify(location.message);
+      return;
+    }
+
+    const pin = checkPinLocation(formData.latitude, formData.longitude, formData.barangay);
+    if (!pin.ok) {
+      setErrors({ latitude: pin.message, longitude: pin.message });
+      notify(pin.message);
       return;
     }
 
@@ -486,24 +480,13 @@ return (
                   </div>
                 </div>
 
+                {locationNote && (
+                  <p className="cfpr-location-note" style={{ margin: "4px 0 10px", fontSize: "13px", color: "#475569" }}>{locationNote}</p>
+                )}
                 <div className="cfpr-map-wrap" id="cfpr-map-wrap">
                   <label className="cfpr-label">Location Visual Verification</label>
                   <div className="cfpr-map-frame">
-                    <MapContainer
-                      center={[formData.latitude || 14.8436, formData.longitude || 120.8114]}
-                      zoom={13}
-                      style={{ height: "100%", width: "100%" }}
-                    >
-                      <TileLayer
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                      />
-                      <MapClickHandler />
-                      <ChangeMapView coords={[formData.latitude, formData.longitude]} />
-                      {formData.latitude && formData.longitude && (
-                        <Marker position={[formData.latitude, formData.longitude]} />
-                      )}
-                    </MapContainer>
+                    <PinMap lat={formData.latitude} lng={formData.longitude} onPick={handlePinPick} />
                   </div>
                 </div>
               </section>

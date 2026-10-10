@@ -1,16 +1,18 @@
 import ReportSelect from "../ReportSelect/ReportSelect";
 import { notify } from "../../utils/notify";
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import html2canvas from 'html2canvas';
-import L from 'leaflet';
-import { MapContainer, TileLayer, CircleMarker, GeoJSON, useMap } from 'react-leaflet';
+import * as turf from '@turf/turf';
+import { httpsCallable } from 'firebase/functions';
+import { AdvancedMarker, AdvancedMarkerAnchorPoint, useMap } from '@vis.gl/react-google-maps';
 import { X, Eye, Download, ArrowLeft, Loader2, MapPinned } from 'lucide-react';
-import 'leaflet/dist/leaflet.css';
 import './map-export-modal.css';
+import { functions } from '../../firebase-config';
+import GoogleMapShell from '../GoogleMap/GoogleMapShell';
+import { MALOLOS_CENTER, hasGoogleMapsKey } from '../GoogleMap/mapConfig';
 import malolosBarangays from '../../data/malolos-barangays.json';
 import { canonicalMethod } from '../../pages/Reports/reportData.js';
-
-const MALOLOS_CENTER = [14.844782, 120.812683];
 
 // One dot color per method, listed in the legend of the exported sheet
 const LEGEND_GROUPS = [
@@ -56,22 +58,115 @@ function legendGroupOf(family) {
   return TRADITIONAL.includes(clean(family.fp_method)) ? 'traditional' : 'none';
 }
 
-// Frames the barangay: its boundary when the map data has one, otherwise its client pins
-function FitToBarangay({ boundary, points }) {
+// The outline of a barangay as lists of {lat, lng}, one list for each separate piece
+const outlinesOf = (boundary) => {
+  const geometry = boundary?.geometry;
+  if (!geometry) return [];
+  const polygons = geometry.type === 'MultiPolygon' ? geometry.coordinates : [geometry.coordinates];
+  return polygons.map((rings) => rings[0].map(([lng, lat]) => ({ lat, lng })));
+};
+
+// Draws the barangay outline and frames the barangay: its boundary when the map data has one, otherwise its client pins
+function BoundaryAndFraming({ boundary, points, onMap }) {
   const map = useMap();
 
   useEffect(() => {
-    map.invalidateSize();
+    if (!map) return undefined;
+    onMap(map);
 
-    if (boundary) {
-      map.fitBounds(L.geoJSON(boundary).getBounds(), { padding: [18, 18], animate: false });
-    } else if (points.length > 0) {
-      map.fitBounds(points, { padding: [40, 40], maxZoom: 17, animate: false });
+    const outlines = outlinesOf(boundary);
+    const shapes = [];
+    if (outlines.length > 0) {
+      // a huge square with the barangay cut out of it; the two rings run in opposite directions, which makes the hole
+      const around = 0.4;
+      const square = [
+        { lat: MALOLOS_CENTER.lat - around, lng: MALOLOS_CENTER.lng - around },
+        { lat: MALOLOS_CENTER.lat - around, lng: MALOLOS_CENTER.lng + around },
+        { lat: MALOLOS_CENTER.lat + around, lng: MALOLOS_CENTER.lng + around },
+        { lat: MALOLOS_CENTER.lat + around, lng: MALOLOS_CENTER.lng - around },
+      ];
+      const area = (ring) => ring.reduce((sum, p, i) => {
+        const q = ring[(i + 1) % ring.length];
+        return sum + (p.lng * q.lat - q.lng * p.lat);
+      }, 0);
+      const holes = outlines.map((ring) => (area(ring) * area(square) > 0 ? [...ring].reverse() : ring));
+      shapes.push(new window.google.maps.Polygon({
+        map,
+        paths: [square, ...holes],
+        clickable: false,
+        strokeWeight: 0,
+        fillColor: '#ffffff',
+        fillOpacity: 0.4,
+      }));
     }
-  }, [boundary, points, map]);
+    outlines.forEach((path) => shapes.push(new window.google.maps.Polygon({
+      map,
+      paths: path,
+      clickable: false,
+      strokeColor: '#0f172a',
+      strokeWeight: 2.5,
+      fillOpacity: 0,
+    })));
+
+    const bounds = new window.google.maps.LatLngBounds();
+    if (outlines.length > 0) {
+      outlines.forEach((path) => path.forEach((point) => bounds.extend(point)));
+      map.fitBounds(bounds, 18);
+    } else if (points.length > 0) {
+      points.forEach(([lat, lng]) => bounds.extend({ lat, lng }));
+      map.fitBounds(bounds, 40);
+    }
+
+    return () => {
+      shapes.forEach((shape) => shape.setMap(null));
+      onMap(null);
+    };
+  }, [map, boundary, points, onMap]);
 
   return null;
 }
+
+// A plain drawing of the framed view: the barangay outline and the client dots on a light background.
+// Used when the map picture cannot be fetched, so an export is still possible.
+const outlineOnlyImage = (map, boundary, markers, width, height) => {
+  const view = map.getBounds()?.toJSON();
+  if (!view) throw new Error('The map has no view yet');
+
+  const mercator = (lat) => Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
+  const top = mercator(view.north);
+  const bottom = mercator(view.south);
+  const at = (lat, lng) => [
+    ((lng - view.west) / (view.east - view.west)) * width,
+    ((top - mercator(lat)) / (top - bottom)) * height,
+  ];
+
+  const shapes = outlinesOf(boundary)
+    .map((ring) => `M${ring.map(({ lat, lng }) => at(lat, lng).map((n) => n.toFixed(1)).join(',')).join('L')}Z`)
+    .join(' ');
+  const dots = markers.map(({ lat, lng, color }) => {
+    const [x, y] = at(lat, lng);
+    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="10" fill="#fff" stroke="#0f172a" stroke-width="1.5"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6.5" fill="#${color}"/>`;
+  }).join('');
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">` +
+    `<rect width="100%" height="100%" fill="#e8edf4"/><path d="${shapes}" fill="#ffffff" stroke="#0f172a" stroke-width="3" stroke-linejoin="round"/>${dots}</svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+};
+
+// The outline as [lat, lng] pairs, thinned until the map image request stays small
+const outlineForImage = (boundary) => {
+  const largest = outlinesOf(boundary).sort((a, b) => b.length - a.length)[0];
+  if (!largest) return [];
+
+  for (const tolerance of [0.0001, 0.0002, 0.0004, 0.0008]) {
+    const ring = turf.simplify(
+      turf.polygon([largest.map(({ lat, lng }) => [lng, lat])]),
+      { tolerance, highQuality: false }
+    ).geometry.coordinates[0];
+    if (ring.length <= 350) return ring.map(([lng, lat]) => [lat, lng]);
+  }
+  return [];
+};
 
 export default function MapExportModal({
   isOpen,
@@ -81,9 +176,13 @@ export default function MapExportModal({
   activeFilterBarangay = ''
 }) {
   const sheetRef = useRef(null);
+  const mapBoxRef = useRef(null);
+  const mapRef = useRef(null);
+  const [staticUrl, setStaticUrl] = useState(null); // the picture of the map that takes the live map's place while the sheet is photographed
   const [selectedBarangay, setSelectedBarangay] = useState('');
   const [isCapturing, setIsCapturing] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const setMap = useMemo(() => (map) => { mapRef.current = map; }, []);
 
   const masterBarangayList = useMemo(() => {
     if (barangayList && barangayList.length > 0) {
@@ -102,6 +201,7 @@ export default function MapExportModal({
   useEffect(() => {
     if (isOpen) {
       setPreviewUrl(null);
+      setStaticUrl(null);
       if (activeFilterBarangay && activeFilterBarangay !== 'ALL') {
         setSelectedBarangay(activeFilterBarangay);
       } else {
@@ -145,9 +245,54 @@ export default function MapExportModal({
 
   const handlePreview = async () => {
     if (!selectedBarangay || !sheetRef.current) return;
+    const map = mapRef.current;
+    const box = mapBoxRef.current;
+    if (!map || !box) {
+      notify("The map is not ready yet. Please try again in a moment.");
+      return;
+    }
     setIsCapturing(true);
 
     try {
+      // the live map cannot be photographed, so Google draws the same view as a picture
+      const rect = box.getBoundingClientRect();
+      const shrink = Math.min(1, 640 / Math.max(rect.width, rect.height));
+      const width = Math.round(rect.width * shrink);
+      const height = Math.round(rect.height * shrink);
+      const center = map.getCenter();
+
+      const markers = barangayFamilies
+        .map((family) => {
+          const lat = Number(family.lat ?? family.latitude);
+          const lng = Number(family.lng ?? family.longitude);
+          if (isNaN(lat) || isNaN(lng) || lat === 0) return null;
+          const group = LEGEND_GROUPS.find((g) => g.id === legendGroupOf(family));
+          return { lat, lng, color: group.color.replace('#', '') };
+        })
+        .filter(Boolean);
+
+      let mapPicture;
+      try {
+        const response = await httpsCallable(functions, 'staticMapImage')({
+          center: { lat: center.lat(), lng: center.lng() },
+          zoom: Math.round((map.getZoom() ?? 14) + Math.log2(shrink)),
+          width,
+          height,
+          boundary: outlineForImage(boundary),
+          markers,
+        });
+        mapPicture = response.data.image;
+      } catch (serviceError) {
+        // no map picture: draw the barangay and its clients instead, and say so
+        console.warn("Map picture unavailable:", serviceError);
+        mapPicture = outlineOnlyImage(map, boundary, markers, Math.round(rect.width), Math.round(rect.height));
+        notify("The map picture could not be loaded, so the export shows the barangay outline and its clients on a plain background.");
+      }
+
+      flushSync(() => setStaticUrl(mapPicture));
+      const image = box.querySelector('img');
+      if (image) await image.decode();
+
       const sheet = sheetRef.current;
       const canvas = await html2canvas(sheet, {
         useCORS: true,
@@ -156,7 +301,6 @@ export default function MapExportModal({
         backgroundColor: '#ffffff',
         // about 2400px wide, sharp enough to print
         scale: Math.min(4, 2400 / sheet.offsetWidth),
-        ignoreElements: (element) => element.classList.contains('leaflet-control-zoom')
       });
 
       setPreviewUrl(canvas.toDataURL('image/png', 1.0));
@@ -164,6 +308,7 @@ export default function MapExportModal({
       console.error("Export Error:", err);
       notify("There was an error while preparing the map. Please try again.");
     } finally {
+      setStaticUrl(null);
       setIsCapturing(false);
     }
   };
@@ -220,58 +365,54 @@ export default function MapExportModal({
             <div className="mx-sheet" ref={sheetRef}>
               <div className="mx-sheet-frame">
                 <div className="mx-sheet-main">
-                  <div className="mx-sheet-map">
-                    <MapContainer
-                      center={MALOLOS_CENTER}
-                      zoom={14}
-                      minZoom={11}
-                      maxZoom={18}
-                      zoomSnap={0.25}
-                      preferCanvas={true}
-                      style={{ height: '100%', width: '100%' }}
-                    >
-                      <TileLayer
-                        attribution='&copy; OpenStreetMap contributors'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        crossOrigin={true}
-                        opacity={0.6}
-                      />
-                      <FitToBarangay boundary={boundary} points={points} />
+                  <div className="mx-sheet-map" ref={mapBoxRef}>
+                    {staticUrl ? (
+                      <img src={staticUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : !hasGoogleMapsKey ? (
+                      <GoogleMapShell />
+                    ) : (
+                      <GoogleMapShell
+                        defaultCenter={MALOLOS_CENTER}
+                        defaultZoom={14}
+                        minZoom={11}
+                        maxZoom={18}
+                        zoomControl
+                        faded
+                        isFractionalZoomEnabled={false}
+                      >
+                        <BoundaryAndFraming boundary={boundary} points={points} onMap={setMap} />
 
-                      {boundary && (
-                        <GeoJSON
-                          key={selectedBarangay}
-                          data={boundary}
-                          interactive={false}
-                          style={{ color: '#0f172a', weight: 2.5, fillColor: '#ffffff', fillOpacity: 0.35 }}
-                        />
-                      )}
+                        {barangayFamilies.map((family, idx) => {
+                          const lat = Number(family.lat ?? family.latitude);
+                          const lng = Number(family.lng ?? family.longitude);
+                          if (isNaN(lat) || isNaN(lng) || lat === 0) return null;
 
-                      {barangayFamilies.map((family, idx) => {
-                        const lat = Number(family.lat ?? family.latitude);
-                        const lng = Number(family.lng ?? family.longitude);
-                        if (isNaN(lat) || isNaN(lng) || lat === 0) return null;
-
-                        const group = LEGEND_GROUPS.find(g => g.id === legendGroupOf(family));
-                        // white disc with a dark edge under a solid method-colored dot
-                        return (
-                          <React.Fragment key={family.id || idx}>
-                            <CircleMarker
-                              center={[lat, lng]}
-                              radius={10}
-                              interactive={false}
-                              pathOptions={{ color: '#0f172a', weight: 1.5, fillColor: '#ffffff', fillOpacity: 1 }}
-                            />
-                            <CircleMarker
-                              center={[lat, lng]}
-                              radius={6.5}
-                              interactive={false}
-                              pathOptions={{ stroke: false, fillColor: group.color, fillOpacity: 1 }}
-                            />
-                          </React.Fragment>
-                        );
-                      })}
-                    </MapContainer>
+                          const group = LEGEND_GROUPS.find(g => g.id === legendGroupOf(family));
+                          // white disc with a dark edge under a solid method-colored dot
+                          return (
+                            <AdvancedMarker
+                              key={family.id || idx}
+                              position={{ lat, lng }}
+                              anchorPoint={AdvancedMarkerAnchorPoint.CENTER}
+                              clickable={false}
+                            >
+                              <span style={{
+                                display: 'grid',
+                                placeItems: 'center',
+                                width: 20,
+                                height: 20,
+                                borderRadius: '50%',
+                                background: '#ffffff',
+                                border: '1.5px solid #0f172a',
+                                boxSizing: 'border-box',
+                              }}>
+                                <span style={{ width: 13, height: 13, borderRadius: '50%', background: group.color }} />
+                              </span>
+                            </AdvancedMarker>
+                          );
+                        })}
+                      </GoogleMapShell>
+                    )}
                   </div>
 
                   <div className="mx-sheet-legend">

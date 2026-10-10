@@ -1,22 +1,7 @@
-import { MapContainer, TileLayer, Marker } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import PinMap from "../GoogleMap/PinMap";
 import './client-view-modal.css';
 
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 
-const DefaultIcon = L.icon({
-  iconUrl: markerIcon,
-  iconRetinaUrl: markerIcon2x,
-  shadowUrl: markerShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-L.Marker.prototype.options.icon = DefaultIcon;
 
 function ClientViewModal({ client, onClose }) {
   return (
@@ -119,20 +104,7 @@ function ClientViewModal({ client, onClose }) {
                 <div className="vfpr-map-wrap" id="vfpr-map-wrap">
                   <span className="vfpr-label">Location Map Pin</span>
                   <div className="vfpr-map-frame">
-                    <MapContainer
-                      center={[client.latitude, client.longitude]}
-                      zoom={15}
-                      dragging={false}
-                      scrollWheelZoom={false}
-                      zoomControl={false}
-                      style={{ height: "100%", width: "100%" }}
-                    >
-                      <TileLayer
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                      />
-                      <Marker position={[client.latitude, client.longitude]} />
-                    </MapContainer>
+                    <PinMap lat={client.latitude} lng={client.longitude} />
                   </div>
                 </div>
               ) : (

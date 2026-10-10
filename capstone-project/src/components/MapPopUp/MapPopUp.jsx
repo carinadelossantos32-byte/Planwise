@@ -44,6 +44,13 @@ export default function MapPopUp({ family, onClose }) {
                 <td>Barangay</td>
                 <td className="response-text">{family.barangay || "N/A"}</td>
               </tr>
+              {family.approximate && (
+                <tr>
+                  <td className="center-icon"><i className="fa-solid fa-triangle-exclamation"></i></td>
+                  <td>Map Location</td>
+                  <td className="response-text">Approximate (barangay area), not the exact address</td>
+                </tr>
+              )}
               <tr>
                 <td className="center-icon"><i className="fa-solid fa-location-crosshairs"></i></td>
                 <td>Longitude</td>

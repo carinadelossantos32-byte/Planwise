@@ -1,4 +1,5 @@
 import { detectBarangay } from '../utils/detectBarangay';
+import { buildKoboLocation } from '../utils/koboAddress';
 
 const normalizeKoboValue = (value) => {
     if (!value) return "";
@@ -20,6 +21,7 @@ export const PUBLIC_FORM_CONFIG = {
     collectionName: "clients_public",
     duplicateScope: "public",
     recordLabel: "Public",
+    geocodeAddress: true, // the location comes from the address questions, looked up when the records are synced
     emptyMessage: "No remote submissions found inside KoboToolBox.",
 
     columns: [
@@ -48,12 +50,17 @@ export const PUBLIC_FORM_CONFIG = {
         let rawAddress = survey["Address"]?.trim() || "";
         const isCoordinateString = /^[0-9.\s-]+$/.test(rawAddress);
 
-        // Get coordinates
-        const lat = survey._geolocation ? parseFloat(survey._geolocation[0]) : null;
-        const lng = survey._geolocation ? parseFloat(survey._geolocation[1]) : null;
+        // Older submissions carry a GPS pin; the current form asks for an address instead
+        const pinLat = Array.isArray(survey._geolocation) ? parseFloat(survey._geolocation[0]) : NaN;
+        const pinLng = Array.isArray(survey._geolocation) ? parseFloat(survey._geolocation[1]) : NaN;
+        const pinBarangay = Number.isFinite(pinLat) && Number.isFinite(pinLng) ? detectBarangay(pinLat, pinLng) : "";
+        const hasPin = Boolean(pinBarangay);
 
-        // Auto-detect barangay from pin location
-        const detectedBarangay = detectBarangay(lat, lng);
+        // House number, street, barangay, and municipality become one address
+        const location = buildKoboLocation(survey);
+        const address = location.hasStructuredAddress ? location.address : (isCoordinateString ? "" : rawAddress);
+        const barangay = location.hasStructuredAddress ? (location.barangay || pinBarangay) : pinBarangay;
+        const canLookUp = !hasPin && location.hasStructuredAddress && Boolean(barangay);
 
         // ✍️ 1. Kunin ang signature filename
         const signatureFilename =
@@ -87,9 +94,9 @@ export const PUBLIC_FORM_CONFIG = {
             educational_attainment_female: normalizeKoboValue(survey["Ano_ang_pinakamataas_al_Attainment_Female"]),
             civil_status_male: normalizeKoboValue(survey["Civil_Status_Male"]),
             civil_status_female: normalizeKoboValue(survey["Civil_Status_Female"]),
-            address: isCoordinateString ? "" : rawAddress,
+            address,
 
-            barangay: detectedBarangay,
+            barangay,
 
             no_of_children: survey["No_of_Children"] ? String(survey["No_of_Children"]) : "0",
             fp_method: normalizeKoboValue(survey["Method_Used"]) || "",
@@ -97,8 +104,25 @@ export const PUBLIC_FORM_CONFIG = {
             type: normalizeKoboValue(survey["Traditional_FP_User_Type"]) || "",
             status: normalizeKoboValue(survey["Traditional_FP_User_Status"]) || "",
             reason: normalizeKoboValue(survey["Reason"]) || "",
-            latitude: lat ?? 14.8436,
-            longitude: lng ?? 120.8114,
+            // Stays empty until the address is found; a placeholder is never saved as if it were the location
+            latitude: hasPin ? pinLat : null,
+            longitude: hasPin ? pinLng : null,
+            location_precision: hasPin ? "gps-pin" : "",
+            location_approximate: false,
+
+            // Used while syncing; none of these are saved
+            _checksLocation: true,
+            _gpsPin: hasPin,
+            _requiresLocation: !hasPin,
+            _geocodeQuery: canLookUp ? location.query : "",
+            _geocodeFallbackQuery: canLookUp ? location.fallbackQuery : "",
+            _municipalityError: location.errors.find((e) => e.startsWith("Municipality")) || "",
+            _locationNote: hasPin
+                ? ""
+                : (location.hasStructuredAddress
+                    ? (location.errors.find((e) => !e.startsWith("Municipality")) || "")
+                    : "No address was given"),
+            _addressKeys: location.matchedKeys,
 
             // ✍️ Metadata para sa Firebase Storage signature sync
             _signatureFilename: signatureFilename,
@@ -111,11 +135,6 @@ export const PUBLIC_FORM_CONFIG = {
         if (!client.name) client._errors.push("Missing husband name");
         if (!client.spouse_name) client._errors.push("Missing wife name");
 
-        // Add error if barangay could not be detected
-        // This means the pin was placed outside Malolos boundaries
-        if (!detectedBarangay) {
-            client._errors.push("Pin location is outside Malolos boundaries — please re-pin");
-        }
 
         return client;
     },

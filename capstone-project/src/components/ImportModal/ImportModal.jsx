@@ -179,8 +179,11 @@ const parsePublicRows = (rows) => {
         : "",
       address: rawAddress,
       barangay: loc.barangay,
+      // the file has no coordinates, so the barangay center stands in; it is labeled approximate, not exact
       latitude: loc.latitude,
       longitude: loc.longitude,
+      location_precision: "barangay-center",
+      location_approximate: true,
       educational_attainment_male: decode(EDUCATION_MAP, row["Highest Educational Attainment"]),
       educational_attainment_female: isWifeRow ? decode(EDUCATION_MAP, wifeRow["Highest Educational Attainment"]) : "",
       no_of_children: parsedChildren,
@@ -389,6 +392,8 @@ function ImportModal({ onClose, collectionName, onSuccess, tabType = "public" })
     const coords = getCoordinatesByBarangay(selectedBarangay);
     client.latitude = coords.latitude;
     client.longitude = coords.longitude;
+    client.location_precision = "barangay-center";
+    client.location_approximate = true;
 
     if (selectedBarangay !== "Unassigned") {
       client._errors = client._errors.filter((err) => err !== "Barangay not detected");
