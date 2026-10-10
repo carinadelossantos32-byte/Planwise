@@ -177,7 +177,6 @@ function GisMap({ getCollection }){
             const stockMap = rhuDoc.stockByMethod || {};
             const depletedMethods = [];
 
-            // KASO 1: Walang inventory record kahit ano
             if (!stockMap || typeof stockMap !== 'object' || Object.keys(stockMap).length === 0) {
                 depletedMethods.push({
                     method: "NO INVENTORY RECORDED",
@@ -186,20 +185,16 @@ function GisMap({ getCollection }){
                     isUninitialized: true
                 });
             } else {
-                // KASO 2: Isa-isahin ang bawat opisyal na method sa INVENTORY_FP_METHODS
                 INVENTORY_FP_METHODS.forEach((invMethod) => {
                     const normInvId = normalizeKey(invMethod.id || invMethod.name);
 
-                    // Hanapin kung may existing key sa stockMap ng RHU
                     const matchedKey = Object.keys(stockMap).find(
                         k => normalizeKey(k) === normInvId || normalizeKey(k).includes(normInvId)
                     );
 
-                    // KUNG WALA SA DB, 0 ANG STOCK (Tulad ng Pills, IUD, at Implant ni RHU 8)
                     const count = matchedKey !== undefined ? Number(stockMap[matchedKey]) : 0;
                     if (isNaN(count)) return;
 
-                    // Kunin ang limit mula sa settings
                     let limitForThisMethod = defaultThreshold;
                     if (methodLimits && typeof methodLimits === 'object') {
                         if (methodLimits[normInvId] !== undefined) {
@@ -209,7 +204,6 @@ function GisMap({ getCollection }){
                         }
                     }
 
-                    // Kapag count <= limit (hal. 0 <= 8 para sa Pills), idagdag sa babala
                     if (count <= limitForThisMethod) {
                         depletedMethods.push({
                             method: (invMethod.name || normInvId).toUpperCase().replace(/_/g, ' '),
@@ -223,12 +217,10 @@ function GisMap({ getCollection }){
 
             if (depletedMethods.length === 0) return;
 
-            // Kunin ang coordinates mula sa GeoPoint object (location o coordinates)
             const geo = rhuDoc.coordinates || rhuDoc.location;
             let rhuLat = Number(geo?.latitude ?? geo?._lat ?? rhuDoc.lat ?? rhuDoc.latitude);
             let rhuLng = Number(geo?.longitude ?? geo?._long ?? rhuDoc.lng ?? rhuDoc.longitude);
 
-            // Fallback kung sakaling array ang format
             if ((isNaN(rhuLat) || isNaN(rhuLng)) && Array.isArray(geo)) {
                 rhuLat = parseFloat(geo[0]);
                 rhuLng = parseFloat(geo[1]);
