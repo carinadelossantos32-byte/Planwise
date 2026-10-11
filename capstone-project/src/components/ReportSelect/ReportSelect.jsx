@@ -143,7 +143,7 @@ function ReportSelect({ value, onChange, options, ariaLabel, placeholder, name, 
         onKeyDown={handleKeyDown}
       >
         <span className="report-select-value">
-          {selected && String(selected.value) !== ""
+          {selected && !["", "all"].includes(String(selected.value))
             ? selected.label
             : <span className="report-select-placeholder">{selected ? selected.label : placeholder}</span>}
           {selected?.hint && <small className="report-select-hint">{selected.hint}</small>}

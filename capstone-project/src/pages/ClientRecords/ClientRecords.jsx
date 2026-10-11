@@ -1,3 +1,5 @@
+import { barangays } from "../../data/barangays";
+import { getClientDate, matchesPeriod, PERIOD_OPTIONS } from "../Reports/reportData";
 import { useEffect, useState, useCallback } from "react";
 import {
   collection,
@@ -69,6 +71,10 @@ function ClientRecords() {
   const [filterMethod, setFilterMethod] = useState("");
   const [activeTab, setActiveTab] = useState("public");
   const [filterCategory, setFilterCategory] = useState("");
+  // narrow an export only; chosen in the export window, like the Reports filters
+  const [exportYear, setExportYear] = useState("all");
+  const [exportPeriod, setExportPeriod] = useState("all");
+  const [exportBarangay, setExportBarangay] = useState("all");
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -188,6 +194,9 @@ function ClientRecords() {
   };
 
   const handleExport = (format) => {
+    setExportYear("all");
+    setExportPeriod("all");
+    setExportBarangay("all");
     setExportFormat(format);
   };
 
@@ -196,7 +205,7 @@ function ClientRecords() {
 
     const exportFunction = exportFormat === "pdf" ? exportClientRecordsPDF : exportClientRecordsExcel;
     setExportFormat(null);
-    exportFunction(activeTab, filteredClients, fileName);
+    exportFunction(activeTab, exportClients, fileName);
   };
 
   const resetForm = () => {
@@ -302,7 +311,18 @@ function ClientRecords() {
     return matchesSearch && matchesMethod && matchesCategory;
   });
 
-  // Same filters as the toolbar, so the export always matches the table
+  // The toolbar's filters, narrowed further by the export window's Year, Period and Barangay
+  const exportClients = filteredClients.filter((client) => {
+    const date = getClientDate(client);
+    const matchesYear = exportYear === "all" || (date && date.getFullYear() === Number(exportYear));
+    const matchesBarangay = exportBarangay === "all" || slugify(client.barangay || "") === exportBarangay;
+    return matchesYear && matchesPeriod(date, exportPeriod) && matchesBarangay;
+  });
+
+  const exportYears = [];
+  for (let y = 2010; y <= 2035; y++) exportYears.push(y);
+
+  // Records, then the same four filters as the Reports page
   const exportFilterControls = [
     ...(activeTab === "public"
       ? [{
@@ -314,8 +334,35 @@ function ClientRecords() {
       }]
       : []),
     {
+      key: "year",
+      label: "Year",
+      value: exportYear,
+      onChange: (e) => setExportYear(e.target.value),
+      options: [
+        { value: "all", label: "All Years" },
+        ...exportYears.map((yr) => ({ value: yr, label: yr })),
+      ],
+    },
+    {
+      key: "period",
+      label: "Period",
+      value: exportPeriod,
+      onChange: (e) => setExportPeriod(e.target.value),
+      options: PERIOD_OPTIONS,
+    },
+    {
+      key: "barangay",
+      label: "Barangay",
+      value: exportBarangay,
+      onChange: (e) => setExportBarangay(e.target.value),
+      options: [
+        { value: "all", label: "All Barangays" },
+        ...barangays.map((barangay) => ({ value: slugify(barangay), label: barangay })),
+      ],
+    },
+    {
       key: "method",
-      label: "FP Method",
+      label: "Method",
       value: filterMethod,
       onChange: (e) => setFilterMethod(e.target.value),
       options: METHOD_OPTIONS,
@@ -326,6 +373,9 @@ function ClientRecords() {
     "Client_Records",
     activeTab,
     activeTab === "public" && filterCategory,
+    exportYear !== "all" && exportYear,
+    exportPeriod !== "all" && exportPeriod,
+    exportBarangay !== "all" && exportBarangay,
     filterMethod && slugify(filterMethod),
   ].filter(Boolean).join("_");
 

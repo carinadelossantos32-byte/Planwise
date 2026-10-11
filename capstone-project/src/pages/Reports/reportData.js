@@ -104,3 +104,38 @@ export function canonicalMethod(value) {
 export function methodLabel(name) {
     return name === "CCM" ? "CMM" : name;
 }
+
+const MONTH_NAMES = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+];
+
+// Period choices offered beside the Year filter (same list as the Reports page)
+export const PERIOD_OPTIONS = [
+    { value: "all", label: "All Year" },
+    {
+        group: "Quarters",
+        options: [
+            { value: "q1", label: "Q1", hint: "Jan to Mar" },
+            { value: "q2", label: "Q2", hint: "Apr to Jun" },
+            { value: "q3", label: "Q3", hint: "Jul to Sep" },
+            { value: "q4", label: "Q4", hint: "Oct to Dec" },
+        ],
+    },
+    {
+        group: "Months",
+        options: MONTH_NAMES.map(month => ({ value: month.toLowerCase(), label: month })),
+    },
+];
+
+// True when the date falls in the period: "all", "q1".."q4", or a month name
+export function matchesPeriod(date, period) {
+    if (!period || period === "all") return true;
+    if (!date) return false;
+
+    const month = date.getMonth();
+    const quarter = /^q[1-4]$/.test(period) ? Number(period[1]) : 0;
+    if (quarter) return Math.floor(month / 3) === quarter - 1;
+
+    return MONTH_NAMES[month].toLowerCase() === String(period).toLowerCase();
+}

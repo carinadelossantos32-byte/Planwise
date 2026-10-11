@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canonicalMethod, getClientDate, isArchived, methodLabel, toDate } from "./reportData";
+import { canonicalMethod, getClientDate, isArchived, matchesPeriod, methodLabel, toDate } from "./reportData";
 
 describe("toDate", () => {
     it("reads Firestore timestamps, Date objects and date strings", () => {
@@ -69,5 +69,25 @@ describe("methodLabel", () => {
     it("shows the Cervical Mucus Method as CMM", () => {
         expect(methodLabel("CCM")).toBe("CMM");
         expect(methodLabel("Pills")).toBe("Pills");
+    });
+});
+
+describe("matchesPeriod", () => {
+    const march = new Date(2026, 2, 15);
+
+    it("accepts every date when no period is chosen", () => {
+        expect(matchesPeriod(march, "all")).toBe(true);
+        expect(matchesPeriod(null, "all")).toBe(true);
+    });
+
+    it("matches quarters and month names", () => {
+        expect(matchesPeriod(march, "q1")).toBe(true);
+        expect(matchesPeriod(march, "q2")).toBe(false);
+        expect(matchesPeriod(march, "march")).toBe(true);
+        expect(matchesPeriod(march, "April")).toBe(false);
+    });
+
+    it("rejects an undated record once a period is chosen", () => {
+        expect(matchesPeriod(null, "q1")).toBe(false);
     });
 });
