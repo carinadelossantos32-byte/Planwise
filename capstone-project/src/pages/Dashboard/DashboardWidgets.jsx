@@ -103,7 +103,7 @@ const ClientDots = ({ clients }) => {
           pixelOffset={[0, -8]}
           onCloseClick={() => setOpenIndex(null)}
         >
-          <div style={{ fontSize: '12px' }}>
+          <div style={{ fontSize: '12px', paddingRight: '20px' }}>
             <strong>{open.name || 'Client'}</strong><br />
             {open.barangay || 'Malolos'}<br />
             <span>Method: {open.fp_method || 'N/A'}</span>

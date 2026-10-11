@@ -625,3 +625,17 @@ ul.suggestions-list {
         transform: translate(-50%, 0);
     }
 }
+
+/* name on the first line, address on the next */
+.suggestion-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    line-height: 1.4;
+}
+
+.suggestion-text small {
+    color: #64748b;
+    font-size: 12px;
+}

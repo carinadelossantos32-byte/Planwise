@@ -209,7 +209,7 @@ function RhuWarningMarkers({ markers }) {
         >
           <div style={{ minWidth: '220px', padding: '6px' }}>
             <div style={{ borderBottom: '1px solid #E2E8F0', paddingBottom: '6px', marginBottom: '8px' }}>
-              <h3 style={{ margin: '0 0 2px 0', fontSize: '14px', color: '#0F172A', fontWeight: '700' }}>
+              <h3 style={{ margin: '0 0 2px 0', paddingRight: '24px', fontSize: '14px', color: '#0F172A', fontWeight: '700' }}>
                 {open.rhuName}
               </h3>
               {open.address && (
