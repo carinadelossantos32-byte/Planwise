@@ -1400,12 +1400,13 @@ button:focus-visible,
   flex-direction: column;
   align-items: stretch;
   gap: 6px;
-  margin-top: 16px;
+  margin-top: 0;
   width: 100%;
   max-width: none;
   margin-left: 0;
   margin-right: 0;
-  padding: 0 24px;
+  padding: 16px 24px 0;
+  background: #ffffff;
   box-sizing: border-box;
 }
 
@@ -1459,6 +1460,7 @@ button:focus-visible,
 /* let the dropdown list extend past the small box instead of being cut off */
 .modal-content.rhu-allocate-box {
   overflow: visible;
+  background: transparent;
 }
 
 .rhu-allocate-box .modal-header-inventory {
@@ -1478,14 +1480,16 @@ button:focus-visible,
   width: 100%;
   margin: 0;
   padding: 16px 24px 20px;
-  background: transparent;
+  background: #ffffff;
   border: 0;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   box-sizing: border-box;
 }
 
 /* ---------- Edit details pop-up ---------- */
 
 .inv-edit-body {
+  background: #ffffff;
   align-self: stretch;
   display: flex;
   flex-direction: column;
@@ -1796,12 +1800,12 @@ button:focus-visible,
 }
 
 .low-modal {
+    background: transparent;
     display: flex;
     flex-direction: column;
     width: 100%;
     max-width: 460px;
     max-height: calc(100vh - 32px);
-    background: #fff;
     border-radius: 18px;
     box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.35);
     font-family: 'Inter', system-ui, sans-serif;
@@ -1866,6 +1870,7 @@ button:focus-visible,
 }
 
 .low-modal-list {
+    background: #ffffff;
     flex: 1;
     min-height: 0;
     margin: 0;
@@ -2535,13 +2540,12 @@ button:focus-visible,
 }
 
 .inv-detail {
+  background: transparent;
   display: flex;
   flex-direction: column;
   width: 100%;
   max-width: 560px;
   max-height: calc(100vh - 40px);
-  background: #ffffff;
-  border: 1px solid #e6eaf3;
   border-radius: 24px;
   box-shadow: 0 32px 64px -16px rgba(15, 23, 42, 0.35);
   color: #0f172a;
@@ -2623,6 +2627,7 @@ button:focus-visible,
 /* ----- Body ----- */
 
 .inv-detail-body {
+  background: #ffffff;
   flex: 1;
   min-height: 0;
   display: flex;
@@ -2861,4 +2866,9 @@ button:focus-visible,
 
 .inv-panel .recharts-surface:focus {
   outline: none;
+}
+
+/* no outline on the export pop-up when it opens from Inventory */
+.inv-page .import-modal {
+  border: 0;
 }
