@@ -61,7 +61,7 @@
 .summary-table {
   width: 100%;
   border-collapse: collapse;
-  font-family: sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   font-size: 14px;
 }
 

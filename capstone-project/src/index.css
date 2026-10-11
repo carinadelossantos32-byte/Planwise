@@ -2,6 +2,15 @@
 
 @plugin "daisyui";
 
+/* The system uses one font. Form controls do not inherit it on their own. */
+body,
+button,
+input,
+select,
+textarea {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
 /* default spacing between lines of text across the system */
 body {
   line-height: 1.6;
@@ -10,5 +19,5 @@ body {
 h1,h2,h3,h4,h5,h6,p {
   padding: 0;
   margin: 0;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
 }

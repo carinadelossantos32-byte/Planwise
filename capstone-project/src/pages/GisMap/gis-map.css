@@ -1,7 +1,7 @@
 h1, h2, h3, h4, h5, h6, p, ul {
     margin: 0;
     padding: 0;
-    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
 }
 
 .page-header {
@@ -162,7 +162,7 @@ ul.suggestions-list {
     border-radius: 14px;
     padding: 0px 0px 6px 0px;
     box-shadow: 0 8px 24px -8px rgba(15, 23, 42, 0.25);
-    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
 
 }
 
@@ -265,7 +265,7 @@ ul.suggestions-list {
     display: flex;
     flex-direction: column;
     gap: 5px;
-    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
 }
 
 .checkbox-group {
@@ -563,7 +563,7 @@ ul.suggestions-list {
   font-size: 15px;
   font-weight: 600;
   color: #374151;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
 }
 
 @keyframes spin {

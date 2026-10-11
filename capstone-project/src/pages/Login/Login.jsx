@@ -355,10 +355,10 @@ const Login = () => {
               </svg>
             </button>
 
-            <h2 style={{ color: '#091F7A', fontSize: '22px', fontWeight: 700, margin: '0 0 6px 0', textAlign: 'left', fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+            <h2 style={{ color: '#091F7A', fontSize: '22px', fontWeight: 700, margin: '0 0 6px 0', textAlign: 'left', fontFamily: "'Inter', system-ui, sans-serif" }}>
               Reset Password
             </h2>
-            <p style={{ color: '#64748B', fontSize: '13.5px', lineHeight: 1.5, margin: '0 0 22px 0', textAlign: 'left', fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+            <p style={{ color: '#64748B', fontSize: '13.5px', lineHeight: 1.5, margin: '0 0 22px 0', textAlign: 'left', fontFamily: "'Inter', system-ui, sans-serif" }}>
               {isSent 
                 ? "Check your email for the password reset instructions." 
                 : isLockedOut 
@@ -390,7 +390,7 @@ const Login = () => {
                       fontSize: '14px',
                       outline: 'none',
                       boxSizing: 'border-box',
-                      fontFamily: "'Segoe UI', system-ui, sans-serif"
+                      fontFamily: "'Inter', system-ui, sans-serif"
                     }}
                   />
                 </div>
@@ -409,7 +409,7 @@ const Login = () => {
                     backgroundColor: modalError ? '#FEF2F2' : '#F0FDF4',
                     color: modalError ? '#991B1B' : '#166534',
                     border: modalError ? '1px solid #FCA5A5' : '1px solid #86EFAC',
-                    fontFamily: "'Segoe UI', system-ui, sans-serif"
+                    fontFamily: "'Inter', system-ui, sans-serif"
                   }}
                 >
                   {modalMessage}
@@ -431,7 +431,7 @@ const Login = () => {
                       fontSize: '14px',
                       fontWeight: 700,
                       cursor: 'pointer',
-                      fontFamily: "'Segoe UI', system-ui, sans-serif"
+                      fontFamily: "'Inter', system-ui, sans-serif"
                     }}
                   >
                     Got It
@@ -451,7 +451,7 @@ const Login = () => {
                         fontSize: '13.5px',
                         fontWeight: 600,
                         cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                        fontFamily: "'Segoe UI', system-ui, sans-serif"
+                        fontFamily: "'Inter', system-ui, sans-serif"
                       }}
                     >
                       Cancel
@@ -469,7 +469,7 @@ const Login = () => {
                         fontWeight: 700,
                         cursor: isSubmitting ? 'not-allowed' : 'pointer',
                         opacity: isSubmitting ? 0.7 : 1,
-                        fontFamily: "'Segoe UI', system-ui, sans-serif"
+                        fontFamily: "'Inter', system-ui, sans-serif"
                       }}
                     >
                       {isSubmitting ? "Checking..." : "Send Link"}

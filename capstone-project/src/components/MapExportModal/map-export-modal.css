@@ -1,7 +1,7 @@
 h1, h2, h3, h4, h5, h6, p, ul {
     margin: 0;
     padding: 0;
-    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
 }
 
 .modal-overlay {
@@ -75,14 +75,14 @@ div.modal-header button.close-btn {
 .form-group p {
     display: block;
     font-size: 0.95rem;
-    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
     font-weight: 500;
     margin-bottom: 5px;
 }
 
 .form-group small {
     display: block;
-    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
     font-size: 0.85rem;
     color: #6c757d;
     margin-top: 5px;
@@ -194,7 +194,7 @@ select.custom-select {
   border-radius: 20px;
   box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.28);
   color: #0f172a;
-  font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   overflow: hidden;
 }
 
@@ -348,7 +348,7 @@ select.custom-select {
   position: absolute;
   inset: 0;
   background: #ffffff;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
 }
 
 .mx-sheet-legend {
