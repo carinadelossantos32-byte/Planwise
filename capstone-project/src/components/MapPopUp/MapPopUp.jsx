@@ -162,10 +162,6 @@ export default function MapPopUp({ family, onClose }) {
                   </tr>
                 </>
               )}
-
-              <tr className="section-title-row">
-                <td colSpan="3">SIGNATURE</td>
-              </tr>
               {/* SECTION: SIGNATURE */}
               <tr className="section-title-row">
                 <td colSpan="3">SIGNATURE</td>
@@ -179,7 +175,6 @@ export default function MapPopUp({ family, onClose }) {
                       return <span style={{ color: '#94A3B8', fontStyle: 'italic' }}>No Signature Recorded</span>;
                     }
 
-                    // Kung valid image URL o Base64 Data URI
                     const isBase64OrUrl = typeof sigData === 'string' && (
                       sigData.startsWith('http') || 
                       sigData.startsWith('data:image') || 
