@@ -2872,3 +2872,15 @@ button:focus-visible,
 .inv-page .import-modal {
   border: 0;
 }
+
+/* Cancel buttons carry an outline, so they read as buttons beside the filled Confirm.
+   Some Inventory pop-ups render outside the page wrapper, so they are named here directly. */
+:is(.inv-page, .allocate-box, .deduct-box, .rhu-allocate-box, .rhu-info-box, .confirm-box) .btn-cancel {
+  background-color: #f1f4f9;
+  border: 1px solid var(--border-strong);
+}
+
+:is(.inv-page, .allocate-box, .deduct-box, .rhu-allocate-box, .rhu-info-box, .confirm-box) .btn-cancel:hover {
+  background-color: #e4e9f2;
+  border-color: #b9c3dd;
+}
