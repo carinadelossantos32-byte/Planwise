@@ -179,7 +179,7 @@
 .lp-brand img {
   width: 36px;
   height: 36px;
-  border-radius: 10px;
+  border-radius: 50%;
 }
 
 .lp-nav-links {
@@ -293,7 +293,7 @@
 .lp-hero-mark img {
   width: clamp(190px, 26vw, 330px);
   height: auto;
-  border-radius: 23.4%;
+  border-radius: 50%;
   box-shadow: 0 34px 64px -22px rgba(2, 8, 40, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.14);
   animation: lp-float 6s ease-in-out infinite;
 }
@@ -567,7 +567,7 @@
 .lp-leave img {
   width: clamp(160px, 24vmin, 260px);
   height: auto;
-  border-radius: 23.4%;
+  border-radius: 50%;
   box-shadow: 0 34px 64px -22px rgba(2, 8, 40, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.14);
   opacity: 0;
   transform: scale(0.6);

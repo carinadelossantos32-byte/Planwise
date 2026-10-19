@@ -6,6 +6,8 @@ import autoTable from "jspdf-autotable";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "../firebase-config";
 import { drawReportHeader, drawSignatories, loadReportLogos, reportTableOptions } from "../pages/Reports/reportPdf.js";
+import { drawForm1Pages, FORM1_PAGE } from "./form1Pdf.js";
+import form1LogoUrl from "../assets/rpfp-form1-logo.png";
 
 const PDF_ROWS_PER_PAGE = 10;
 const FORM1_COLUMN_WIDTHS = [
@@ -370,7 +372,7 @@ function drawForm1Footer(pdf) {
 
 const EXPORT_CONFIG = {
   public: {
-    template: "/RPFP_Form1_Template.xlsx",
+    template: "/RPFP_Form1_v04_Export_Template.xlsx",
     filename: "RPFP_Form1_Template.xlsx",
     writeRows: writePublicRows,
   },
@@ -474,71 +476,112 @@ const setCell = (sheet, ref, value, align = center) => {
   cell.font = { name: "Arial", size: 10 };
 };
 
-function writePublicRows(sheet, filteredClients) {
-  const allCols = ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"];
+const FORM1_FIRST_ROW = 19; // first couple slot in the template
+const FORM1_TEMPLATE_SLOTS = 10; // couples pre-drawn in the template (rows 19-38)
+const FORM1_TEMPLATE_LAST_ROW = 50; // legends / signature footer end here
+const FORM1_FIRST_COL = 2; // B
+const FORM1_LAST_COL = 16; // P
 
-  // 1. Linisin ang data rows simula Row 9 hanggang 500 (huwag galawin ang Rows 1-8 dahil naroon ang headers)
-  for (let r = 9; r <= 500; r++) {
-    allCols.forEach((col) => {
-      const cell = sheet.getCell(`${col}${r}`);
+const parseRange = (range) => {
+  const [, left, top, right, bottom] = /^([A-Z]+)(\d+):([A-Z]+)(\d+)$/.exec(range);
+  return { left, top: Number(top), right, bottom: Number(bottom) };
+};
+const cloneStyle = (style) => JSON.parse(JSON.stringify(style));
+
+// RPFP Form 1 (PMED-FM021 v.04). The template carries the exact layout of the
+// reference form. Records flow continuously on ONE sheet: there is no limit per
+// sheet, and the legends / signature footer under the table is removed. Rows
+// beyond the 10 pre-drawn couple slots are copies of the template's own rows.
+function writePublicRows(sheet, filteredClients) {
+  const slots = filteredClients.length || FORM1_TEMPLATE_SLOTS;
+  const lastRow = FORM1_FIRST_ROW + slots * 2 - 1;
+  const slotRows = (slot) => [FORM1_FIRST_ROW + slot * 2, FORM1_FIRST_ROW + slot * 2 + 1];
+  const columns = Array.from(
+    { length: FORM1_LAST_COL - FORM1_FIRST_COL + 1 },
+    (_, i) => FORM1_FIRST_COL + i
+  );
+
+  // 1. Remember how every template slot looks (row heights, borders, merges).
+  const templateMerges = sheet.model.merges.map(parseRange);
+  const slotLooks = Array.from({ length: FORM1_TEMPLATE_SLOTS }, (_, slot) => {
+    const [top, bottom] = slotRows(slot);
+    return {
+      heights: [sheet.getRow(top).height, sheet.getRow(bottom).height],
+      styles: [top, bottom].map((row) => columns.map((col) => cloneStyle(sheet.getCell(row, col).style))),
+      merges: templateMerges
+        .filter((merge) => merge.top >= top && merge.top <= bottom)
+        .map((merge) => ({ ...merge, offset: merge.top - top, span: merge.bottom - merge.top })),
+    };
+  });
+
+  // 2. Remove the footer (and any unused template slots) under the last record.
+  const clearFrom = FORM1_FIRST_ROW + Math.min(slots, FORM1_TEMPLATE_SLOTS) * 2;
+  templateMerges
+    .filter((merge) => merge.top >= clearFrom)
+    .forEach((merge) => sheet.unMergeCells(`${merge.left}${merge.top}:${merge.right}${merge.bottom}`));
+  for (let row = clearFrom; row <= FORM1_TEMPLATE_LAST_ROW; row += 1) {
+    sheet.getRow(row).height = undefined;
+    for (let col = 1; col <= 18; col += 1) {
+      const cell = sheet.getCell(row, col);
       cell.value = null;
-      cell.style = {
-        border: noBorder,
-        fill: { type: "pattern", pattern: "none" },
-        font: {},
-        alignment: {},
-      };
+      cell.style = {};
+    }
+  }
+
+  // 3. Extend the table with as many couple slots as there are records.
+  for (let slot = FORM1_TEMPLATE_SLOTS; slot < slots; slot += 1) {
+    const look = slotLooks[slot % FORM1_TEMPLATE_SLOTS];
+    const rows = slotRows(slot);
+    rows.forEach((row, i) => {
+      sheet.getRow(row).height = look.heights[i];
+      columns.forEach((col, c) => {
+        sheet.getCell(row, col).style = cloneStyle(look.styles[i][c]);
+      });
+    });
+    look.merges.forEach((merge) => {
+      const top = rows[0] + merge.offset;
+      sheet.mergeCellsWithoutStyle(`${merge.left}${top}:${merge.right}${top + merge.span}`);
     });
   }
 
-  // 2. Isulat ang bawat client record (2 rows bawat pares: Husband at Wife)
+  // 4. Print as one table that is only fitted to the page width.
+  // ExcelJS prefixes each end of the range with "$", so this is written as $B$2:$P$<last>.
+  sheet.pageSetup.printArea = `B$2:P$${Math.max(lastRow, FORM1_FIRST_ROW + 1)}`;
+  sheet.pageSetup.fitToWidth = 1;
+  sheet.pageSetup.fitToHeight = 0;
+
+  // 5. Fill in the records.
+  const put = (ref, value, horizontal = "center") => {
+    const cell = sheet.getCell(ref);
+    cell.value = value;
+    cell.alignment = { horizontal, vertical: "middle", wrapText: true };
+  };
+
   filteredClients.forEach((client, index) => {
-    // Nagsisimula sa Row 9 (Index 0 -> Row 9 & 10, Index 1 -> Row 11 & 12, etc.)
-    const husbandRow = 9 + index * 2;
-    const wifeRow = husbandRow + 1;
+    const [husbandRow, wifeRow] = slotRows(index);
 
-    // Mga column na naka-merge vertical para sa mag-asawa:
-    // B (#), H (Address), J (Children), K (FP Method), L (Shift), M (Type), N (Status), O (Reason), P (Signature)
-    const merges = ["B", "H", "J", "K", "L", "M", "N", "O", "P"];
-    merges.forEach((col) => {
-      try {
-        sheet.mergeCells(`${col}${husbandRow}:${col}${wifeRow}`);
-      } catch { /* cells already merged */ }
-    });
+    // Husband row. B, H and J-O are merged over both rows.
+    put(`B${husbandRow}`, index + 1);
+    put(`C${husbandRow}`, client.name || "", "left");
+    put(`E${husbandRow}`, "M");
+    put(`F${husbandRow}`, client.civil_status_male || "");
+    put(`G${husbandRow}`, client.birthdate_male || "");
+    put(`H${husbandRow}`, client.address || "", "left");
+    put(`I${husbandRow}`, client.educational_attainment_male || "");
+    put(`J${husbandRow}`, client.no_of_children ? Number(client.no_of_children) : "");
+    put(`K${husbandRow}`, client.fp_method || "");
+    put(`L${husbandRow}`, client.intention_to_shift || "");
+    put(`M${husbandRow}`, client.type || "");
+    put(`N${husbandRow}`, client.status || "");
+    put(`O${husbandRow}`, client.reason || "");
+    put(`P${husbandRow}`, client.signature_url ? "Signed" : "");
 
-    // Merge C at D para sa Name column (Name width spans Col C and Col D)
-    try { sheet.mergeCells(`C${husbandRow}:D${husbandRow}`); } catch { /* already merged */ }
-    try { sheet.mergeCells(`C${wifeRow}:D${wifeRow}`); } catch { /* already merged */ }
-
-    // ── HUSBAND ROW (Row 9, 11, 13...) ──
-    setCell(sheet, `B${husbandRow}`, index + 1);
-    setCell(sheet, `C${husbandRow}`, client.name || "", left);
-    setCell(sheet, `E${husbandRow}`, "M");
-    setCell(sheet, `F${husbandRow}`, client.civil_status_male || "");
-    setCell(sheet, `G${husbandRow}`, client.birthdate_male || "");
-    setCell(sheet, `H${husbandRow}`, client.address || "", left);
-    setCell(sheet, `I${husbandRow}`, client.educational_attainment_male || "");
-    setCell(sheet, `J${husbandRow}`, client.no_of_children ? Number(client.no_of_children) : "");
-    setCell(sheet, `K${husbandRow}`, client.fp_method || "");
-    setCell(sheet, `L${husbandRow}`, client.intention_to_shift || "");
-    setCell(sheet, `M${husbandRow}`, client.type || "");
-    setCell(sheet, `N${husbandRow}`, client.status || "");
-    setCell(sheet, `O${husbandRow}`, client.reason || "");
-    
-    // Column P: PARTICIPANT'S SIGNATURE (Kung may pirma sa system)
-    setCell(sheet, `P${husbandRow}`, client.signature_url ? "Signed" : "");
-
-    // ── WIFE ROW (Row 10, 12, 14...) ──
-    setCell(sheet, `C${wifeRow}`, client.spouse_name || "", left);
-    setCell(sheet, `E${wifeRow}`, "F");
-    setCell(sheet, `F${wifeRow}`, client.civil_status_female || "");
-    setCell(sheet, `G${wifeRow}`, client.birthdate_female || "");
-    setCell(sheet, `I${wifeRow}`, client.educational_attainment_female || "");
-
-    // I-apply ang borders sa ibabang merged cells (wife row)
-    merges.forEach((col) => {
-      sheet.getCell(`${col}${wifeRow}`).border = border;
-    });
+    // Wife row.
+    put(`C${wifeRow}`, client.spouse_name || "", "left");
+    put(`E${wifeRow}`, "F");
+    put(`F${wifeRow}`, client.civil_status_female || "");
+    put(`G${wifeRow}`, client.birthdate_female || "");
+    put(`I${wifeRow}`, client.educational_attainment_female || "");
   });
 }
 
@@ -618,9 +661,51 @@ export async function exportClientRecordsExcel(activeTab, filteredClients, fileN
   }
 }
 
+async function loadForm1Logo() {
+  try {
+    const blob = await (await fetch(form1LogoUrl)).blob();
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.warn("Could not load the Form 1 logo for PDF export:", error);
+    return null;
+  }
+}
+
+// RPFP Form 1 (PMED-FM021 v.04) – laid out to match the reference Excel form.
+// The grid, borders and static wording live in form1PdfLayout.js / form1Pdf.js.
+async function exportClientRecordsForm1PDF(clients, fileName) {
+  const [logo, signatures] = await Promise.all([
+    loadForm1Logo(),
+    loadClientSignatureImages(clients),
+  ]);
+  const pdf = new jsPDF({
+    orientation: "landscape",
+    unit: "pt",
+    format: [FORM1_PAGE.width, FORM1_PAGE.height],
+  });
+
+  drawForm1Pages(pdf, clients, { logo, signatures });
+  pdf.save(fileName || `client-records-public-${new Date().toISOString().slice(0, 10)}.pdf`);
+}
+
 export async function exportClientRecordsPDF(activeTab, filteredClients, fileName) {
   if (filteredClients.length === 0) {
     notify("There are no records to export.");
+    return;
+  }
+
+  if (activeTab === "public") {
+    try {
+      await exportClientRecordsForm1PDF(filteredClients, fileName);
+    } catch (error) {
+      console.error("Client records PDF export failed:", error);
+      notify("Could not export the PDF. Please try again.");
+    }
     return;
   }
 
