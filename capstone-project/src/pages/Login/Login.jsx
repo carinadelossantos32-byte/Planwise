@@ -217,7 +217,7 @@ const Login = () => {
     <div className="login-page">
       <section className="login-brand">
         <div className="login-brand-center">
-          <img src="/planwise-logo-yellow.svg" alt="PlanWise logo" className="login-logo" />
+          <img id="planwise-logo" src="/cpd-seal.png" alt="PlanWise logo" className="login-logo" />
           <h2 className="login-brand-name">Plan<span>Wise</span></h2>
         </div>
 
@@ -231,7 +231,7 @@ const Login = () => {
 
       <section className="login-panel">
         <div className="login-card">
-          <img src="/planwise-logo.svg" alt="PlanWise logo" className="login-card-logo" />
+          <img src="/cpd-seal.png" alt="PlanWise logo" className="login-card-logo" />
           <h1 className="login-title">Sign In</h1>
 
           <form onSubmit={handleSubmit}>

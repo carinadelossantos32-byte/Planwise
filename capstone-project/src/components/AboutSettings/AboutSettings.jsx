@@ -9,9 +9,9 @@ function AboutSettings(){
 
             <div id="about-container" className="settings-card">
                 <div id="about-header">
-                    <img id="planwise-logo" src="/planwise-logo.svg" alt="PlanWise Logo"/>
+                    <img id="planwise-logo" src="/cpd-seal.png" alt="PlanWise Logo"/>
                     <div>
-                        <h2 className="settings-card-title">PlanWise Family Planning System</h2>
+                        <h2 className="settings-card-title">PlanWise Family Planning Management System</h2>
                         <p className="settings-card-sub">A comprehensive family planning management system for health workers and administrators in Malolos City Health Office.</p>
                     </div>
                 </div>

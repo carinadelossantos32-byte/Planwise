@@ -8,6 +8,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { getClientDate } from "../reportData";
 import ExportConfirmModal from "../ExportConfirmModal";
+import RemoveImportModal from "../RemoveImportModal";
 import { loadReportLogos, drawReportHeader, reportTableOptions, drawSignatories } from "../reportPdf";
 
 /*
@@ -480,6 +481,8 @@ function FormBAnalytics({
     const [importYear, setImportYear] = useState("");
     const [importError, setImportError] = useState("");
     const [importing, setImporting] = useState(false);
+    const [overwriteWarning, setOverwriteWarning] = useState("");
+    const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
     const fileInputRef = useRef(null);
 
     useEffect(() => {
@@ -723,6 +726,7 @@ function FormBAnalytics({
         }
 
         setImportError("");
+        setOverwriteWarning("");
         setImportYear("");   // no default, so the year is always chosen deliberately
         setPendingFile(file);
         setShowImport(false);
@@ -781,12 +785,16 @@ function FormBAnalytics({
 
         if (importedReports[year] || hasClientData) {
 
-            const ok = window.confirm(
-                `${year} already has data. The imported report will be shown ` +
-                `for ${year} instead (your client records are not deleted). Continue?`
-            );
+            if (!overwriteWarning) {
 
-            if (!ok) return;
+                setOverwriteWarning(
+                    `${year} already has data. The imported report will be shown ` +
+                    `for ${year} instead (your client records are not deleted). Continue?`
+                );
+
+                return;
+
+            }
 
         }
 
@@ -836,10 +844,13 @@ function FormBAnalytics({
 
     const removeImportedReport = () => {
 
-        if (!window.confirm(
-            `Remove the imported report for ${selectedYear}? ` +
-            `The page will go back to using client records for that year.`
-        )) return;
+        setShowRemoveConfirm(true);
+
+    };
+
+    const confirmRemoveImportedReport = () => {
+
+        setShowRemoveConfirm(false);
 
         setImportedReports(prev => {
             const { [selectedYear]: _removed, ...rest } = prev;
@@ -1299,6 +1310,14 @@ function FormBAnalytics({
                 />
             )}
 
+            {showRemoveConfirm && (
+                <RemoveImportModal
+                    year={selectedYear}
+                    onConfirm={confirmRemoveImportedReport}
+                    onCancel={() => setShowRemoveConfirm(false)}
+                />
+            )}
+
             {/* IMPORT STEP 1: choose a file */}
 
             {showImport && !pendingFile && (
@@ -1334,6 +1353,14 @@ function FormBAnalytics({
                                 Choose file
                             </button>
                         </div>
+
+                        <a
+                            href="/templates/FormB_Template.xlsx"
+                            download="FormB_Template.xlsx"
+                            className="download-template-link"
+                        >
+                            Don't have the template? Download it here.
+                        </a>
 
                         {importError && (
                             <p className="import-error" role="alert">{importError}</p>
@@ -1378,9 +1405,13 @@ function FormBAnalytics({
                             max={new Date().getFullYear() + 1}
                             value={importYear}
                             autoFocus
-                            onChange={e => setImportYear(e.target.value)}
+                            onChange={e => { setImportYear(e.target.value); setOverwriteWarning(""); }}
                             onKeyDown={e => { if (e.key === "Enter") confirmImport(); }}
                         />
+
+                        {overwriteWarning && !importError && (
+                            <p className="import-warning-msg" role="alert">{overwriteWarning}</p>
+                        )}
 
                         {importError && (
                             <p className="import-error" role="alert">{importError}</p>
@@ -1402,7 +1433,7 @@ function FormBAnalytics({
                                 onClick={confirmImport}
                                 disabled={importing}
                             >
-                                {importing ? "Importing..." : "Import"}
+                                {importing ? "Importing..." : overwriteWarning ? "Continue" : "Import"}
                             </button>
 
                         </div>

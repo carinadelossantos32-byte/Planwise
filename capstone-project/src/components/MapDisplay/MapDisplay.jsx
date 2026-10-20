@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AdvancedMarker, AdvancedMarkerAnchorPoint, InfoWindow, useMap, useMapsLibrary } from '@vis.gl/react-google-maps';
-import { MarkerClusterer } from '@googlemaps/markerclusterer';
+import { AdvancedMarker, AdvancedMarkerAnchorPoint, InfoWindow, useMap } from '@vis.gl/react-google-maps';
 import GoogleMapShell from '../GoogleMap/GoogleMapShell';
 import { MALOLOS_CENTER } from '../GoogleMap/mapConfig';
+import { normalizeBarangayName } from '../../utils/barangayNames';
 import './map-display.css';
 import HeatmapLayer from './HeatmapLayer';
 
@@ -35,74 +35,107 @@ const colorClassOf = (family) => {
 // grows with zoom so client pins stay clear of the street map's own icons
 const dotSizeAt = (zoom) => Math.max(20, Math.min(34, (zoom - 12) * 3 + 20));
 
-// A dot drawn for the clusterer, which needs plain DOM elements instead of React
-const makeDotElement = (family, zoom) => {
-  const size = dotSizeAt(zoom);
-  const wrapper = document.createElement('div');
-  wrapper.className = 'map-fa-marker';
-  wrapper.style.transform = 'translate(0, 50%)'; // a marker sits on its point by its bottom edge; this centers the dot on it
-  const dot = document.createElement('span');
-  dot.className = `map-client-dot ${colorClassOf(family)}`;
-  dot.style.width = `${size}px`;
-  dot.style.height = `${size}px`;
-  wrapper.appendChild(dot);
-  return wrapper;
+// Barangay boundaries live in public/malolos-barangays.geojson (WGS84 lon/lat)
+const BOUNDARY_URL = '/malolos-barangays.geojson';
+// property that holds the barangay name, depending on where the file came from
+const NAME_KEYS = ['adm4_name', 'adm4_en', 'ADM4_EN', 'NAME_4', 'name', 'NAME', 'Name', 'brgy_name', 'BRGY_NAME', 'barangay', 'BARANGAY'];
+
+const featureName = (feature) => {
+  for (const key of NAME_KEYS) {
+    const value = feature.getProperty(key);
+    if (value) return value;
+  }
+  return '';
 };
 
-const clusterElement = (count) => {
-  let sizeClass = 'cluster-small';
-  if (count > 20) sizeClass = 'cluster-medium';
-  if (count > 50) sizeClass = 'cluster-large';
-
-  const element = document.createElement('div');
-  element.className = `custom-marker-cluster ${sizeClass}`;
-  element.style.width = '40px';
-  element.style.height = '40px';
-  element.style.transform = 'translate(0, 50%)';
-  element.innerHTML = `<div class="custom-cluster-inner"><span>${count}</span></div>`;
-  return element;
-};
-
-// Groups nearby clients into numbered circles; zooming in or clicking a circle opens it up
-function ClusteredClients({ families, getCoords, zoom, onMarkerClick }) {
+// Draws the outline of the given barangays, like the boundary Google Maps shows for a searched place
+// The map also zooms to fit the outlines: one barangay for the barangay filter,
+// every barangay of the chosen RHU for the RHU filter.
+function BarangayOutlines({ barangays }) {
   const map = useMap();
-  const markerLibrary = useMapsLibrary('marker');
-  const clickRef = useRef(onMarkerClick);
-  useEffect(() => { clickRef.current = onMarkerClick; });
+  const [layer, setLayer] = useState(null);
+  const wantedKey = barangays.map(normalizeBarangayName).join('|');
 
+  // loads the boundaries once; they stay hidden until a barangay is asked for
   useEffect(() => {
-    if (!map || !markerLibrary) return undefined;
+    if (!map) return undefined;
+    let cancelled = false;
+    const dataLayer = new window.google.maps.Data({ map });
 
-    const markers = [];
-    families.forEach((family) => {
-      const coords = getCoords(family);
-      if (!coords) return;
-      const marker = new markerLibrary.AdvancedMarkerElement({
-        position: { lat: coords[0], lng: coords[1] },
-        content: makeDotElement(family, zoom),
-      });
-      marker.addListener('click', () => {
-        if (clickRef.current) clickRef.current(family);
-      });
-      markers.push(marker);
-    });
-
-    const clusterer = new MarkerClusterer({
-      map,
-      markers,
-      algorithmOptions: { radius: 50 },
-      renderer: {
-        render: ({ count, position }) =>
-          new markerLibrary.AdvancedMarkerElement({ position, content: clusterElement(count) }),
-      },
-    });
+    fetch(BOUNDARY_URL)
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((geojson) => {
+        if (cancelled) return;
+        dataLayer.addGeoJson(geojson);
+        setLayer(dataLayer);
+      })
+      .catch((err) => console.warn('Barangay outlines unavailable:', err));
 
     return () => {
-      clusterer.clearMarkers();
-      clusterer.setMap(null);
-      markers.forEach((marker) => { marker.map = null; });
+      cancelled = true;
+      dataLayer.setMap(null);
     };
-  }, [map, markerLibrary, families, getCoords, zoom]);
+  }, [map]);
+
+  useEffect(() => {
+    if (!layer) return;
+    const wanted = new Set(wantedKey ? wantedKey.split('|') : []);
+    layer.setStyle((feature) => ({
+      visible: wanted.has(normalizeBarangayName(featureName(feature))),
+      clickable: false, // clicks fall through to the markers and the map
+      strokeColor: '#E5484D',
+      strokeOpacity: 0.9,
+      strokeWeight: 2,
+      fillColor: '#E5484D',
+      fillOpacity: 0.05,
+    }));
+  }, [layer, wantedKey]);
+
+  // zooms to fit every outlined barangay
+  useEffect(() => {
+    if (!map || !layer || !wantedKey) return undefined;
+    const wanted = new Set(wantedKey.split('|'));
+    const bounds = new window.google.maps.LatLngBounds();
+    let found = false;
+    layer.forEach((feature) => {
+      if (!wanted.has(normalizeBarangayName(featureName(feature)))) return;
+      feature.getGeometry().forEachLatLng((latLng) => {
+        bounds.extend(latLng);
+        found = true;
+      });
+    });
+    if (!found) return undefined;
+    map.fitBounds(bounds, 40);
+
+    // Something can move the map right after the fit (an open popup, a zoom sync), so once the
+    // map settles, check the outlines are really in view and fit again if they are not
+    let retries = 2;
+    let timer = null;
+    let listener = null;
+    const stop = () => {
+      if (listener) listener.remove();
+      window.clearTimeout(timer);
+    };
+    listener = window.google.maps.event.addListener(map, 'idle', () => {
+      if ((map.getZoom() ?? 0) > 18) {
+        map.setZoom(18);
+        return;
+      }
+      const view = map.getBounds();
+      const inView = view && view.contains(bounds.getNorthEast()) && view.contains(bounds.getSouthWest());
+      if (inView || retries <= 0) {
+        stop();
+        return;
+      }
+      retries -= 1;
+      map.fitBounds(bounds, 40);
+    });
+    timer = window.setTimeout(stop, 4000);
+    return stop;
+  }, [map, layer, wantedKey]);
 
   return null;
 }
@@ -110,18 +143,33 @@ function ClusteredClients({ families, getCoords, zoom, onMarkerClick }) {
 // Keeps the map's zoom and the zoom buttons of the page in step
 function ZoomSync({ zoomLevel, onZoomChange }) {
   const map = useMap();
+  // zooms the map itself reported. The page state can lag behind the map (for example while
+  // fitBounds animates); pushing such an old value back onto the map would undo the zoom.
+  const fromMap = useRef(new Set());
 
   useEffect(() => {
     if (!map) return undefined;
-    const listener = map.addListener('zoom_changed', () => {
+    const zoomListener = map.addListener('zoom_changed', () => {
       const zoom = map.getZoom();
-      if (onZoomChange && zoom != null) onZoomChange(zoom);
+      if (zoom == null) return;
+      fromMap.current.add(zoom);
+      if (onZoomChange) onZoomChange(zoom);
     });
-    return () => listener.remove();
+    let timer = null;
+    const idleListener = map.addListener('idle', () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => fromMap.current.clear(), 150);
+    });
+    return () => {
+      zoomListener.remove();
+      idleListener.remove();
+      window.clearTimeout(timer);
+    };
   }, [map, onZoomChange]);
 
   useEffect(() => {
-    if (map && map.getZoom() !== zoomLevel) map.setZoom(zoomLevel);
+    if (!map || fromMap.current.has(zoomLevel)) return;
+    if (map.getZoom() !== zoomLevel) map.setZoom(zoomLevel);
   }, [zoomLevel, map]);
 
   return null;
@@ -137,36 +185,6 @@ function ChangeMapView({ center }) {
     map.setZoom(17);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [center?.timestamp, map]);
-
-  return null;
-}
-
-// Frames the clients of the selected barangay
-export function BarangayFocusController({ selectedBarangay, families }) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!map || !selectedBarangay || selectedBarangay === 'ALL') return;
-
-    const bounds = new window.google.maps.LatLngBounds();
-    let count = 0;
-    families.forEach((f) => {
-      const bgy = f.barangay || f.location?.barangay || '';
-      if (bgy.toString().trim().toLowerCase() !== selectedBarangay.toString().trim().toLowerCase()) return;
-      const lat = Number(f.lat ?? f.latitude ?? f.location?.lat);
-      const lng = Number(f.lng ?? f.longitude ?? f.location?.lng);
-      if (isNaN(lat) || isNaN(lng) || lat === 0) return;
-      bounds.extend({ lat, lng });
-      count += 1;
-    });
-
-    if (count === 0) return;
-    map.fitBounds(bounds, 15);
-    const once = window.google.maps.event.addListenerOnce(map, 'idle', () => {
-      if ((map.getZoom() ?? 0) > 18) map.setZoom(18);
-    });
-    return () => once.remove();
-  }, [selectedBarangay, families, map]);
 
   return null;
 }
@@ -297,7 +315,7 @@ export default function MapDisplay({
   mapMode = 'markers',
   filteredFamilies,
   activeLayer = 'standard',
-  selectedBarangay = 'ALL',
+  outlinedBarangays = [],
   rhuWarningMarkers = []
 }) {
   const activeFamilies = Array.isArray(filteredFamilies) ? filteredFamilies : families;
@@ -323,11 +341,10 @@ export default function MapDisplay({
       // "hybrid" is the satellite view with street names on it
       mapTypeId={activeLayer === 'satellite' ? 'hybrid' : 'roadmap'}
     >
-      <BarangayFocusController selectedBarangay={selectedBarangay} families={families} />
-
       {/* Change map view to the selected barangay center */}
       {barangayCenter && <ChangeMapView center={barangayCenter} />}
       <ZoomSync zoomLevel={currentZoom} onZoomChange={onZoomChange} />
+      <BarangayOutlines barangays={outlinedBarangays} />
 
       {/* Display user location marker if available */}
       {userLocation && (
@@ -361,15 +378,6 @@ export default function MapDisplay({
       })}
 
       {mapMode === 'heatmap' && <HeatmapLayer points={heatPoints} />}
-
-      {mapMode === 'clusters' && (
-        <ClusteredClients
-          families={activeFamilies}
-          getCoords={getCoords}
-          zoom={currentZoom}
-          onMarkerClick={onMarkerClick}
-        />
-      )}
 
       {/* RHU BUILDING LOW STOCK WARNING MARKERS */}
       <RhuWarningMarkers markers={rhuWarningMarkers} />

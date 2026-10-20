@@ -21,3 +21,10 @@ h1,h2,h3,h4,h5,h6,p {
   margin: 0;
   font-family: 'Inter', system-ui, sans-serif;
 }
+
+#planwise-logo
+{
+  border-radius: 10100px;
+  object-fit: cover;
+  overflow: hidden;
+}
