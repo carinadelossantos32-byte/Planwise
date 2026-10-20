@@ -1,0 +1,726 @@
+/* ==========================================
+   1. MAIN CONTAINER & HEADER STYLES
+   ========================================== */
+
+.rhu-management-container {
+  padding: 32px 40px 48px;
+  width: 100%;
+  max-width: 1200px;
+  box-sizing: border-box;
+  font-family: inherit;
+  color: #0f172a;
+}
+
+.rhu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e6eaf3;
+}
+
+.rhu-header h2 {
+  margin: 0;
+  font-size: 22px;
+  color: #0f172a;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.rhu-header p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+/* ==========================================
+   2. BUTTON STYLES
+   ========================================== */
+
+.rhu-management-container .btn-primary {
+  background-color: #091F7A;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.rhu-management-container .btn-primary:hover {
+  background-color: #071758;
+}
+
+.rhu-management-container .btn-secondary {
+  background-color: #ffffff;
+  color: #091F7A;
+  border: 1px solid #d5dbe9;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rhu-management-container .btn-secondary:hover {
+  background-color: #f1f4fa;
+  border-color: #b9c3dd;
+}
+
+.rhu-management-container .btn-text {
+  background: none;
+  border: none;
+  color: #091F7A;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+}
+
+.rhu-management-container .btn-text:hover {
+  text-decoration: underline;
+}
+
+/* ==========================================
+   3. RHU GRID & CARDS
+   ========================================== */
+
+.rhu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.rhu-card {
+  background: #ffffff;
+  border: 1px solid #e6eaf3;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.rhu-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.rhu-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.rhu-card-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #0f172a;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.rhu-management-container .badge {
+  background-color: #eef1fb;
+  color: #091F7A;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.rhu-address {
+  font-size: 14px;
+  color: #475569;
+  margin: 0 0 20px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rhu-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #f1f4fa;
+  padding-top: 16px;
+}
+
+.rhu-management-container .text-muted {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.rhu-management-container .icon-inline {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.rhu-management-container .empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 56px;
+  background: #ffffff;
+  border: 2px dashed #e6eaf3;
+  border-radius: 16px;
+}
+
+.rhu-management-container .empty-icon {
+  color: #94a3b8;
+  margin-bottom: 12px;
+}
+
+/* ==========================================
+   4. FORM STYLES (Add New RHU Modal)
+   ========================================== */
+
+.rhu-modal-content form {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.rhu-management-container .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rhu-management-container .form-group label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.rhu-management-container .form-group input[type="text"] {
+  padding: 0 14px;
+  height: 44px;
+  border: 1px solid #d5dbe9;
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+  font-family: inherit;
+  color: #0f172a;
+  background-color: #ffffff;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.rhu-management-container .form-group input[type="text"]:focus {
+  border-color: #091F7A;
+  box-shadow: 0 0 0 3px rgba(9, 31, 122, 0.12);
+}
+
+.rhu-management-container .barangay-select-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.rhu-management-container .search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.rhu-management-container .search-icon {
+  position: absolute;
+  left: 10px;
+  color: #94a3b8;
+}
+
+.rhu-management-container .search-input-sm {
+  padding: 6px 10px 6px 30px !important;
+  height: 36px !important;
+  font-size: 13px !important;
+  width: 180px;
+}
+
+.rhu-management-container .help-text {
+  font-size: 12.5px;
+  color: #64748b;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.4;
+}
+
+.rhu-management-container .barangay-checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid #e6eaf3;
+  padding: 12px;
+  border-radius: 12px;
+  background-color: #f9fafb;
+}
+
+.rhu-management-container .barangay-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+
+.rhu-management-container .barangay-checkbox-item:hover {
+  border-color: #cbd5e1;
+  background-color: #f8fafc;
+}
+
+.rhu-management-container .barangay-checkbox-item.selected {
+  background-color: #eef1fb;
+  border-color: #091F7A;
+}
+
+.rhu-management-container .checkbox-icon {
+  color: #cbd5e1;
+  flex-shrink: 0;
+}
+
+.rhu-management-container .checkbox-icon.checked {
+  color: #091F7A;
+}
+
+.rhu-management-container .barangay-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.rhu-management-container .b-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.rhu-management-container .b-current-tag {
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.rhu-management-container .b-current-tag.will-reassign {
+  color: #091F7A;
+  font-weight: 600;
+}
+
+/* ==========================================
+   5. SCOPED RHU MODAL STYLES
+   ========================================== */
+
+.rhu-management-container .rhu-modal-overlay,
+.rhu-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 16px;
+  backdrop-filter: blur(2px);
+}
+
+.rhu-modal-content {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 580px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e6eaf3;
+}
+
+.rhu-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e6eaf3;
+  box-sizing: border-box;
+}
+
+.rhu-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.rhu-modal-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.rhu-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  margin-left: auto;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.rhu-close-btn:hover {
+  background-color: #f1f4fa;
+  color: #0f172a;
+}
+
+.rhu-modal-body-pad {
+  padding: 24px;
+}
+
+.rhu-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 1px solid #e6eaf3;
+  padding: 16px 24px;
+  background-color: #fcfcfd;
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+}
+
+.rhu-detail-meta-card {
+  background-color: #f6f8fc;
+  border: 1px solid #e6eaf3;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.rhu-management-container .meta-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #334155;
+}
+
+.rhu-management-container .text-primary {
+  color: #091F7A;
+}
+
+.rhu-modal-divider {
+  border: 0;
+  height: 1px;
+  background-color: #e6eaf3;
+  margin: 20px 0;
+}
+
+.barangay-scope-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.scope-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.scope-section-header h4 {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.rhu-management-container .badge-pill {
+  background-color: #eef1fb;
+  color: #091F7A;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.tag-container-scrollable {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  background-color: #f9fafb;
+  border: 1px solid #e6eaf3;
+  padding: 14px;
+  border-radius: 12px;
+  margin-top: 10px;
+}
+
+.barangay-tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #ffffff;
+  color: #1e293b;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.rhu-management-container .dot-indicator {
+  width: 6px;
+  height: 6px;
+  background-color: #091F7A;
+  border-radius: 50%;
+}
+
+.empty-scope-state {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  gap: 8px;
+  text-align: center;
+}
+
+/* ==========================================
+   6. REFINEMENTS (cards, modal layout, small screens)
+   ========================================== */
+
+.rhu-header {
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.rhu-management-container .btn-primary:focus-visible,
+.rhu-management-container .btn-secondary:focus-visible,
+.rhu-management-container .btn-text:focus-visible,
+.rhu-close-btn:focus-visible {
+  outline: 2px solid #2f5bff;
+  outline-offset: 2px;
+}
+
+/* ---------- RHU cards ---------- */
+.rhu-card {
+  gap: 14px;
+}
+
+.rhu-card-header {
+  gap: 10px;
+  margin-bottom: 0;
+}
+
+.rhu-card-header h3 {
+  flex: 1;
+  min-width: 0;
+  font-size: 16px;
+  letter-spacing: 0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rhu-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #eef1fb;
+  color: #091F7A;
+}
+
+.rhu-management-container .badge {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.rhu-card-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 30px;
+  align-content: flex-start;
+}
+
+.rhu-chip {
+  padding: 3px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #f8fafc;
+  font-size: 12px;
+  font-weight: 500;
+  color: #475569;
+}
+
+.rhu-chip--more {
+  border-color: transparent;
+  background: #eef1fb;
+  font-weight: 600;
+  color: #091F7A;
+}
+
+.rhu-card-footer {
+  margin-top: auto;
+  padding-top: 14px;
+}
+
+/* ---------- Modals: header and footer stay put, the middle scrolls ---------- */
+.rhu-modal-content {
+  overflow: hidden;
+  max-width: 560px;
+}
+
+.rhu-modal-content--wide {
+  max-width: 680px;
+}
+
+.rhu-modal-header {
+  flex-shrink: 0;
+}
+
+.modal-icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #eef1fb;
+  color: #091F7A;
+}
+
+.modal-subtitle {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.rhu-modal-body-pad {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.rhu-modal-content form {
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+  gap: 0;
+}
+
+.rhu-form-body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  flex: 1;
+  min-height: 0;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.rhu-modal-actions {
+  flex-shrink: 0;
+}
+
+.rhu-management-container .barangay-checkbox-grid {
+  max-height: 260px;
+}
+
+.rhu-management-container .form-group input[type="text"]::placeholder {
+  color: #94a3b8;
+}
+
+@media (max-width: 640px) {
+  .rhu-management-container {
+    padding: 20px 16px 36px;
+  }
+
+  .rhu-header .btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .rhu-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rhu-management-container .barangay-select-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .rhu-management-container .search-input-sm {
+    width: 100% !important;
+    box-sizing: border-box;
+  }
+
+  .rhu-management-container .barangay-checkbox-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rhu-form-body {
+    padding: 18px 16px;
+  }
+
+  .rhu-modal-header {
+    padding: 16px;
+  }
+
+  .rhu-modal-actions {
+    padding: 12px 16px;
+  }
+
+  .rhu-modal-actions button {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+/* sizes below assume border-box; the global rule that sets it lives in another page's stylesheet */
+.rhu-management-container,
+.rhu-management-container * {
+  box-sizing: border-box;
+}

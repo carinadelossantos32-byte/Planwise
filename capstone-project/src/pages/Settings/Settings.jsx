@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react"
 import "./settings.css"
 import { useNavigate } from "react-router"
-import {Info, LockKeyhole, User, Bell } from "lucide-react";
+import {Info, LockKeyhole, User, Bell, Plus } from "lucide-react";
 import Account from "../../components/AccountSettings/Account"
 import PrivacySettings from "../../components/PrivacySettings/PrivacySettings"
 import LowStockSettings from "../../components/LowStockSettings/LowStock"
 import AboutSettings from "../../components/AboutSettings/AboutSettings"
+import RhuManagement from "../RhuManagement/RhuManagement"
+
 import { auth, db, doc, getDoc } from "../../firebase-config"
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -57,6 +59,14 @@ function Settings(){
         <h4>Privacy & Security</h4>
         </div>
 
+        <div id="addRhu-field" 
+        onClick={() => setActivePage("addRhu")} 
+        className={activePage === "addRhu" ? "selected" : ""}
+         >
+        <Plus size={18} strokeWidth={1.75} />
+        <h4>RHU Management</h4>
+        </div>
+
         {isHealth && (
         <div id="notif-field" 
         onClick={() => setActivePage("notifications")} 
@@ -81,6 +91,7 @@ function Settings(){
     <div id="settings-content">
         {activePage === "account" && <Account />}
         {activePage === "privacy" && <PrivacySettings />}
+        {activePage === "addRhu" && <RhuManagement />}
         {activePage === "notifications" && isHealth && <LowStockSettings/>}
         {activePage === "about" && <AboutSettings />}
     </div>

@@ -1,0 +1,73 @@
+/* Deduct stock pop-up: the shared sm-* styles live in ReceiveStockModal/receive-stock-modal.css.
+   This adds the red header (marks it as the removing action) and the FIFO pick list. */
+
+.sm-modal--deduct .sm-head {
+    background: #fef3f2;
+    border-bottom: 1px solid #fbd9d4;
+}
+
+.sm-modal--deduct .sm-head h3 { color: #b42318; }
+.sm-modal--deduct .sm-head p { color: #a8554c; }
+
+.sm-modal--deduct .sm-tag {
+    background: #fbd9d4;
+    color: #b42318;
+}
+
+.sm-modal--deduct .report-select {
+    --rs-accent: #b42318;
+    --rs-accent-tint: #fef3f2;
+    --rs-ring: rgba(180, 35, 24, 0.14);
+}
+
+.sm-modal--deduct .sm-input:focus {
+    border-color: #b42318;
+    box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.14);
+}
+
+/* ---------- FIFO pick preview ---------- */
+.sm-pick {
+    padding: 12px 14px;
+    border: 1px solid #e6eaf3;
+    border-radius: 12px;
+    background: #f9fafc;
+}
+
+.sm-pick ul {
+    display: flex;
+    flex-direction: column;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.sm-pick li {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 7px 0;
+    border-top: 1px solid #eef1f7;
+    font-size: 13px;
+    color: #334155;
+}
+
+.sm-pick li:first-child { border-top: 0; }
+
+.sm-pick-lot {
+    font-weight: 600;
+    color: #1b1b2f;
+}
+
+.sm-pick-date {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.sm-pick-qty {
+    margin-left: auto;
+    font-weight: 600;
+    white-space: nowrap;
+    color: #1b1b2f;
+}

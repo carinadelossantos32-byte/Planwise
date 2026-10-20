@@ -10,7 +10,9 @@ import { INVENTORY_FP_METHODS as FP_METHODS } from "../../data/inventoryMethods.
 import ExportConfirmModal from "../Reports/ExportConfirmModal.jsx";
 import ReportSelect from "../../components/ReportSelect/ReportSelect";
 import PageHeader from "../../components/PageHeader/PageHeader";
-
+import AllocateStockModal from "../../components/ReceiveStockModal/AllocateStockModal.jsx";
+import DeductStockModal from "../../components/IssueStockModal/DeductStockModal.jsx";
+import StockBatchesModal from "../../components/StockBatchesModal/StockBatchesModal.jsx";
 const VISIBLE_LOW_METHODS = 1;
 
 // blue = fine, orange-red = a method at or below its limit (checked for color-blind separation)
@@ -46,6 +48,7 @@ function Inventory() {
     const [isLoading, setIsLoading] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [viewRHUId, setViewRHUId] = useState(null);
+    const [batchesRHUId, setBatchesRHUId] = useState(null);   // RHU whose batches are open (Stock Matrix)
     const [exportFormat, setExportFormat] = useState(null);
     const [activeTab, setActiveTab] = useState("overview");
     const [showConfirmation, setShowConfirmation] = useState(false);
@@ -77,15 +80,9 @@ function Inventory() {
 
     const [showRhuAllocate, setShowRhuAllocate] = useState(false);
     const [allocRHU, setAllocRHU] = useState(null);
-    const [allocQty, setAllocQty] = useState("");
-    const [allocMethod, setAllocMethod] = useState("");
-    const [allocError, setAllocError] = useState("");
 
     const [showRhuDeduct, setShowRhuDeduct] = useState(false);
     const [deductRHU, setDeductRHU] = useState(null);
-    const [singleDeductQty, setSingleDeductQty] = useState("");
-    const [singleDeductMethod, setSingleDeductMethod] = useState("");
-    const [singleDeductError, setSingleDeductError] = useState("");
 
     const [bulkDeductMethod, setBulkDeductMethod] = useState("");
 
@@ -102,9 +99,6 @@ function Inventory() {
 
     function openRhuAllocate(item) {
         setAllocRHU(item);
-        setAllocQty("");
-        setAllocMethod("");
-        setAllocError("");
         setShowRhuAllocate(true);
     }
 
@@ -112,71 +106,23 @@ function Inventory() {
         setShowRhuAllocate(false);
         setAllocRHU(null);
     }
-    // 1. Triggered when clicking "Allocate" / "Confirm" inside the input form
-    function handleRhuAllocate() {
-        const qty = Number(allocQty);
-
-        if (!allocMethod) return setAllocError("Please select an FP method.");
-        if (!Number.isInteger(qty) || qty <= 0) return setAllocError("Enter a whole number greater than 0.");
-
-        setAllocError("");
-        setShowConfirmAllocate(true);
-    }
-
-    // 2. Triggered when clicking "Confirm" inside the confirmation overlay
-    async function ConfirmRhuAllocation() {
-        const qty = Number(allocQty);
-
-        try {
-            await updateDoc(doc(db, "rhu", allocRHU.id), {
-                stock: increment(qty),
-                [`stockByMethod.${allocMethod}`]: increment(qty),
-            });
-
-            await setDoc(
-                doc(db, "inventory", "allocation"),
-                { totalAllocation: increment(qty), rhuCount: rhuData.length },
-                { merge: true }
-            );
-
-            await addDoc(collection(db, "inventory", "allocation", "history"), {
-                rhuId: allocRHU.id,
-                rhuName: allocRHU.name,
-                method: allocMethod,
-                quantity: qty,
-                createdAt: serverTimestamp(),
-            });
-
-            await fetchRHUData();
-
-            const label = FP_METHODS.find(m => m.id === allocMethod)?.label;
-
-            setShowConfirmAllocate(false);
-            closeRhuAllocate();
-
-            setToastTitle("Allocation Successful");
-            setToastMessage(`${qty} units of ${label} allocated to ${allocRHU.name}.`);
-            setShowToast(true);
-
-            setTimeout(() => {
-                setShowToast(false);
-                setToastTitle("");
-                setToastMessage("");
-            }, 4000);
-
-        } catch (err) {
-            console.error("rhu allocation error:", err);
-            setShowConfirmAllocate(false);
-            setAllocError("Failed to allocate. Please try again.");
-        }
+    // shared by the Receive / Issue modals: refresh data, close the modal, show the toast
+    async function finishStockAction(title, message, closeModal) {
+        await fetchRHUData();
+        closeModal();
+        setToastTitle(title);
+        setToastMessage(message);
+        setShowToast(true);
+        setTimeout(() => {
+            setShowToast(false);
+            setToastTitle("");
+            setToastMessage("");
+        }, 4000);
     }
 
 
     function openRhuDeduct(item) {
         setDeductRHU(item);
-        setSingleDeductQty("");
-        setSingleDeductMethod("");
-        setSingleDeductError("");
         setShowRhuDeduct(true);
     }
 
@@ -185,53 +131,6 @@ function Inventory() {
         setDeductRHU(null);
     }
 
-    async function handleSingleRhuDeduct() {
-        const qty = Number(singleDeductQty);
-
-        if (!singleDeductMethod) {
-            return setSingleDeductError("Please select an FP method.");
-        }
-        if (!Number.isInteger(qty) || qty <= 0) {
-            return setSingleDeductError("Enter a whole number greater than 0.");
-        }
-
-        const available = Number(deductRHU?.stockByMethod?.[singleDeductMethod] ?? 0);
-        if (qty > available) {
-            return setSingleDeductError(`Only ${available} units available for this method.`);
-        }
-
-        try {
-            await updateDoc(doc(db, "rhu", deductRHU.id), {
-                stock: increment(-qty),
-                [`stockByMethod.${singleDeductMethod}`]: increment(-qty),
-            });
-
-            await addDoc(collection(db, "inventory", "allocation", "history"), {
-                type: "deduct",
-                rhuId: deductRHU.id,
-                rhuName: deductRHU.name,
-                method: singleDeductMethod,
-                quantity: qty,
-                createdAt: serverTimestamp(),
-            });
-
-            await fetchRHUData();
-            const label = FP_METHODS.find(m => m.id === singleDeductMethod)?.label;
-            closeRhuDeduct();
-
-            setToastTitle("Deduction Successful");
-            setToastMessage(`${qty} units of ${label} deducted from ${deductRHU.name}.`);
-            setShowToast(true);
-            setTimeout(() => {
-                setShowToast(false);
-                setToastTitle("");
-                setToastMessage("");
-            }, 4000);
-        } catch (err) {
-            console.error("Single RHU deduction error:", err);
-            setSingleDeductError("Failed to deduct. Please try again.");
-        }
-    }
 
     async function fetchRHUData() {
         setIsLoading(true);
@@ -777,7 +676,7 @@ function Inventory() {
                                                                 style={{ width: `${(rowTotal / maxStock) * 100}%` }}
                                                             ></div>
                                                         </div>
-                                                        <span className="inv-stock-count">{rowTotal.toLocaleString()} stocks</span>
+                                                        <span className="inv-stock-count">{rowTotal.toLocaleString()}</span>
                                                     </div>
                                                 </td>
 
@@ -858,7 +757,19 @@ function Inventory() {
                                 </thead>
                                 <tbody>
                                     {sortedRHUData.map((item) => (
-                                        <tr key={item.id}>
+                                        <tr
+                                            key={item.id}
+                                            className="inv-row-clickable"
+                                            tabIndex={0}
+                                            aria-label={`View ${item.name} batches`}
+                                            onClick={() => setBatchesRHUId(item.id)}
+                                            onKeyDown={(event) => {
+                                                if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) {
+                                                    event.preventDefault();
+                                                    setBatchesRHUId(item.id);
+                                                }
+                                            }}
+                                        >
                                             <td className="inv-rhu-name">{item.name}</td>
                                             {FP_METHODS.map((method) => {
                                                 const count = Number(item.stockByMethod?.[method.id] ?? 0);
@@ -907,6 +818,14 @@ function Inventory() {
                     />
                 )}
 
+                {batchesRHUId && rhuData.some((item) => item.id === batchesRHUId) && (
+                    <StockBatchesModal
+                        rhu={rhuData.find((item) => item.id === batchesRHUId)}
+                        methods={FP_METHODS}
+                        onClose={() => setBatchesRHUId(null)}
+                    />
+                )}
+
                 {viewedRHU && (
                     <div className="inv-detail-overlay" onClick={() => setViewRHUId(null)}>
                         <div className="inv-detail" role="dialog" aria-modal="true" aria-label={`${viewedRHU.name} details`} onClick={(e) => e.stopPropagation()}>
@@ -932,7 +851,7 @@ function Inventory() {
                                         <dd>{Number(viewedRHU.total_population || 0).toLocaleString()}</dd>
                                     </div>
                                     <div>
-                                        <dt>Total stocks</dt>
+                                        <dt>Total Stock</dt>
                                         <dd>{stockTotal(viewedRHU).toLocaleString()}</dd>
                                     </div>
                                     <div>
@@ -942,7 +861,7 @@ function Inventory() {
                                 </dl>
 
                                 <section className="inv-detail-section">
-                                    <h4 className="inv-detail-title">Stocks by FP method</h4>
+                                    <h4 className="inv-detail-title">Stock by FP Method</h4>
                                     <ul className="inv-detail-methods">
                                         {viewedMethods.map((m) => (
                                             <li key={m.id} className={m.isLow ? (m.qty === 0 ? "is-low is-out" : "is-low") : ""}>
@@ -1058,121 +977,24 @@ function Inventory() {
                 )}
 
                 {showRhuAllocate && allocRHU && (
-                    <div className="modal-overlay">
-                        <div className="modal-content allocate-box rhu-allocate-box">
-                            <div className="modal-header-inventory">
-                                <h3 className="modal-title-with-tag">
-                                    Allocate Stock
-                                    <span className="modal-title-tag">{allocRHU.name}</span>
-                                </h3>
-                            </div>
-
-                            <div className="allocate-input-section">
-                                <h3>FP Method:</h3>
-                                <div className="inv-method-select">
-                                    <ReportSelect
-                                        value={allocMethod}
-                                        onChange={(e) => { setAllocMethod(e.target.value); setAllocError(""); }}
-                                        options={FP_METHODS.map((m) => ({ value: m.id, label: m.label }))}
-                                        ariaLabel="FP method"
-                                        placeholder="Select FP method"
-                                    />
-                                </div>
-
-                                <h3>Quantity to Allocate:</h3>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    step="1"
-                                    value={allocQty}
-                                    placeholder="e.g. 100"
-                                    onChange={(e) => { setAllocQty(e.target.value); setAllocError(""); }}
-                                    className="allocate-input"
-                                />
-
-                                {allocError && <p className="error-text">{allocError}</p>}
-                            </div>
-
-                            <div className="modal-footer">
-                                <button className="btn-cancel" onClick={closeRhuAllocate}>Cancel</button>
-                                <button className="btn-confirm-success" onClick={ConfirmRhuAllocation}>Confirm</button>
-                            </div>
-
-                            {showConfirmAllocate && (
-                                <div className="modal-overlay confirm-overlay">
-                                    <div className="modal-content confirm-box">
-                                        <h3 className="confirm-title">Confirm Stock Allocation</h3>
-                                        <p className="confirm-note"> Note: This action will allocate stocks to all RHUs. </p>
-                                        <p className="confirm-detail" >Please ensure you have reviewed the current stock levels and the allocation quantities for each RHU before confirming. Click Confirm to authorize the automated ledger updates and finalize the distribution process.</p>
-
-
-                                        <div className="modal-footer confirm-footer">
-                                            <button className="btn-cancel-large" onClick={() => { setShowConfirmAllocate(false); setshowAllocateModal(true); }}
-                                            >Cancel
-                                            </button>
-                                            <button className="btn-confirm-success-large" onClick={ConfirmAllocation}
-                                            >Confirm
-                                            </button>
-                                        </div>
-
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                    <AllocateStockModal
+                        rhu={allocRHU}
+                        methods={FP_METHODS}
+                        onClose={closeRhuAllocate}
+                        onDone={(msg) => finishStockAction("Allocation Successful", msg, closeRhuAllocate)}
+                    />
                 )}
             </div>
 
 
 
             {showRhuDeduct && deductRHU && (
-                <div className="modal-overlay">
-                    <div className="modal-content allocate-box rhu-allocate-box is-deduct">
-                        <div className="modal-header-inventory">
-                            <h3 className="modal-title-with-tag">
-                                Deduct Stock
-                                <span className="modal-title-tag">{deductRHU.name}</span>
-                            </h3>
-                        </div>
-
-                        <div className="allocate-input-section">
-                            <h3>FP METHOD:</h3>
-                            <div className="inv-method-select">
-                                <ReportSelect
-                                    value={singleDeductMethod}
-                                    onChange={(e) => {
-                                        setSingleDeductMethod(e.target.value);
-                                        setSingleDeductError("");
-                                    }}
-                                    options={FP_METHODS.map((m) => ({ value: m.id, label: m.label }))}
-                                    ariaLabel="FP method"
-                                    placeholder="Select FP method"
-                                />
-                            </div>
-
-                            <h3>QUANTITY TO DEDUCT:</h3>
-                            <input
-                                type="number"
-                                min="1"
-                                step="1"
-                                value={singleDeductQty}
-                                placeholder="e.g. 100"
-                                onChange={(e) => {
-                                    setSingleDeductQty(e.target.value);
-                                    setSingleDeductError("");
-                                }}
-                                className="allocate-input"
-                            />
-
-                            {singleDeductError && <p className="error-text">{singleDeductError}</p>}
-                        </div>
-
-                        <div className="modal-footer">
-                            <button className="btn-cancel" onClick={closeRhuDeduct}>Cancel</button>
-                            <button className="btn-confirm-solid" onClick={handleSingleRhuDeduct}>Confirm</button>
-                        </div>
-                    </div>
-                </div>
+                <DeductStockModal
+                    rhu={deductRHU}
+                    methods={FP_METHODS}
+                    onClose={closeRhuDeduct}
+                    onDone={(msg) => finishStockAction("Deduction Successful", msg, closeRhuDeduct)}
+                />
             )}
 
 

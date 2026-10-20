@@ -54,6 +54,13 @@ service cloud.firestore {
       allow read: if isStaff();
       allow create, update: if isHealth();
       allow delete: if false;
+
+      // Stock batches received by this RHU (one per allocation: batchNo, arrivedAt, qtyRemaining...)
+      match /batches/{batchId} {
+        allow read: if isStaff();
+        allow create, update: if isHealth();
+        allow delete: if false;
+      }
     }
 
     match /inventory/{document=**} {

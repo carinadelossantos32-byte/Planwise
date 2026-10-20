@@ -115,28 +115,124 @@
   height: 40px;
 }
 
-/* ---------- Per-method grid ---------- */
-.method-thresholds-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 16px;
-}
-
-.method-threshold-item {
+/* ---------- Low stock limit: number + unit dropdown ---------- */
+.limit-field {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 8px 8px 14px;
+  gap: 8px;
+}
+
+.limit-unit-select {
+  width: 96px;
+  flex-shrink: 0;
+}
+
+.limit-pack {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.limit-pack .threshold-input {
+  width: 72px;
+}
+
+.limit-field {
+  flex-wrap: wrap;
+}
+
+/* ---------- Per-method table (one row per method) ---------- */
+/* no overflow clipping here, so the unit dropdown can open past the table */
+.method-table-scroll {
   border: 1px solid #e6eaf3;
   border-radius: 12px;
 }
 
-.method-label {
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.5;
+.limit-unit-select .report-select {
+  --rs-height: 40px;
+}
+
+.method-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.method-table th,
+.method-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #e6eaf3;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.method-table tbody tr:last-child th,
+.method-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.method-table thead th {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
   color: #334155;
+  background: #f6f8fc;
+}
+
+.method-table thead th:first-child { border-top-left-radius: 12px; }
+.method-table thead th:last-child { border-top-right-radius: 12px; }
+
+.method-table tbody th {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+}
+
+.method-table tbody tr:hover th,
+.method-table tbody tr:hover td {
+  background: #fafbfe;
+}
+
+/* column widths: method name | limit + unit | shelf life | notice */
+.method-table thead th:nth-child(1) { width: 24%; }
+.method-table thead th:nth-child(2) { width: 36%; }
+.method-table thead th:nth-child(3),
+.method-table thead th:nth-child(4) { width: 20%; }
+
+/* inside the table the inputs line up under their column heading */
+.method-table .threshold-input {
+  width: 100%;
+  max-width: 110px;
+  text-align: left;
+}
+
+.method-table .limit-field .threshold-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.method-na {
+  color: #94a3b8;
+}
+
+.method-table-note {
+  margin: 14px 2px 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: #64748b;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .settings-footer {
@@ -149,8 +245,49 @@
 
 /* ---------- Mobile ---------- */
 @media (max-width: 640px) {
-  .method-thresholds-grid {
-    grid-template-columns: 1fr;
+  /* each method becomes a stacked card; the column name comes from data-label */
+  .method-table thead {
+    display: none;
+  }
+
+  .method-table,
+  .method-table tbody,
+  .method-table tr,
+  .method-table th,
+  .method-table td {
+    display: block;
+  }
+
+  .method-table tbody tr {
+    padding: 6px 0;
+    border-bottom: 1px solid #e6eaf3;
+  }
+
+  .method-table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .method-table th,
+  .method-table td {
+    padding: 6px 14px;
+    border-bottom: none;
+  }
+
+  .method-table tbody th {
+    font-weight: 600;
+  }
+
+  .method-table td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+  }
+
+  .limit-field {
+    flex-wrap: wrap;
   }
 
   .bulk-set-container label {

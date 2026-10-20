@@ -5,4 +5,5 @@ export const INVENTORY_FP_METHODS = [
   { id: "injectable", label: "Injectable" },
   { id: "iud", label: "IUD" },
   { id: "implant", label: "Implant" },
+  
 ];

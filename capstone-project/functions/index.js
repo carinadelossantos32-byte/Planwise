@@ -1,5 +1,6 @@
 const { onRequest, onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onDocumentUpdated } = require("firebase-functions/v2/firestore");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { defineSecret } = require("firebase-functions/params");
 const admin = require("firebase-admin");
 
@@ -110,9 +111,7 @@ async function alertIfLow(rhuRef, rhuId, rhu, methodIds, limitsByMethod) {
         continue;
       }
 
-      const label = METHOD_LABELS[methodId] || methodId;
-      const subject = `Low Stock Alert: ${label} at ${rhuName}`;
-      const text = `${rhuName} is low on ${label}.\n\nRemaining: ${qty}\nLimit: ${limit}`;
+      const { subject, text } = lowStockEmail({ methodId, rhuName, qty, limit });
 
       const transporter = getTransporter();
       const results = await Promise.allSettled(
@@ -160,7 +159,170 @@ const METHOD_LABELS = {
   sdm: "Standard Days Method (SDM)",
   lam: "Lactational Amenorrhea Method (LAM)",
 };
- 
+
+// Base unit stock is counted in, same as STOCK_CONFIG in AllocateStockModal.jsx
+const BASE_UNITS = {
+  condom: "pcs",
+  pills: "cycle",
+  injectable: "vial",
+  iud: "pcs",
+  implant: "set",
+  sdm: "set",
+  bbt: "pcs",
+};
+
+const unitOf = (methodId) => BASE_UNITS[methodId] || "units";
+
+// TEMPLATE 2: LOW STOCK ALERT
+function lowStockEmail({ methodId, rhuName, qty, limit }) {
+  const item = `${METHOD_LABELS[methodId] || methodId} - ${rhuName}`;
+  const unit = unitOf(methodId);
+  return {
+    subject: `LOW STOCK ALERT: ${item} Running Low`,
+    text: [
+      "Dear Inventory Team,",
+      "",
+      "This is a notification to inform you that the inventory level for one of our key items has dropped below the safety threshold.",
+      "",
+      `* Product Name: ${item}`,
+      `* Current Stock Level: ${Number(qty).toLocaleString("en-PH")} ${unit} remaining`,
+      `* Reorder Threshold: ${Number(limit).toLocaleString("en-PH")} ${unit}`,
+      "",
+      "To ensure uninterrupted public service delivery and avoid depletion of essential supplies, please initiate the procurement or requisition process immediately.",
+      "",
+      "Best regards,",
+      "PlanWise",
+    ].join("\n"),
+  };
+}
+
+// TEMPLATE 1: EXPIRATION ALERT
+function expirationEmail({ methodId, rhuName, lotNo, qty, expiryDate, daysLeft }) {
+  const label = METHOD_LABELS[methodId] || methodId;
+  const date = expiryDate.toLocaleDateString("en-PH", { timeZone: MANILA_TZ, year: "numeric", month: "long", day: "numeric" });
+  return {
+    subject: `EXPIRATION ALERT: ${label} - Batch #${lotNo} Nearing Expiry`,
+    text: [
+      "Dear CPD Personnel and Health Officer,",
+      "",
+      "This is to alert you that a specific batch of inventory items under our custody is approaching its expiration date and requires immediate utilization or disposition in compliance with LGU audit and inventory standards.",
+      "",
+      `* Item Description: ${label} - ${rhuName}`,
+      `* Batch / Lot Number: ${lotNo}`,
+      `* Current Quantity: ${Number(qty).toLocaleString("en-PH")} ${unitOf(methodId)}`,
+      `* Expiration Date: ${date}`,
+      `* Days Remaining: ${daysLeft} ${daysLeft === 1 ? "day" : "days"}`,
+      "",
+      "Recommended Next Steps:",
+      "To prevent wastage of public resources and ensure proper compliance, please consider the following actions:",
+      "",
+      "1. Prioritize Distribution (FIFO): Issue or distribute this specific batch first to ongoing LGU programs or recipient barangays.",
+      "2. Reallocation: If our office cannot consume these units before expiry, coordinate with other municipal departments or health centers that may need them immediately.",
+      "3. Inspection / Disposal Protocol: If the items expire before use, coordinate with the General Services Office (GSO) and the Commission on Audit (COA) representative for proper condemnation and write-off procedures.",
+      "",
+      "Please advise on the action plan for this batch.",
+      "",
+      "Best regards,",
+      "PlanWise",
+    ].join("\n"),
+  };
+}
+
+const MANILA_TZ = "Asia/Manila";
+
+// Whole days from today to `date`, both counted as calendar days in Manila time
+function daysUntil(date) {
+  const day = (d) => {
+    const [y, m, dd] = d.toLocaleDateString("en-CA", { timeZone: MANILA_TZ }).split("-").map(Number);
+    return Date.UTC(y, m - 1, dd);
+  };
+  return Math.round((day(date) - day(new Date())) / 86400000);
+}
+
+// `date` plus `months` calendar months, at midnight Manila time (day clamped to the month's end)
+function addMonths(date, months) {
+  const [y, m, d] = date.toLocaleDateString("en-CA", { timeZone: MANILA_TZ }).split("-").map(Number);
+  const target = new Date(Date.UTC(y, m - 1 + months, 1));
+  const lastDay = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
+  target.setUTCDate(Math.min(d, lastDay));
+  return new Date(target.getTime() - 8 * 3600000); // Manila is UTC+8
+}
+
+// Sends one email to every user; true if at least one was accepted
+async function sendToAll(allEmails, { subject, text }, logTag) {
+  const transporter = getTransporter();
+  const results = await Promise.allSettled(
+    allEmails.map((email) =>
+      transporter.sendMail({
+        from: `"PlanWise System" <${process.env.BREVO_FROM_EMAIL}>`,
+        to: email,
+        subject,
+        text,
+      })
+    )
+  );
+
+  results.forEach((r, i) => {
+    if (r.status === "rejected") {
+      console.error(`Failed for ${allEmails[i]} (${logTag}):`, r.reason);
+    } else {
+      console.log(`Sent to ${allEmails[i]} (${logTag}):`, r.value.accepted);
+    }
+  });
+
+  return results.some(
+    (r) => r.status === "fulfilled" && r.value.accepted && r.value.accepted.length > 0
+  );
+}
+
+// Daily check of every RHU's batches. Each batch expires `shelfLifeMonthsByMethod[method]` months
+// after its own Date Arrived (arrivedAt), and is emailed once, `expiryNoticeMonthsByMethod[method]`
+// (default 1) months before that, while it still has stock. Both settings live in lowStock/lowStockLimit.
+exports.checkExpiringStock = onSchedule(
+  { schedule: "every day 08:00", timeZone: MANILA_TZ, region: "asia-southeast1" },
+  async () => {
+    const settingsSnap = await admin.firestore().doc("lowStock/lowStockLimit").get();
+    const { enabled = true, shelfLifeMonthsByMethod = {}, expiryNoticeMonthsByMethod = {} } = settingsSnap.exists ? settingsSnap.data() : {};
+    if (!enabled) {
+      console.log("Alerts are turned off in settings.");
+      return;
+    }
+
+    const rhuSnap = await admin.firestore().collection("rhu").get();
+    const due = [];
+    for (const rhuDoc of rhuSnap.docs) {
+      const rhuName = rhuDoc.data().name || rhuDoc.id;
+      const batchSnap = await rhuDoc.ref.collection("batches").get();
+      batchSnap.docs.forEach((b) => {
+        const batch = b.data();
+        const shelfLife = Number(shelfLifeMonthsByMethod[batch.method]);
+        const arrived = batch.arrivedAt || batch.receivedAt; // batches saved before Date Arrived only have receivedAt
+        if (!(shelfLife > 0) || !arrived || !(batch.qtyRemaining > 0) || batch.expiryNotified === true) return;
+        const expiryDate = addMonths(arrived.toDate(), shelfLife);
+        const daysLeft = daysUntil(expiryDate);
+        const notice = expiryNoticeMonthsByMethod[batch.method];
+        const noticeMonths = notice === undefined || notice === "" ? 1 : Number(notice);
+        const alertFrom = addMonths(arrived.toDate(), shelfLife - noticeMonths);
+        if (daysLeft < 0 || daysUntil(alertFrom) > 0) return;
+        due.push({ ref: b.ref, methodId: batch.method, rhuName, lotNo: batch.lotNo, qty: batch.qtyRemaining, expiryDate, daysLeft });
+      });
+    }
+    console.log("Batches nearing expiry:", due.length);
+    if (due.length === 0) return;
+
+    const allEmails = await getAllEmails();
+    if (allEmails.length === 0) {
+      console.log("No recipient emails found in users collection.");
+      return;
+    }
+
+    for (const d of due) {
+      const anySent = await sendToAll(allEmails, expirationEmail(d), `${d.rhuName}/${d.methodId}/Lot ${d.lotNo}`);
+      if (anySent) await d.ref.update({ expiryNotified: true });
+    }
+  }
+);
+
 
 exports.checkLowStock = onDocumentUpdated(
   { document: "rhu/{rhuId}", region: "asia-southeast1" },
@@ -222,36 +384,10 @@ exports.checkLowStock = onDocumentUpdated(
       console.log("Recipients found:", allEmails.length);
 
       if (allEmails.length > 0) {
-        const transporter = getTransporter();
         for (const m of newlyLow) {
-          const label = METHOD_LABELS[m.methodId] || m.methodId;
-          const subject = `Low Stock Alert: ${label} at ${rhuName}`;
-          const text = `${rhuName} is low on ${label}.\n\nRemaining: ${m.qty}\nLimit: ${m.limit}`;
-
-          // Send to each user's own email
-          const results = await Promise.allSettled(
-            allEmails.map((email) =>
-              transporter.sendMail({
-                from: `"PlanWise System" <${process.env.BREVO_FROM_EMAIL}>`,
-                to: email,
-                subject,
-                text,
-              })
-            )
-          );
-
-          results.forEach((r, i) => {
-            if (r.status === "rejected") {
-              console.error(`Failed for ${allEmails[i]} (${rhuId}/${m.methodId}):`, r.reason);
-            } else {
-              console.log(`Sent to ${allEmails[i]} (${rhuId}/${m.methodId}):`, r.value.accepted);
-            }
-          });
-
-          // Flag only if at least one email was accepted
-          const anySent = results.some(
-            (r) => r.status === "fulfilled" && r.value.accepted && r.value.accepted.length > 0
-          );
+          // Send to each user's own email; flag only if at least one was accepted
+          const email = lowStockEmail({ methodId: m.methodId, rhuName, qty: m.qty, limit: m.limit });
+          const anySent = await sendToAll(allEmails, email, `${rhuId}/${m.methodId}`);
           if (anySent) {
             updates[`lowStockNotifiedByMethod.${m.methodId}`] = true;
           }

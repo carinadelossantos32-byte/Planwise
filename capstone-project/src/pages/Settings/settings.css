@@ -29,7 +29,7 @@
     color: #0f172a;
 }
 
-#account-field, #privacy-field, #notif-field, #about-field {
+#account-field, #privacy-field, #notif-field, #about-field,#addRhu-field {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -46,12 +46,12 @@
     font-weight: 500;
 }
 
-#account-field:hover, #privacy-field:hover, #notif-field:hover, #about-field:hover {
+#account-field:hover, #privacy-field:hover, #notif-field:hover, #about-field:hover, #addRhu-field:hover {
     background-color: #f1f4fa;
     color: #0f172a;
 }
 
-#account-field.selected, #privacy-field.selected, #notif-field.selected, #about-field.selected {
+#account-field.selected, #privacy-field.selected, #notif-field.selected, #about-field.selected, #addRhu-field.selected {
     background-color: #eef1fb;
     color: #091F7A;
 }
