@@ -6,13 +6,14 @@ import html2canvas from 'html2canvas';
 import * as turf from '@turf/turf';
 import { httpsCallable } from 'firebase/functions';
 import { AdvancedMarker, AdvancedMarkerAnchorPoint, useMap } from '@vis.gl/react-google-maps';
-import { X, Eye, Download, ArrowLeft, Loader2, MapPinned } from 'lucide-react';
+import { X, Eye, Download, FileText, ArrowLeft, Loader2, MapPinned } from 'lucide-react';
 import './map-export-modal.css';
 import { functions } from '../../firebase-config';
 import GoogleMapShell from '../GoogleMap/GoogleMapShell';
 import { MALOLOS_CENTER, hasGoogleMapsKey } from '../GoogleMap/mapConfig';
 import malolosBarangays from '../../data/malolos-barangays.json';
 import { canonicalMethod } from '../../pages/Reports/reportData.js';
+import { canvasToPdfBlob } from '../../utils/imagePdf';
 
 // One dot color per method, listed in the legend of the exported sheet
 const LEGEND_GROUPS = [
@@ -178,6 +179,7 @@ export default function MapExportModal({
   const sheetRef = useRef(null);
   const mapBoxRef = useRef(null);
   const mapRef = useRef(null);
+  const canvasRef = useRef(null); // the photographed sheet, kept so it can also be saved as a PDF
   const [staticUrl, setStaticUrl] = useState(null); // the picture of the map that takes the live map's place while the sheet is photographed
   const [selectedBarangay, setSelectedBarangay] = useState('');
   const [isCapturing, setIsCapturing] = useState(false);
@@ -241,7 +243,7 @@ export default function MapExportModal({
 
   if (!isOpen) return null;
 
-  const fileName = `Planwise_Map_${selectedBarangay.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().slice(0, 10)}.png`;
+  const baseName = `Planwise_Map_${selectedBarangay.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().slice(0, 10)}`;
 
   const handlePreview = async () => {
     if (!selectedBarangay || !sheetRef.current) return;
@@ -303,6 +305,7 @@ export default function MapExportModal({
         scale: Math.min(4, 2400 / sheet.offsetWidth),
       });
 
+      canvasRef.current = canvas;
       setPreviewUrl(canvas.toDataURL('image/png', 1.0));
     } catch (err) {
       console.error("Export Error:", err);
@@ -313,14 +316,31 @@ export default function MapExportModal({
     }
   };
 
-  const handleDownload = () => {
+  const saveFile = (href, fileName) => {
     const link = document.createElement('a');
-    link.setAttribute('href', previewUrl);
+    link.setAttribute('href', href);
     link.setAttribute('download', fileName);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleDownload = () => {
+    saveFile(previewUrl, `${baseName}.png`);
     onClose();
+  };
+
+  const handleDownloadPdf = () => {
+    if (!canvasRef.current) return;
+    try {
+      const url = URL.createObjectURL(canvasToPdfBlob(canvasRef.current));
+      saveFile(url, `${baseName}.pdf`);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      onClose();
+    } catch (err) {
+      console.error("PDF Export Error:", err);
+      notify("The PDF could not be created. Please try again.");
+    }
   };
 
   return (
@@ -331,7 +351,7 @@ export default function MapExportModal({
             <h3 className="mx-title"><MapPinned size={18} /> Export Barangay Map</h3>
             <p className="mx-subtitle">
               {previewUrl
-                ? "This is the image that will be downloaded."
+                ? "This is what will be downloaded, as a PNG image or a PDF."
                 : "Pick a barangay, then drag or zoom the map to frame it."}
             </p>
           </div>
@@ -452,6 +472,9 @@ export default function MapExportModal({
               </button>
               <button type="button" className="mx-btn mx-btn--primary" onClick={handleDownload}>
                 <Download size={15} /> Download PNG
+              </button>
+              <button type="button" className="mx-btn mx-btn--primary" onClick={handleDownloadPdf}>
+                <FileText size={15} /> Download PDF
               </button>
             </>
           ) : (

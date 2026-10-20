@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import "./landing.css";
 
-const LOGO = "/planwise-logo-yellow-gradient.svg";
+const LOGO = "/cpd-seal.png";
 
 const NAV_LINKS = [
   { id: "better-way", label: "Why PlanWise" },
@@ -124,7 +124,7 @@ function Landing() {
     <div className="lp">
       {leaving && (
         <div className="lp-leave" style={{ "--x": `${leaving.x}px`, "--y": `${leaving.y}px` }} aria-hidden="true">
-          <img src={LOGO} alt="" width="240" height="240" />
+          <img id="planwise-logo" src={LOGO} alt="" width="240" height="240" />
         </div>
       )}
 
@@ -134,7 +134,7 @@ function Landing() {
       <header className={`lp-nav${scrolled ? " is-solid" : ""}`}>
         <div className="lp-wrap lp-nav-inner">
           <Link to="/" className="lp-brand" aria-label="PlanWise home">
-            <img src={LOGO} alt="" width="36" height="36" />
+            <img id="planwise-logo" src={LOGO} alt="" width="36" height="36" />
             <span className="lp-wordmark">Plan<span>Wise</span></span>
           </Link>
 
