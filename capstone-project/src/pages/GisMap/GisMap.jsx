@@ -10,6 +10,7 @@ import { INVENTORY_FP_METHODS } from "../../data/inventoryMethods.js";
 import ReportSelect from "../../components/ReportSelect/ReportSelect";
 import PageHeader from "../../components/PageHeader/PageHeader";
 import { isPlaceholderCoordinate } from "../../utils/geoHelper";
+import { normalizeBarangayName } from "../../utils/barangayNames";
 
 const BARANGAYS = [
     "Anilao", "Atlag", "Babatnin", "Bagna", "Bagong Bayan", "Balayong", "Balite",
@@ -94,10 +95,18 @@ const FP_METHOD_OPTIONS = [
     ...FP_METHODS.map((method) => ({ value: method, label: method }))
 ];
 
+// the barangays an RHU covers, read from its Firestore document (`barangays` array of names)
+const getRhuBarangays = (rhuDoc) => {
+    const raw = rhuDoc?.barangays ?? [];
+    const list = Array.isArray(raw) ? raw : String(raw).split(',');
+    return list.map((b) => String(b).trim()).filter(Boolean);
+};
+
 function GisMap({ getCollection }){
     //filters
     const [isFiltersOpen, setIsFiltersOpen] = useState(true);
     const [selectedBarangay, setSelectedBarangay] = useState("");
+    const [selectedRhu, setSelectedRhu] = useState("");
     const [mapTrigger, setMapTrigger] = useState(null);
     const [selectedFPMethod, setSelectedFPMethod] = useState('all');
     const [mapMode, setMapMode] = useState('markers');
@@ -247,6 +256,41 @@ function GisMap({ getCollection }){
         return markers;
     }, [rhu, methodLimits, defaultThreshold, isLowStockEnabled]);
 
+    const rhuOptions = useMemo(() => [
+        { value: "", label: "All RHUs" },
+        ...rhu.map((r) => ({ value: r.id, label: r.name || r.rhuName || r.id }))
+    ], [rhu]);
+
+    // barangays under the selected RHU (null when no RHU is selected)
+    const rhuBarangays = useMemo(() => {
+        if (!selectedRhu) return null;
+        const rhuDoc = rhu.find((r) => r.id === selectedRhu);
+        return rhuDoc ? getRhuBarangays(rhuDoc) : [];
+    }, [rhu, selectedRhu]);
+
+    // same list, with names normalized so "Sto. Cristo" matches "Santo Cristo"
+    const rhuKeys = useMemo(
+        () => (rhuBarangays ? new Set(rhuBarangays.map(normalizeBarangayName)) : null),
+        [rhuBarangays]
+    );
+
+    // the barangay dropdown only lists the selected RHU's barangays
+    const barangayOptions = useMemo(() => {
+        if (!rhuKeys) return BARANGAY_OPTIONS;
+        return [
+            { value: "", label: "All Barangays" },
+            ...BARANGAYS
+                .filter((b) => rhuKeys.has(normalizeBarangayName(b)))
+                .map((b) => ({ value: b, label: b }))
+        ];
+    }, [rhuKeys]);
+
+    // barangays that get an outline: the chosen barangay, otherwise every barangay of the chosen RHU
+    const outlinedBarangays = useMemo(
+        () => (selectedBarangay ? [selectedBarangay] : (rhuBarangays || [])),
+        [selectedBarangay, rhuBarangays]
+    );
+
     const fetchMapClients = useCallback(async () => {
             try {
                 const collectionName = typeof getCollection === 'function' ? getCollection() : 'clients_public';
@@ -379,17 +423,7 @@ function GisMap({ getCollection }){
         fetchThreshold();
     }, [fetchMapClients, fetchRHU, fetchThreshold]);
 
-    //zooming in on selected barangay
-    useEffect(() => {
-        if (selectedBarangay && BARANGAY_COORDINATES[selectedBarangay]) {
-            setMapTrigger({
-                coordinates: BARANGAY_COORDINATES[selectedBarangay],
-                timestamp: Date.now()
-            });
-        } else {
-            setMapTrigger(null);
-        }
-    }, [selectedBarangay]);
+    // the barangay filter now zooms to the barangay's outline (see BarangayOutlines in MapDisplay)
 
     const filteredFamilies = useMemo(() => {
         if (!Array.isArray(families) || families.length === 0) return [];
@@ -408,7 +442,9 @@ function GisMap({ getCollection }){
                 selectedBgyClean === 'all barangays' ||
                 selectedBgyClean === 'select barangay';
 
-            const matchesBarangay = isBgyAll || itemBarangay === selectedBgyClean;
+            const itemKey = normalizeBarangayName(item.barangay);
+            const matchesBarangay = isBgyAll || itemBarangay === selectedBgyClean ||
+                itemKey === normalizeBarangayName(selectedBarangay);
 
             const isMethodAll =
                 !selectedFPMethod ||
@@ -419,9 +455,11 @@ function GisMap({ getCollection }){
 
             const matchesMethod = isMethodAll || itemMethod === selectedMethodClean;
 
-            return matchesBarangay && matchesMethod;
+            const matchesRhu = !rhuKeys || rhuKeys.has(itemKey);
+
+            return matchesRhu && matchesBarangay && matchesMethod;
         });
-    }, [families, selectedBarangay, selectedFPMethod]);
+    }, [families, selectedBarangay, selectedFPMethod, rhuKeys]);
 
     const handleLocateUser = () => {
         if (!navigator.geolocation) {
@@ -631,18 +669,20 @@ function GisMap({ getCollection }){
                                     <i className="fa-solid fa-arrow-trend-up"></i>
                                     <p>Heatmap</p>
                                 </div>
-
-                                <div
-                                    id="clusters"
-                                    className={`option-item ${mapMode === 'clusters' ? 'active' : ''}`}
-                                    onClick={() => setMapMode('clusters')}
-                                    role="button"
-                                    tabIndex={0}
-                                >
-                                    <i className="fa-regular fa-circle"></i>
-                                    <p>Clusters</p>
-                                </div>
                             </div>
+                        </div>
+
+                        <div className="barangay-filter rhu-filter">
+                            <h4>RHU</h4>
+                            <ReportSelect
+                                ariaLabel="RHU"
+                                value={selectedRhu}
+                                onChange={(e) => {
+                                    setSelectedRhu(e.target.value);
+                                    setSelectedBarangay("");
+                                }}
+                                options={rhuOptions}
+                            />
                         </div>
 
                         <div className="barangay-filter">
@@ -651,7 +691,7 @@ function GisMap({ getCollection }){
                                 ariaLabel="Barangay"
                                 value={selectedBarangay}
                                 onChange={(e) => setSelectedBarangay(e.target.value)}
-                                options={BARANGAY_OPTIONS}
+                                options={barangayOptions}
                             />
                         </div>
 
@@ -775,6 +815,7 @@ function GisMap({ getCollection }){
                         families={families}
                         filteredFamilies={filteredFamilies}
                         selectedBarangay={selectedBarangay}
+                        outlinedBarangays={outlinedBarangays}
                         rhuWarningMarkers={rhuWarningMarkers}
                         mapMode={mapMode}
                         currentZoom={zoom}
