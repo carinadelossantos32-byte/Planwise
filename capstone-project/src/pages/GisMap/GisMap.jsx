@@ -257,9 +257,11 @@ function GisMap({ getCollection }){
     }, [rhu, methodLimits, defaultThreshold, isLowStockEnabled]);
 
     const rhuOptions = useMemo(() => [
-        { value: "", label: "All RHUs" },
-        ...rhu.map((r) => ({ value: r.id, label: r.name || r.rhuName || r.id }))
-    ], [rhu]);
+    { value: "", label: "All RHUs" },
+    ...rhu
+        .map((r) => ({ value: r.id, label: r.name || r.rhuName || r.id }))
+        .sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }))
+], [rhu]);
 
     // barangays under the selected RHU (null when no RHU is selected)
     const rhuBarangays = useMemo(() => {
