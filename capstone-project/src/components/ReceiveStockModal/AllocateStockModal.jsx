@@ -10,9 +10,9 @@ import "./receive-stock-modal.css";
 //               change it on every delivery; only suggested where a source confirms a size.
 // code      = letter in the auto-generated batch number, e.g. BATCH-C-0001 (batch methods only)
 export const STOCK_CONFIG = {
-    condom:     { mode: "batch", code: "C", base: "pcs",   defaultPack: 144,  aliases: ["condom"] },
+    condom:     { mode: "batch", code: "C", base: "pcs",   defaultPack: null, aliases: ["condom"] },
     pills:      { mode: "batch", code: "P", base: "cycle", defaultPack: null, aliases: ["pill", "pills"] },
-    injectable: { mode: "batch", code: "I", base: "vial",  defaultPack: 20,   aliases: ["injectable", "dmpa"] },
+    injectable: { mode: "batch", code: "I", base: "vial",  defaultPack: null, aliases: ["injectable", "dmpa"] },
     iud:        { mode: "batch", code: "U", base: "pcs",   defaultPack: null, aliases: ["iud"] },
     implant:    { mode: "batch", code: "M", base: "set",   defaultPack: null, aliases: ["implant"] },
     sdm:        { mode: "count", base: "set",   defaultPack: null, aliases: ["sdm", "standarddays", "cyclebeads", "standarddaysmethod"] },
@@ -47,7 +47,7 @@ export default function ReceiveStockModal({ rhu, methods, onClose, onDone }) {
     const [qty, setQty] = useState("");
     const [packSize, setPackSize] = useState("");  // base units per box
     const [nextSeq, setNextSeq] = useState(null);  // { id, seq }: preview of the number the next batch of that method gets
-    const [arrived, setArrived] = useState(todayStr());
+    const [expiry, setExpiry] = useState("");
     const [error, setError] = useState("");
     const [busy, setBusy] = useState(false);
 
@@ -79,8 +79,8 @@ export default function ReceiveStockModal({ rhu, methods, onClose, onDone }) {
         if (!Number.isInteger(n) || n <= 0) return setError("Enter a whole number greater than 0.");
         if (isBox && (!Number.isInteger(pack) || pack <= 0)) return setError(`Enter how many ${cfg.base} are in one box.`);
         if (isBatch) {
-            if (!arrived) return setError("Date arrived is required.");
-            if (arrived > todayStr()) return setError("Date arrived cannot be in the future.");
+            if (!expiry) return setError("Expiration date is required.");
+            if (expiry <= todayStr()) return setError("Expiration date must be in the future.");
         }
 
         const added = n * pack;
@@ -98,7 +98,7 @@ export default function ReceiveStockModal({ rhu, methods, onClose, onDone }) {
                         method: method.id,
                         batchNo,
                         batchSeq: seq,
-                        arrivedAt: Timestamp.fromDate(new Date(`${arrived}T00:00:00`)),
+                        expiresAt: Timestamp.fromDate(new Date(`${expiry}T00:00:00`)),
                         receivedAt: serverTimestamp(),
                         qtyReceived: added,
                         qtyRemaining: added,
@@ -203,12 +203,12 @@ export default function ReceiveStockModal({ rhu, methods, onClose, onDone }) {
                                     />
                                 </div>
                                 <div className="sm-field">
-                                    <label className="sm-label" htmlFor="sm-arrived">Date arrived</label>
+                                    <label className="sm-label" htmlFor="sm-expiry">Expiration date</label>
                                     <input
-                                        id="sm-arrived"
-                                        type="date" value={arrived}
-                                        max={todayStr()}
-                                        onChange={(e) => { setArrived(e.target.value); setError(""); }}
+                                        id="sm-expiry"
+                                        type="date" value={expiry}
+                                        min={todayStr()}
+                                        onChange={(e) => { setExpiry(e.target.value); setError(""); }}
                                         className="sm-input"
                                     />
                                 </div>

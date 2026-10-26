@@ -275,14 +275,13 @@ async function sendToAll(allEmails, { subject, text }, logTag) {
   );
 }
 
-// Daily check of every RHU's batches. Each batch expires `shelfLifeMonthsByMethod[method]` months
-// after its own Date Arrived (arrivedAt), and is emailed once, `expiryNoticeMonthsByMethod[method]`
-// (default 1) months before that, while it still has stock. Both settings live in lowStock/lowStockLimit.
+// Daily check of every RHU's batches. Each batch has its own expiration date (expiresAt), and is emailed
+// once, `expiryNoticeMonthsByMethod[method]` (default 1) months before that, while it still has stock. The notice setting lives in lowStock/lowStockLimit.
 exports.checkExpiringStock = onSchedule(
   { schedule: "every day 08:00", timeZone: MANILA_TZ, region: "asia-southeast1" },
   async () => {
     const settingsSnap = await admin.firestore().doc("lowStock/lowStockLimit").get();
-    const { enabled = true, shelfLifeMonthsByMethod = {}, expiryNoticeMonthsByMethod = {} } = settingsSnap.exists ? settingsSnap.data() : {};
+    const { enabled = true, expiryNoticeMonthsByMethod = {} } = settingsSnap.exists ? settingsSnap.data() : {};
     if (!enabled) {
       console.log("Alerts are turned off in settings.");
       return;
@@ -295,16 +294,14 @@ exports.checkExpiringStock = onSchedule(
       const batchSnap = await rhuDoc.ref.collection("batches").get();
       batchSnap.docs.forEach((b) => {
         const batch = b.data();
-        const shelfLife = Number(shelfLifeMonthsByMethod[batch.method]);
-        const arrived = batch.arrivedAt || batch.receivedAt; // batches saved before Date Arrived only have receivedAt
-        if (!(shelfLife > 0) || !arrived || !(batch.qtyRemaining > 0) || batch.expiryNotified === true) return;
-        const expiryDate = addMonths(arrived.toDate(), shelfLife);
+        if (!batch.expiresAt || !(batch.qtyRemaining > 0) || batch.expiryNotified === true) return;
+        const expiryDate = batch.expiresAt.toDate();
         const daysLeft = daysUntil(expiryDate);
         const notice = expiryNoticeMonthsByMethod[batch.method];
         const noticeMonths = notice === undefined || notice === "" ? 1 : Number(notice);
-        const alertFrom = addMonths(arrived.toDate(), shelfLife - noticeMonths);
+        const alertFrom = addMonths(expiryDate, -noticeMonths);
         if (daysLeft < 0 || daysUntil(alertFrom) > 0) return;
-        due.push({ ref: b.ref, methodId: batch.method, rhuName, lotNo: batch.lotNo, qty: batch.qtyRemaining, expiryDate, daysLeft });
+        due.push({ ref: b.ref, methodId: batch.method, rhuName, lotNo: batch.batchNo ?? batch.lotNo, qty: batch.qtyRemaining, expiryDate, daysLeft });
       });
     }
     console.log("Batches nearing expiry:", due.length);

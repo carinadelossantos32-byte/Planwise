@@ -14,7 +14,6 @@ const toBase = (entry) => Number(entry.qty) * (entry.unit === "box" ? Number(ent
 function LowStockSettings() {
     const [alertsEnabled, setAlertsEnabled] = useState(true);
     const [limits, setLimits] = useState({});       // { [methodId]: { qty, unit, packSize } }
-    const [shelfLife, setShelfLife] = useState({}); // { [methodId]: months after Date Arrived until a batch expires }
     const [notice, setNotice] = useState({});       // { [methodId]: months before expiry the email goes out }
     const [globalValue, setGlobalValue] = useState("");
     const [showToast, setShowToast] = useState(false);
@@ -33,7 +32,6 @@ function LowStockSettings() {
                     m.id,
                     entries[m.id] ?? { qty: saved[m.id] ?? "", unit: baseOf(m.id), packSize: "" },
                 ])));
-                setShelfLife(data.shelfLifeMonthsByMethod || {});
                 setNotice(data.expiryNoticeMonthsByMethod || {});
             }
         }
@@ -63,7 +61,6 @@ function LowStockSettings() {
             [methodId]: value === "" ? "" : Math.max(0, Math.floor(Number(value)))
         }));
     };
-    const handleShelfLifeChange = monthsHandler(setShelfLife);
     const handleNoticeChange = monthsHandler(setNotice);
 
     const handleApplyGlobal = () => {
@@ -93,7 +90,6 @@ function LowStockSettings() {
                 enabled: alertsEnabled,
                 limitsByMethod,
                 limitEntryByMethod: limits,
-                shelfLifeMonthsByMethod: shelfLife,
                 expiryNoticeMonthsByMethod: notice,
             }, { merge: true });
 
@@ -154,7 +150,6 @@ function LowStockSettings() {
                         <tr>
                             <th scope="col"><span className="sr-only">FP method</span></th>
                             <th scope="col">Low Stock Limit</th>
-                            <th scope="col">Shelf Life (Months)</th>
                             <th scope="col">Advance Expiry Notice (Months)</th>
                         </tr>
                     </thead>
@@ -202,22 +197,6 @@ function LowStockSettings() {
                                             )}
                                         </div>
                                     </td>
-                                    <td data-label="Shelf Life (Months)">
-                                        {isBatch ? (
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                step="1"
-                                                placeholder="0"
-                                                value={shelfLife[method.id] ?? ""}
-                                                onChange={(e) => handleShelfLifeChange(method.id, e.target.value)}
-                                                className="threshold-input"
-                                                aria-label={`${method.label} shelf life in months`}
-                                            />
-                                        ) : (
-                                            <span className="method-na" title="Not tracked by batch">—</span>
-                                        )}
-                                    </td>
                                     <td data-label="Advance Expiry Notice (Months)">
                                         {isBatch ? (
                                             <input
@@ -242,8 +221,7 @@ function LowStockSettings() {
             </div>
 
             <p className="method-table-note">
-                Shelf life counts from each batch's date of arrival, and the expiry notice is emailed that many months
-                before the batch expires. 
+                The expiry notice is emailed that many months before a batch's expiration date.
             </p>
 
             <div className="settings-footer">

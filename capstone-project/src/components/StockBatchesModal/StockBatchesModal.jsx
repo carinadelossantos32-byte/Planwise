@@ -20,15 +20,12 @@ function addMonths(date, months) {
 const formatDate = (d) => d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 const monthsLabel = (n) => `${n} ${n === 1 ? "month" : "months"}`;
 
-// batches of one method that still have stock, oldest arrival first (the order they are issued in)
+// batches of one method that still have stock, soonest expiry first (batches without one go last)
 function methodBatches(batches, methodId) {
     return batches
         .filter((b) => b.method === methodId && b.qtyRemaining > 0)
-        .map((b) => {
-            const arrived = b.arrivedAt ?? b.receivedAt; // older batches only have receivedAt
-            return { ...b, arrivedOn: arrived?.toDate ? startOfDay(arrived.toDate()) : null };
-        })
-        .sort((a, b) => (a.arrivedOn?.getTime() ?? 0) - (b.arrivedOn?.getTime() ?? 0));
+        .map((b) => ({ ...b, expiresOn: b.expiresAt?.toDate ? startOfDay(b.expiresAt.toDate()) : null }))
+        .sort((a, b) => (a.expiresOn?.getTime() ?? Infinity) - (b.expiresOn?.getTime() ?? Infinity));
 }
 
 export default function StockBatchesModal({ rhu, methods, onClose }) {
@@ -60,7 +57,6 @@ export default function StockBatchesModal({ rhu, methods, onClose }) {
         return () => document.removeEventListener("keydown", onKey);
     }, [onClose]);
 
-    const shelfLifeByMethod = settings.shelfLifeMonthsByMethod || {};
     const noticeByMethod = settings.expiryNoticeMonthsByMethod || {};
     const batchMethods = methods.filter((m) => STOCK_CONFIG[m.id]?.mode === "batch");
     const today = startOfDay(new Date());
@@ -71,7 +67,7 @@ export default function StockBatchesModal({ rhu, methods, onClose }) {
                 <header className="sbm-head">
                     <div>
                         <h3 id="sbm-title">Stock Batches</h3>
-                        <p>Shelf life and expiry notice for each batch, by date of arrival</p>
+                        <p>Expiration date and expiry notice for each batch</p>
                     </div>
                     <span className="sbm-tag">{rhu.name}</span>
                     <button type="button" className="sbm-close" onClick={onClose} aria-label="Close">
@@ -85,8 +81,6 @@ export default function StockBatchesModal({ rhu, methods, onClose }) {
 
                     {batches !== null && batchMethods.map((method) => {
                         const rows = methodBatches(batches, method.id);
-                        const shelfLife = Number(shelfLifeByMethod[method.id]);
-                        const hasShelfLife = shelfLife > 0;
                         const rawNotice = noticeByMethod[method.id];
                         const notice = rawNotice === undefined || rawNotice === "" ? DEFAULT_NOTICE_MONTHS : Number(rawNotice);
 
@@ -101,15 +95,14 @@ export default function StockBatchesModal({ rhu, methods, onClose }) {
                                             <thead>
                                                 <tr>
                                                     <th>Batch</th>
-                                                    <th>Arrived</th>
-                                                    <th>Shelf life</th>
+                                                    <th>Expiration date</th>
                                                     <th>Alert ({monthsLabel(notice)} before)</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {rows.map((b, i) => {
-                                                    const alertOn = hasShelfLife && b.arrivedOn ? addMonths(b.arrivedOn, shelfLife - notice) : null;
-                                                    const expiresOn = hasShelfLife && b.arrivedOn ? addMonths(b.arrivedOn, shelfLife) : null;
+                                                    const expiresOn = b.expiresOn;
+                                                    const alertOn = expiresOn ? addMonths(expiresOn, -notice) : null;
                                                     const status = !expiresOn ? "" : expiresOn <= today ? "expired" : alertOn <= today ? "due" : "";
                                                     return (
                                                         <tr key={b.id}>
@@ -117,8 +110,7 @@ export default function StockBatchesModal({ rhu, methods, onClose }) {
                                                                 <span className="sbm-batch">{b.batchNo ?? `Batch ${i + 1}`}</span>
                                                                 {!b.batchNo && b.lotNo && <span className="sbm-lot">Lot {b.lotNo}</span>}
                                                             </td>
-                                                            <td>{b.arrivedOn ? formatDate(b.arrivedOn) : "—"}</td>
-                                                            <td>{hasShelfLife ? monthsLabel(shelfLife) : <span className="sbm-muted">Not set</span>}</td>
+                                                            <td>{expiresOn ? formatDate(expiresOn) : <span className="sbm-muted">Not set</span>}</td>
                                                             <td>
                                                                 {alertOn ? formatDate(alertOn) : <span className="sbm-muted">—</span>}
                                                                 {status === "due" && <span className="sbm-chip sbm-chip--due">Expiring soon</span>}
@@ -130,9 +122,6 @@ export default function StockBatchesModal({ rhu, methods, onClose }) {
                                             </tbody>
                                         </table>
                                     </div>
-                                )}
-                                {rows.length > 0 && !hasShelfLife && (
-                                    <p className="sbm-hint">Set a shelf life for {method.label} in Settings &gt; Notifications to get expiry alerts.</p>
                                 )}
                             </section>
                         );
